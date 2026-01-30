@@ -1,0 +1,3 @@
+{
+  "agents": ["legal-agent.yaml", "governance-agent.yaml"]
+}
