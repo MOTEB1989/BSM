@@ -1,0 +1,7 @@
+id: legal-agent
+name: Legal analysis agent
+role: Analyze regulations and circulars
+version: 1
+modelProvider: openai
+modelKey: bsm
+modelName: gpt-4o-mini
