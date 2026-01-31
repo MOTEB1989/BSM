@@ -50,8 +50,7 @@ export const runAgent = async ({ agentId, input }) => {
 
     // Ensure output is always a string
     const output =
-      result ||
-      "لم يصل رد من الوكيل.";
+      (result !== null && result !== undefined && result !== "") ? result : "لم يصل رد من الوكيل.";
 
     return { output };
   } catch (err) {
