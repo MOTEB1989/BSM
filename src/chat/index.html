@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>BSM Chat</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h1>واجهة دردشة BSM</h1>
+
+  <div id="chat-box"></div>
+
+  <div id="controls">
+    <select id="agent">
+      <option value="legal-agent">Legal Agent</option>
+      <option value="governance-agent">Governance Agent</option>
+    </select>
+
+    <textarea id="input" placeholder="اكتب رسالتك هنا..."></textarea>
+    <button type="button" onclick="sendMessage()">إرسال</button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

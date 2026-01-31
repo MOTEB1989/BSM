@@ -3,6 +3,8 @@ import { loadKnowledgeIndex } from "../services/knowledgeService.js";
 import { models } from "../config/models.js";
 import { runGPT } from "../services/gptService.js";
 import { AppError } from "../utils/errors.js";
+import { createFile } from "../actions/githubActions.js";
+import { extractIntent, intentToAction } from "../utils/intent.js";
 
 export const runAgent = async ({ agentId, input }) => {
   const agents = await loadAgents();
@@ -24,6 +26,26 @@ export const runAgent = async ({ agentId, input }) => {
     system: systemPrompt,
     user: userPrompt
   });
+
+  const intent = extractIntent(output);
+  const action = intentToAction(intent);
+  if (action) {
+    const allowedActions = new Set(agent.actions || []);
+    if (!allowedActions.has(action)) {
+      throw new AppError(`Action not permitted: ${action}`, 403, "ACTION_NOT_ALLOWED");
+    }
+  }
+
+  if (intent === "create_agent") {
+    await createFile(
+      "data/agents/new-agent.yaml",
+      "id: new-agent\nname: New Agent\nrole: Auto-created\n"
+    );
+  }
+
+  if (intent === "update_file") {
+    throw new AppError("Update file intent not implemented", 501, "UPDATE_FILE_NOT_IMPLEMENTED");
+  }
 
   return {
     agent: { id: agent.id, name: agent.name },
