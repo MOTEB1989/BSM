@@ -6,6 +6,8 @@ const must = (cond, msg) => {
   if (!cond) throw new Error(msg);
 };
 
+const allowedActions = new Set(["create_file"]);
+
 const agentsDir = path.join(process.cwd(), "data", "agents");
 must(fs.existsSync(agentsDir), "Missing data/agents directory");
 
@@ -17,6 +19,12 @@ idx.agents.forEach((file) => {
   must(fs.existsSync(p), `Missing agent file: ${file}`);
   const parsed = YAML.parse(fs.readFileSync(p, "utf8"));
   must(parsed?.id, `Agent missing id in: ${file}`);
+  if (parsed.actions) {
+    must(Array.isArray(parsed.actions), `Agent actions must be an array in: ${file}`);
+    parsed.actions.forEach((action) => {
+      must(allowedActions.has(action), `Unsupported agent action "${action}" in: ${file}`);
+    });
+  }
 });
 
 console.log("OK: validation passed");

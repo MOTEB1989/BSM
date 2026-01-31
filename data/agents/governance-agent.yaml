@@ -9,5 +9,3 @@ modelKey: bsm
 modelName: gpt-4o-mini
 actions:
   - create_file
-  - update_file
-  - open_pr
