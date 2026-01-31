@@ -10,10 +10,38 @@ const timingSafeEqual = (a, b) => {
   return crypto.timingSafeEqual(bufA, bufB);
 };
 
+const tokenFromBasicAuth = (headerValue) => {
+  if (!headerValue) return null;
+  const [scheme, encoded] = headerValue.split(" ");
+  if (!scheme || scheme.toLowerCase() !== "basic" || !encoded) return null;
+  const decoded = Buffer.from(encoded, "base64").toString("utf8");
+  const separatorIndex = decoded.indexOf(":");
+  if (separatorIndex === -1) return null;
+  return decoded.slice(separatorIndex + 1);
+};
+
 export const adminAuth = (req, res, next) => {
   const token = req.headers["x-admin-token"];
   if (!token || !env.adminToken || !timingSafeEqual(token, env.adminToken)) {
     return res.status(401).json({ error: "Unauthorized" });
   }
   next();
+};
+
+export const adminUiAuth = (req, res, next) => {
+  if (!env.adminToken) {
+    return res.status(500).send("Admin token not configured");
+  }
+
+  const token =
+    req.headers["x-admin-token"] ||
+    req.query?.token ||
+    tokenFromBasicAuth(req.headers.authorization);
+
+  if (!token || !timingSafeEqual(token, env.adminToken)) {
+    res.setHeader("WWW-Authenticate", 'Basic realm="Admin", charset="UTF-8"');
+    return res.status(401).send("Unauthorized");
+  }
+
+  return next();
 };

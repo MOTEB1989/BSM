@@ -1,8 +1,19 @@
+const parseNumber = (value, fallback) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
 export const env = {
   nodeEnv: process.env.NODE_ENV || "development",
-  port: Number(process.env.PORT || 3000),
+  port: parseNumber(process.env.PORT, 3000),
   logLevel: process.env.LOG_LEVEL || "info",
-  adminToken: process.env.ADMIN_TOKEN
+  adminToken: process.env.ADMIN_TOKEN,
+  corsOrigins: process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim()).filter(Boolean)
+    : [],
+  rateLimitWindowMs: parseNumber(process.env.RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
+  rateLimitMax: parseNumber(process.env.RATE_LIMIT_MAX, 100),
+  maxAgentInputLength: parseNumber(process.env.MAX_AGENT_INPUT_LENGTH, 4000)
 };
 
 // Validate admin token in production

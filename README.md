@@ -37,7 +37,7 @@ BSM/
 ### Admin Endpoints (requires x-admin-token header)
 - `GET /api/admin/agents` - Get agents configuration
 - `GET /api/admin/knowledge` - Get knowledge documents
-- `/admin` - Admin UI dashboard
+- `/admin` - Admin UI dashboard (requires admin token via Basic Auth, `x-admin-token`, or `?token=...`)
 
 ## Getting Started
 
@@ -80,6 +80,16 @@ OPENAI_MODEL=gpt-4o-mini
 
 # Admin (use strong token in production)
 ADMIN_TOKEN=change-me-to-strong-token
+
+# CORS (comma-separated origins, optional)
+CORS_ORIGINS=https://example.com,https://admin.example.com
+
+# Rate limiting (optional)
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX=100
+
+# Agent input limits (optional)
+MAX_AGENT_INPUT_LENGTH=4000
 ```
 
 ### Running the Application
@@ -130,8 +140,11 @@ After upgrading our subscription to **GitHub Copilot Pro**, the platform now lev
 - **Input Validation**: All API endpoints validate input parameters
 - **Request Size Limiting**: Body parser limited to 1MB to prevent memory exhaustion
 - **Authentication**: Admin endpoints protected with token-based authentication
+- **Admin UI Protection**: Admin UI requires a valid admin token
 - **Timing Attack Prevention**: Constant-time token comparison
 - **Request Timeout**: 30-second timeout for external API calls
+- **Rate Limiting**: API endpoints throttled to prevent abuse
+- **Security Headers**: Helmet-enabled defaults for common protections
 - **Environment Validation**: Production mode requires secure admin token (16+ characters)
 - **CORS Protection**: Configurable cross-origin resource sharing
 - **CodeQL Analysis**: Automated security scanning via GitHub Actions

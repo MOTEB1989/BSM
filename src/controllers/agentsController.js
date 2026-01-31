@@ -1,5 +1,6 @@
 import { loadAgents } from "../services/agentsService.js";
 import { runAgent } from "../runners/agentRunner.js";
+import { env } from "../config/env.js";
 
 export const listAgents = async (req, res, next) => {
   try {
@@ -25,6 +26,13 @@ export const executeAgent = async (req, res, next) => {
       return res.status(400).json({ 
         error: 'Invalid or missing input', 
         correlationId: req.correlationId 
+      });
+    }
+
+    if (input.length > env.maxAgentInputLength) {
+      return res.status(400).json({
+        error: `Input exceeds maximum length of ${env.maxAgentInputLength} characters`,
+        correlationId: req.correlationId
       });
     }
     
