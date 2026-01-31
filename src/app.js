@@ -21,6 +21,7 @@ app.use("/api", routes);
 
 // serve admin UI static
 app.use("/admin", express.static(path.join(process.cwd(), "src/admin")));
+app.use("/chat", express.static(path.join(process.cwd(), "src/chat")));
 
 app.use(notFound);
 app.use(errorHandler);

@@ -1,0 +1,46 @@
+body {
+  font-family: sans-serif;
+  background: #0f172a;
+  color: #fff;
+  padding: 20px;
+}
+
+#chat-box {
+  height: 400px;
+  overflow-y: auto;
+  background: #1e293b;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.message {
+  margin-bottom: 12px;
+}
+
+.user {
+  color: #38bdf8;
+}
+
+.agent {
+  color: #a3e635;
+}
+
+#controls {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+textarea {
+  height: 80px;
+  padding: 10px;
+}
+
+button {
+  padding: 10px;
+  background: #38bdf8;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
