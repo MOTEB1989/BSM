@@ -11,9 +11,15 @@ BSM/
 ├── data/                    # Data storage
 │   ├── agents/             # Agent configurations (YAML)
 │   └── knowledge/          # Knowledge documents
+├── docs/                   # GitHub Pages frontend (lexdo.uk)
+│   ├── index.html          # Standalone chat interface
+│   ├── app.js              # Vue 3 chat application
+│   ├── styles.css          # Custom styles
+│   └── CNAME               # Domain configuration
 ├── scripts/                # Build and validation scripts
 ├── src/
 │   ├── admin/              # Admin UI (HTML/CSS/JS)
+│   ├── chat/               # Chat UI (Vue 3 + Tailwind)
 │   ├── config/             # Configuration modules
 │   ├── controllers/        # Request handlers
 │   ├── middleware/         # Express middleware
@@ -33,11 +39,21 @@ BSM/
 - `GET /api/agents` - List all available agents
 - `GET /api/knowledge` - List all knowledge documents
 - `POST /api/agents/run` - Execute an agent with input
+- `POST /api/chat` - Agent-based chat (requires `agentId` and `input`)
+- `POST /api/chat/direct` - Direct GPT chat with conversation history
+
+### Chat Interface
+- `/chat` - Professional Arabic/English GPT chat interface (Vue 3 + Tailwind)
 
 ### Admin Endpoints (requires x-admin-token header)
 - `GET /api/admin/agents` - Get agents configuration
 - `GET /api/admin/knowledge` - Get knowledge documents
 - `/admin` - Admin UI dashboard (requires admin token via Basic Auth, `x-admin-token`, or `?token=...`)
+
+### Standalone Frontend (GitHub Pages)
+- Hosted at `https://www.lexdo.uk` via GitHub Pages
+- Connects to the API backend (configurable URL)
+- Same chat interface with API URL configuration
 
 ## Getting Started
 
@@ -165,6 +181,7 @@ The project includes GitHub Actions workflows:
 
 - **Validate**: Runs on every PR and push to main, validates data structure
 - **CodeQL**: Security analysis for JavaScript code
+- **Pages**: Deploys `docs/` to GitHub Pages on push to main
 
 ## Benefits
 

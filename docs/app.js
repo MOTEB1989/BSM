@@ -1,7 +1,7 @@
 const { createApp, ref, computed, nextTick, onMounted } = Vue;
 
-// Detect API base URL - same origin when served from Express, configurable for standalone
-const API_BASE = window.__LEXBANK_API_URL__ || '';
+// Standalone version - API URL stored in localStorage
+const STORAGE_KEY = 'lexbank_api_url';
 
 createApp({
   setup() {
@@ -12,6 +12,8 @@ createApp({
     const lang = ref('ar');
     const mode = ref('direct');
     const showModeMenu = ref(false);
+    const showConfig = ref(false);
+    const apiUrl = ref(localStorage.getItem(STORAGE_KEY) || '');
     const messagesContainer = ref(null);
     const inputField = ref(null);
 
@@ -59,6 +61,13 @@ createApp({
       nextTick(() => inputField.value?.focus());
     }
 
+    function saveApiUrl() {
+      const url = apiUrl.value.trim().replace(/\/+$/, '');
+      apiUrl.value = url;
+      localStorage.setItem(STORAGE_KEY, url);
+      showConfig.value = false;
+    }
+
     function formatTime(time) {
       if (!time) return '';
       const d = new Date(time);
@@ -85,22 +94,10 @@ createApp({
       });
     }
 
-    function handleScroll() {
-      // Could track scroll position for "scroll to bottom" button
-    }
-
     function handleEnter(e) {
       if (!e.shiftKey) {
         e.preventDefault();
         sendMessage();
-      }
-    }
-
-    function autoResize() {
-      const el = inputField.value;
-      if (el) {
-        el.style.height = 'auto';
-        el.style.height = Math.min(el.scrollHeight, 128) + 'px';
       }
     }
 
@@ -113,15 +110,22 @@ createApp({
       const text = input.value.trim();
       if (!text || loading.value) return;
 
+      const base = apiUrl.value.trim().replace(/\/+$/, '');
+      if (!base) {
+        showConfig.value = true;
+        error.value = lang.value === 'ar'
+          ? '\u064A\u0631\u062C\u0649 \u0625\u062F\u062E\u0627\u0644 \u0631\u0627\u0628\u0637 \u0627\u0644\u0640 API \u0623\u0648\u0644\u0627\u064B'
+          : 'Please enter the API URL first';
+        return;
+      }
+
       error.value = '';
       input.value = '';
 
-      // Reset textarea height
       nextTick(() => {
         if (inputField.value) inputField.value.style.height = 'auto';
       });
 
-      // Add user message
       messages.value.push({
         role: 'user',
         content: text,
@@ -135,8 +139,7 @@ createApp({
         let url, body;
 
         if (mode.value === 'direct') {
-          // Direct GPT chat with history
-          url = `${API_BASE}/api/chat/direct`;
+          url = `${base}/api/chat/direct`;
           body = {
             message: text,
             language: lang.value,
@@ -145,8 +148,7 @@ createApp({
               .map(m => ({ role: m.role, content: m.content }))
           };
         } else {
-          // Agent-based chat
-          url = `${API_BASE}/api/chat`;
+          url = `${base}/api/chat`;
           body = {
             agentId: mode.value,
             input: text
@@ -183,13 +185,18 @@ createApp({
       }
     }
 
-    // Close dropdown on outside click
     onMounted(() => {
       document.addEventListener('click', (e) => {
         if (!e.target.closest('.relative')) {
           showModeMenu.value = false;
         }
       });
+
+      // Show config if no API URL saved
+      if (!apiUrl.value) {
+        showConfig.value = true;
+      }
+
       inputField.value?.focus();
     });
 
@@ -201,6 +208,8 @@ createApp({
       lang,
       mode,
       showModeMenu,
+      showConfig,
+      apiUrl,
       messagesContainer,
       inputField,
       quickActions,
@@ -208,12 +217,11 @@ createApp({
       toggleLang,
       setMode,
       clearChat,
+      saveApiUrl,
       formatTime,
       renderMarkdown,
       scrollToBottom,
-      handleScroll,
       handleEnter,
-      autoResize,
       sendQuickAction,
       sendMessage
     };

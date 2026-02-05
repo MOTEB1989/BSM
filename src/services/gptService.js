@@ -4,11 +4,17 @@ import { AppError } from "../utils/errors.js";
 const API_URL = "https://api.openai.com/v1/chat/completions";
 const REQUEST_TIMEOUT_MS = 30000; // 30 seconds
 
-export const runGPT = async ({ model, apiKey, system, user }) => {
+export const runGPT = async ({ model, apiKey, system, user, messages }) => {
   if (!apiKey) throw new AppError("Missing API key for model provider", 500, "MISSING_API_KEY");
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  // Use full messages array if provided, otherwise build from system+user
+  const chatMessages = messages || [
+    { role: "system", content: system },
+    { role: "user", content: user }
+  ];
 
   try {
     const res = await fetch(API_URL, {
@@ -19,10 +25,7 @@ export const runGPT = async ({ model, apiKey, system, user }) => {
       },
       body: JSON.stringify({
         model: model || process.env.OPENAI_MODEL || "gpt-4o-mini",
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: user }
-        ],
+        messages: chatMessages,
         max_tokens: 1200
       }),
       signal: controller.signal
