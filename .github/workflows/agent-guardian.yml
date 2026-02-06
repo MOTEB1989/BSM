@@ -1,0 +1,76 @@
+name: "🛡️ Agent Guardian — Validate & Prepare PR"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+    paths:
+      - 'agents/**.agent.md'
+      - '.github/agents/**.agent.md'
+      - '.github/workflows/agent-guardian.yml'
+      - 'scripts/schema.yaml'
+      - 'scripts/validate_agent.py'
+      - 'scripts/optimize_agent.py'
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pydantic pyyaml ruff semgrep
+
+      - name: 🔍 Validate agent schema
+        id: validate
+        run: |
+          python scripts/validate_agent.py --glob 'agents/*.agent.md' --glob '.github/agents/*.agent.md'
+
+      - name: 🧹 Optimize code (dry-run)
+        id: optimize
+        run: |
+          python scripts/optimize_agent.py --dry-run --pr-number "${{ github.event.number }}"
+
+      - name: 📝 Post status comment
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const validationOutcome = '${{ steps.validate.outcome }}';
+            const optimizeNeeded = '${{ steps.optimize.outputs.optimize_needed || 'false' }}';
+            let body = `### 🤖 Agent Guardian Report\n`;
+            body += `- Schema: ${validationOutcome === 'success' ? '✅ Valid' : '❌ Invalid'}\n`;
+            body += `- Optimization: ${optimizeNeeded === 'true' ? '💡 Suggested (run manually)' : '✅ Not needed'}\n`;
+            body += `\n> 🔐 This agent is safe to merge *after human approval*.`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+
+      - name: 🟢 Add 'Ready for Merge' label (if valid)
+        if: steps.validate.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['ready-for-merge', 'agent-valid']
+            });

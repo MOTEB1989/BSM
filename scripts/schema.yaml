@@ -1,0 +1,55 @@
+name:
+  type: string
+  minLength: 1
+  maxLength: 64
+description:
+  type: string
+  maxLength: 500
+version:
+  type: string
+  pattern: '^\\d+\\.\\d+\\.\\d+$'
+author:
+  type: string
+license:
+  type: string
+  enum: [MIT, Apache-2.0, GPL-3.0]
+triggers:
+  type: array
+  items:
+    type: object
+    properties:
+      event:
+        type: string
+        enum: [pull_request, push, workflow_dispatch]
+      conditions:
+        type: array
+        items:
+          type: object
+          properties:
+            files_changed:
+              type: array
+              items:
+                type: string
+            base_branch:
+              type: string
+actions:
+  type: array
+  items:
+    type: object
+    required: [name, run]
+    properties:
+      name:
+        type: string
+      run:
+        type: string
+      uses:
+        type: string
+permissions:
+  type: object
+  properties:
+    contents:
+      type: string
+      enum: [read, write]
+    pull-requests:
+      type: string
+      enum: [read, write]
