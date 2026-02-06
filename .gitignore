@@ -1,3 +1,27 @@
 node_modules
 .env
 .DS_Store
+
+# Reports - ignore most but keep security reports
+reports/*
+!reports/SECURITY-*.md
+
+# Sensitive files - Security
+*.key
+*.pem
+*.p12
+*.pfx
+*.secret
+*.crt
+*.cer
+docker-secrets.env
+.env.local
+.env.*.local
+.env.production
+config.secret.js
+secrets.json
+
+# Certificates
+certs/
+certificates/
+ssl/

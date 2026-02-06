@@ -1,0 +1,159 @@
+# ============================================
+# BSM Platform - Docker Compose
+# Local Development Environment
+# ============================================
+
+version: '3.8'
+
+services:
+  # Main API Service
+  bsm-api:
+    build:
+      context: .
+      target: development
+    container_name: bsm-api-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - LOG_LEVEL=debug
+      - REDIS_URL=redis://redis:6379
+    env_file:
+      - .env
+    volumes:
+      # Hot-reload support
+      - ./src:/app/src:ro
+      - ./data:/app/data:ro
+      # Prevent overwriting node_modules
+      - /app/node_modules
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - bsm-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: bsm-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - bsm-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:16-alpine
+    container_name: bsm-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=bsm
+      - POSTGRES_USER=bsm_user
+      # ⚠️ SECURITY WARNING: Change password before production use!
+      # Generate strong password: openssl rand -base64 32
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-bsm_password_dev}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - bsm-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bsm_user -d bsm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Prometheus (optional - for monitoring)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: bsm-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - bsm-network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # Grafana (optional - for dashboards)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: bsm-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      # ⚠️ SECURITY WARNING: Never use default credentials in production!
+      # Change these immediately! Generate: openssl rand -base64 24
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-CHANGE_ME_NOW}
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - bsm-network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+volumes:
+  redis-data:
+    driver: local
+  postgres-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  bsm-network:
+    driver: bridge
+
+# ============================================
+# Usage:
+# ============================================
+# Start all services:
+#   docker-compose up -d
+#
+# Start with monitoring:
+#   docker-compose --profile monitoring up -d
+#
+# View logs:
+#   docker-compose logs -f bsm-api
+#
+# Stop all services:
+#   docker-compose down
+#
+# Stop and remove volumes:
+#   docker-compose down -v
+#
+# Rebuild API:
+#   docker-compose up -d --build bsm-api
+# ============================================
