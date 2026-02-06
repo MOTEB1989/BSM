@@ -1,0 +1,79 @@
+name: Publish Reports
+
+on:
+  workflow_run:
+    workflows: ["Run BSM Agents", "Weekly Agents Audit"]
+    types: [completed]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download report artifacts
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: _artifacts
+
+      - name: Copy reports to docs/
+        run: |
+          mkdir -p docs/reports
+          # Copy any Markdown reports from downloaded artifacts
+          find _artifacts -name '*.md' -not -name 'agents-summary-*' -exec cp {} docs/reports/ \; 2>/dev/null || true
+          find _artifacts -name 'report_*.md' -exec cp {} docs/reports/ \; 2>/dev/null || true
+          echo "Reports copied to docs/reports/"
+          ls -la docs/reports/ || true
+
+      - name: Rebuild reports index
+        run: node scripts/build_reports_index.js
+
+      - name: Commit reports to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "docs: publish agents report [automated]"
+          git push
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs
+
+      - name: Create notification issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const date = new Date().toISOString().slice(0, 10);
+            const trigger = '${{ github.event.workflow_run.name }}';
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `New Agents Report Published — ${date}`,
+              body: [
+                `A new agents report has been published to GitHub Pages.`,
+                '',
+                `**Triggered by:** ${trigger}`,
+                `**Date:** ${date}`,
+                '',
+                `View the reports index on your GitHub Pages site.`,
+              ].join('\n'),
+              labels: ['automation', 'report-published'],
+            });
