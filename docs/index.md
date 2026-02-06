@@ -9,7 +9,11 @@ title: BSM Reports
 
 ---
 
-*No reports published yet. Run the agents pipeline to generate the first report.*
+**1** report(s) available.
+
+| # | Date | Type | Report |
+|---|------|------|--------|
+| 1 | 2026-02-06 06:03 | Agents Run | [report_20260206T060349.md](reports/report_20260206T060349.md) |
 
 ---
 
