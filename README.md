@@ -105,6 +105,27 @@ cp .env.example .env
 # Edit .env with your configuration
 ```
 
+### ORBIT Self-Healing Agent Setup
+
+Set up automated monitoring, health checks, and self-healing capabilities:
+
+```bash
+# Quick setup (10 minutes)
+./scripts/bootstrap-orbit.sh
+```
+
+**Features:**
+- 🤖 Automated GitHub Actions integration
+- 📱 Telegram bot command interface  
+- 🔧 Self-healing workflow monitoring
+- 🔐 Secure secrets management
+- ☁️ Cloudflare Workers deployment
+
+**Documentation:**
+- [Quick Setup Guide](docs/ORBIT-QUICK-SETUP.md) - Get started in 10 minutes
+- [Full Bootstrap Guide](docs/ORBIT-BOOTSTRAP-GUIDE.md) - Detailed setup instructions
+- [Secrets Management](docs/ORBIT-SECRETS-MANAGEMENT.md) - Security best practices
+
 ### Configuration
 
 Create a `.env` file with the following variables:
