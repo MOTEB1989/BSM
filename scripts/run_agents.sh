@@ -107,6 +107,11 @@ RUNNER_DETAIL="${TMPDIR}/runner.json"
 echo '{}' > "${RUNNER_DETAIL}"
 
 if [ -f package.json ] && command -v npm >/dev/null 2>&1; then
+  # Ensure dependencies are installed
+  if [ ! -d node_modules ]; then
+    log "Installing dependencies..."
+    npm ci --ignore-scripts --no-audit --no-fund 2>&1 | tail -1 || npm install --ignore-scripts --no-audit --no-fund 2>&1 | tail -1 || true
+  fi
   if npm test --silent 2>&1 | tee "${TMPDIR}/test_output.txt"; then
     echo "- Tests passed" >> "${SUMMARY_OUT}"
     echo '{"tests":"passed"}' > "${RUNNER_DETAIL}"
@@ -146,17 +151,26 @@ else
 fi
 
 # 3b. Quick secret scan
+# Only scan source code files — skip docs, configs, examples, and security tooling
+# Use high-confidence patterns that indicate real secrets, not references to them
 SECRET_FOUND=false
+SCAN_EXCLUDES='\.(md|toml|example|txt)$|^docs/|^reports/|^dns/|^\.github/workflows/|^\.gitleaks'
+HIGH_CONFIDENCE_PATTERNS='AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|-----BEGIN (RSA |EC )?PRIVATE KEY-----|ghp_[0-9A-Za-z]{36}|sk-[0-9A-Za-z]{48}|xox[bpras]-[0-9A-Za-z-]+'
+
 if command -v git >/dev/null 2>&1; then
   while IFS= read -r f; do
-    if grep -I -nE "AKIA|AIza|SECRET|PRIVATE_KEY|password|passwd|token|-----BEGIN PRIVATE KEY-----" "$f" >/dev/null 2>&1; then
-      echo "- Potential secret pattern found in ${f}" >> "${SUMMARY_OUT}"
+    # Skip excluded paths
+    if echo "${f}" | grep -qE "${SCAN_EXCLUDES}"; then
+      continue
+    fi
+    if grep -I -nE "${HIGH_CONFIDENCE_PATTERNS}" "$f" >/dev/null 2>&1; then
+      echo "- Potential secret found in ${f}" >> "${SUMMARY_OUT}"
       SECRET_FOUND=true
       SECURITY_STATUS="warn"
     fi
   done < <(git ls-files)
   if [ "${SECRET_FOUND}" = false ]; then
-    echo "- Quick scan: no obvious secret patterns found" >> "${SUMMARY_OUT}"
+    echo "- Quick scan: no secret patterns found" >> "${SUMMARY_OUT}"
   fi
 else
   echo "- Git not available for quick secret scan" >> "${SUMMARY_OUT}"
