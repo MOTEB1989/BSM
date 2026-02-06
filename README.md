@@ -11,6 +11,9 @@ BSM/
 ├── data/                    # Data storage
 │   ├── agents/             # Agent configurations (YAML)
 │   └── knowledge/          # Knowledge documents
+├── dns/                    # DNS configuration and documentation
+│   ├── lexdo-uk-zone.txt   # Cloudflare DNS zone file
+│   └── DNS-RECORD-TYPES.md # DNS record types reference
 ├── docs/                   # GitHub Pages frontend (lexdo.uk)
 │   ├── index.html          # Standalone chat interface
 │   ├── app.js              # Vue 3 chat application

@@ -1,11 +1,15 @@
 ; Zone file for lexdo.uk - GitHub Pages + LexBANK
 ; Upload this file to Cloudflare DNS > Import DNS records
+; See DNS-RECORD-TYPES.md for record type documentation
 
+; --- IP Address Resolution (A records) ---
 ; Apex domain (lexdo.uk) - GitHub Pages IPs
+; These A records point the root domain to GitHub Pages servers
 lexdo.uk.	3600	IN	A	185.199.108.153
 lexdo.uk.	3600	IN	A	185.199.109.153
 lexdo.uk.	3600	IN	A	185.199.110.153
 lexdo.uk.	3600	IN	A	185.199.111.153
 
-; www subdomain - points to GitHub Pages
+; --- Alias (CNAME record) ---
+; www subdomain - points to GitHub Pages via CNAME
 www	3600	IN	CNAME	lexbank.github.io.
