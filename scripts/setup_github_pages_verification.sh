@@ -125,10 +125,10 @@ get_existing_record_id() {
   local response
   response=$(cf_api "GET" "/zones/${ZONE_ID}/dns_records?type=${RECORD_TYPE}&name=${RECORD_NAME}")
 
-  python3 - <<'PY' "$RECORD_CONTENT" <<<"$response"
+  python3 - <<'PY' "$RECORD_CONTENT" "$response"
 import json,sys
 expected = sys.argv[1]
-data = json.load(sys.stdin)
+data = json.loads(sys.argv[2])
 for record in data.get("result", []):
     if record.get("content") == expected:
         print(record.get("id", ""))
