@@ -1,0 +1,58 @@
+name: Run BSM Agents
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run-agents:
+    runs-on: ubuntu-latest
+    env:
+      KM_ENDPOINT: ${{ secrets.KM_ENDPOINT }}
+      KM_TOKEN: ${{ secrets.KM_TOKEN }}
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq jq
+          npm install -g snyk || true
+
+      - name: Make scripts executable
+        run: chmod +x scripts/run_agents.sh
+
+      - name: Run agents pipeline
+        run: ./scripts/run_agents.sh reports false
+
+      - name: Upload JSON report
+        uses: actions/upload-artifact@v4
+        with:
+          name: agents-report-json
+          path: reports/*.json
+          retention-days: 90
+
+      - name: Upload Markdown report
+        uses: actions/upload-artifact@v4
+        with:
+          name: agents-report-md
+          path: reports/*.md
+          retention-days: 90
+
+      - name: Upload logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agents-run-log
+          path: reports/*.log
+          retention-days: 30
