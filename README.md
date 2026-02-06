@@ -15,11 +15,15 @@ BSM/
 │   ├── lexdo-uk-zone.txt   # Cloudflare DNS zone file
 │   ├── DNS-RECORD-TYPES.md # DNS record types reference
 │   └── GITHUB-PAGES-VERIFICATION.md # GitHub Pages verification guide
-├── docs/                   # GitHub Pages frontend (lexdo.uk)
+├── docs/                   # Documentation and GitHub Pages frontend
 │   ├── index.html          # Standalone chat interface
 │   ├── app.js              # Vue 3 chat application
 │   ├── styles.css          # Custom styles
-│   └── CNAME               # Domain configuration
+│   ├── CNAME               # Domain configuration
+│   ├── ARCHITECTURE.md     # System architecture documentation
+│   ├── CICD-RECOMMENDATIONS.md # CI/CD enhancement guide
+│   ├── SECURITY-DEPLOYMENT.md  # Security and deployment guide
+│   └── AGENT-ORCHESTRATION.md  # Agent patterns and workflows
 ├── scripts/                # Build and validation scripts
 │   ├── validate.js         # Data structure validation
 │   └── setup_github_pages_verification.sh # GitHub Pages DNS setup
@@ -221,6 +225,22 @@ The project includes GitHub Actions workflows:
 - **Infrastructure**: Scalable cloud-based architecture (Render.com ready)
 - **Security**: Enterprise-grade security and compliance measures
 - **Logging**: Pino logger with pretty printing in development
+
+## Documentation
+
+### Architecture and Design
+- [System Architecture](docs/ARCHITECTURE.md) - Comprehensive architectural overview
+- [Agent Orchestration Patterns](docs/AGENT-ORCHESTRATION.md) - Multi-agent design patterns and workflows
+- [CI/CD Recommendations](docs/CICD-RECOMMENDATIONS.md) - Pipeline enhancements and automation strategies
+- [Security & Deployment Guide](docs/SECURITY-DEPLOYMENT.md) - Security best practices and deployment procedures
+
+### API Documentation
+- API endpoints documented above
+- OpenAPI/Swagger specification (coming soon)
+
+### DNS and Infrastructure
+- [DNS Record Types](dns/DNS-RECORD-TYPES.md) - Cloudflare DNS configuration
+- [GitHub Pages Verification](dns/GITHUB-PAGES-VERIFICATION.md) - Custom domain setup
 
 ## Contributing
 
