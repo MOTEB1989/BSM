@@ -11,8 +11,8 @@ router.get("/agents", async (req, res, next) => {
   try {
     const agents = await loadAgents();
     res.json({ agents });
-  } catch (e) {
-    next(e);
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -20,8 +20,8 @@ router.get("/knowledge", async (req, res, next) => {
   try {
     const docs = await loadKnowledgeIndex();
     res.json({ documents: docs });
-  } catch (e) {
-    next(e);
+  } catch (err) {
+    next(err);
   }
 });
 

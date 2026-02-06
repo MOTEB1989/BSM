@@ -5,6 +5,7 @@ import { runGPT } from "../services/gptService.js";
 import { AppError } from "../utils/errors.js";
 import { createFile } from "../actions/githubActions.js";
 import { extractIntent, intentToAction } from "../utils/intent.js";
+import logger from "../utils/logger.js";
 
 export const runAgent = async ({ agentId, input }) => {
   try {
@@ -54,6 +55,7 @@ export const runAgent = async ({ agentId, input }) => {
 
     return { output };
   } catch (err) {
+    logger.error({ err, agentId }, "Agent execution failed");
     return { output: "حدث خطأ أثناء تشغيل الوكيل." };
   }
 };

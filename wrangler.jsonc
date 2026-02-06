@@ -1,0 +1,8 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bsm",
+  "compatibility_date": "2026-02-06",
+  "assets": {
+    "directory": "./docs"
+  }
+}
