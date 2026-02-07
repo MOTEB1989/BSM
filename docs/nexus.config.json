@@ -1,0 +1,19 @@
+{
+  "project_name": "BSM Nexus Integrated",
+  "version": "2.6.0-BSM",
+  "domain": "www.lexdo.uk",
+  "infrastructure": {
+    "cloud": "Cloudflare",
+    "repository": "GitHub",
+    "zone_id": "47f901b97bf4724266f6a0e7c1006a1d",
+    "pages_branch": "main",
+    "pages_folder": "docs"
+  },
+  "agents": {
+    "sync_manager": {
+      "mode": "autonomous",
+      "sync_interval": "real-time",
+      "bidirectional": true
+    }
+  }
+}

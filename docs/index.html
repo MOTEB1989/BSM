@@ -3,239 +3,158 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LexBANK - المساعد الذكي | Smart Assistant</title>
-  <meta name="description" content="واجهة المساعد الذكي من منصة LexBANK - دردشة GPT مهنية" />
-  <meta property="og:title" content="LexBANK - المساعد الذكي" />
-  <meta property="og:description" content="منصة LexBANK للمساعدة الذكية في الشؤون القانونية والإدارية" />
+  <title>BSM Nexus Control</title>
+  <meta name="description" content="واجهة BSM Nexus لإدارة الوكلاء والمزامنة." />
+  <meta property="og:title" content="BSM Nexus Control" />
+  <meta property="og:description" content="نظام إدارة الوكلاء الذكي المتكامل مع Cloudflare وGitHub." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://www.lexdo.uk" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>" />
-  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            lex: {
-              50: '#f0f4ff',
-              100: '#dbe4ff',
-              200: '#bac8ff',
-              300: '#91a7ff',
-              400: '#748ffc',
-              500: '#5c7cfa',
-              600: '#4c6ef5',
-              700: '#4263eb',
-              800: '#3b5bdb',
-              900: '#364fc7',
-              950: '#1e3a8a'
-            }
-          },
-          fontFamily: {
-            arabic: ['Segoe UI', 'Tahoma', 'Arial', 'sans-serif']
-          }
-        }
-      }
-    }
-  </script>
-  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { background: radial-gradient(circle at top, #0b1220, #020617 50%, #010409); }
+    .glass-card { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(148, 163, 184, 0.15); }
+    .font-nexus { font-family: "Segoe UI", Tahoma, sans-serif; }
+    .font-code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .scroll-custom::-webkit-scrollbar { width: 6px; }
+    .scroll-custom::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.35); border-radius: 6px; }
+  </style>
 </head>
-<body class="dark bg-gray-950 text-white font-arabic min-h-screen flex flex-col" dir="rtl">
+<body class="text-white min-h-screen overflow-hidden">
+  <header class="h-14 px-4 border-b border-white/10 flex items-center justify-between bg-black/20">
+    <h1 class="font-nexus text-sm tracking-wider text-blue-300">BSM NEXUS</h1>
+    <div id="clock" class="text-xs text-gray-300 font-code" aria-live="polite"></div>
+  </header>
 
-  <div id="app" class="flex flex-col min-h-screen">
-
-    <!-- API Config Banner (shown when no API URL configured) -->
-    <div v-if="showConfig" class="bg-amber-900/30 border-b border-amber-800/50 py-2 px-4">
-      <div class="max-w-4xl mx-auto flex items-center gap-3 flex-wrap">
-        <span class="text-amber-300 text-sm">{{ lang === 'ar' ? 'رابط الـ API:' : 'API URL:' }}</span>
-        <input
-          v-model="apiUrl"
-          type="url"
-          :placeholder="lang === 'ar' ? 'https://your-api.onrender.com' : 'https://your-api.onrender.com'"
-          class="flex-1 min-w-[200px] bg-gray-800 border border-gray-700 rounded-lg px-3 py-1 text-sm text-white placeholder-gray-500 outline-none focus:border-lex-500"
-          dir="ltr"
-        />
-        <button @click="saveApiUrl" class="px-3 py-1 bg-lex-600 hover:bg-lex-700 rounded-lg text-sm transition-colors">
-          {{ lang === 'ar' ? 'حفظ' : 'Save' }}
-        </button>
-        <button @click="showConfig = false" class="text-gray-500 hover:text-gray-300 text-lg">&times;</button>
-      </div>
-    </div>
-
-    <!-- Header -->
-    <header class="bg-gray-900/80 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50">
-      <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-lex-600 rounded-xl flex items-center justify-center text-lg font-bold shadow-lg shadow-lex-600/20">
-            L
-          </div>
-          <div>
-            <h1 class="text-lg font-bold text-white">LexBANK</h1>
-            <p class="text-xs text-gray-400">{{ lang === 'ar' ? 'المساعد الذكي' : 'Smart Assistant' }}</p>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <!-- Settings -->
-          <button @click="showConfig = !showConfig" class="p-1.5 text-gray-400 hover:text-white rounded-lg transition-colors" :title="lang === 'ar' ? 'إعدادات' : 'Settings'">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          </button>
-
-          <!-- Language Toggle -->
-          <button @click="toggleLang" class="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors border border-gray-700">
-            {{ lang === 'ar' ? 'EN' : 'عربي' }}
-          </button>
-
-          <!-- Mode Toggle -->
-          <div class="relative">
-            <button @click="showModeMenu = !showModeMenu" class="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors border border-gray-700 flex items-center gap-1">
-              <span>{{ currentModeLabel }}</span>
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div v-if="showModeMenu" class="absolute left-0 mt-1 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden">
-              <button @click="setMode('direct')" class="w-full text-right px-4 py-2 text-sm hover:bg-gray-700 transition-colors" :class="{ 'bg-lex-600/20 text-lex-400': mode === 'direct' }">
-                {{ lang === 'ar' ? 'دردشة مباشرة' : 'Direct Chat' }}
-              </button>
-              <button @click="setMode('legal-agent')" class="w-full text-right px-4 py-2 text-sm hover:bg-gray-700 transition-colors" :class="{ 'bg-lex-600/20 text-lex-400': mode === 'legal-agent' }">
-                {{ lang === 'ar' ? 'الوكيل القانوني' : 'Legal Agent' }}
-              </button>
-              <button @click="setMode('governance-agent')" class="w-full text-right px-4 py-2 text-sm hover:bg-gray-700 transition-colors" :class="{ 'bg-lex-600/20 text-lex-400': mode === 'governance-agent' }">
-                {{ lang === 'ar' ? 'وكيل الحوكمة' : 'Governance Agent' }}
-              </button>
-            </div>
-          </div>
-
-          <!-- New Chat -->
-          <button @click="clearChat" class="px-3 py-1.5 text-xs bg-lex-600 hover:bg-lex-700 rounded-lg transition-colors shadow-sm">
-            {{ lang === 'ar' ? 'محادثة جديدة' : 'New Chat' }}
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <!-- Chat Area -->
-    <main class="flex-1 overflow-hidden flex flex-col max-w-4xl w-full mx-auto">
-
-      <!-- Messages -->
-      <div ref="messagesContainer" class="flex-1 overflow-y-auto px-4 py-6 space-y-4 scroll-smooth">
-
-        <!-- Welcome Screen -->
-        <div v-if="messages.length === 0" class="flex flex-col items-center justify-center h-full text-center py-16">
-          <div class="w-20 h-20 bg-lex-600/20 rounded-2xl flex items-center justify-center mb-6">
-            <svg class="w-10 h-10 text-lex-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-            </svg>
-          </div>
-          <h2 class="text-2xl font-bold mb-2">{{ lang === 'ar' ? 'مرحبًا بك في LexBANK' : 'Welcome to LexBANK' }}</h2>
-          <p class="text-gray-400 mb-8 max-w-md">{{ lang === 'ar' ? 'المساعد الذكي جاهز لمساعدتك في الأسئلة القانونية والتقنية والإدارية' : 'Smart assistant ready to help with legal, technical, and administrative questions' }}</p>
-
-          <!-- Quick Actions -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
-            <button v-for="q in quickActions" :key="q.text" @click="sendQuickAction(q.text)" class="text-right p-4 bg-gray-900/50 hover:bg-gray-800/80 border border-gray-800 hover:border-lex-600/50 rounded-xl transition-all group">
-              <span class="text-lg mb-1 block">{{ q.icon }}</span>
-              <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ q.text }}</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Message Bubbles -->
-        <div v-for="(msg, i) in messages" :key="i" class="flex" :class="msg.role === 'user' ? 'justify-start' : 'justify-end'">
-          <div class="max-w-[85%] sm:max-w-[75%]">
-            <!-- Avatar + Name -->
-            <div class="flex items-center gap-2 mb-1" :class="msg.role === 'user' ? '' : 'flex-row-reverse'">
-              <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs"
-                :class="msg.role === 'user' ? 'bg-lex-600' : 'bg-emerald-600'">
-                {{ msg.role === 'user' ? (lang === 'ar' ? 'أ' : 'U') : 'L' }}
+  <main class="flex-1 p-4 grid lg:grid-cols-12 gap-4 overflow-hidden h-[calc(100vh-3.5rem)]">
+      <aside class="lg:col-span-3 space-y-4 flex flex-col">
+          <div class="glass-card flex-1 rounded-3xl p-5 overflow-y-auto">
+              <div class="flex justify-between items-center mb-6">
+                  <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">نظام الوكلاء</h3>
+                  <span class="text-[9px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">BSM Core</span>
               </div>
-              <span class="text-xs text-gray-500">{{ msg.role === 'user' ? (lang === 'ar' ? 'أنت' : 'You') : 'LexBANK' }}</span>
-              <span class="text-xs text-gray-600">{{ formatTime(msg.time) }}</span>
-            </div>
-            <!-- Bubble -->
-            <div class="rounded-2xl px-4 py-3 leading-relaxed"
-              :class="msg.role === 'user'
-                ? 'bg-lex-600/20 border border-lex-600/30 text-gray-100'
-                : 'bg-gray-800/80 border border-gray-700/50 text-gray-200'">
-              <div v-if="msg.role === 'assistant'" class="prose prose-invert prose-sm max-w-none" v-html="renderMarkdown(msg.content)"></div>
-              <div v-else class="whitespace-pre-wrap">{{ msg.content }}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Typing Indicator -->
-        <div v-if="loading" class="flex justify-end">
-          <div class="max-w-[75%]">
-            <div class="flex items-center gap-2 mb-1 flex-row-reverse">
-              <div class="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center text-xs">L</div>
-              <span class="text-xs text-gray-500">LexBANK</span>
-            </div>
-            <div class="bg-gray-800/80 border border-gray-700/50 rounded-2xl px-4 py-3">
-              <div class="typing-dots flex gap-1 items-center">
-                <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
-                <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
-                <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
+              <div class="space-y-3 text-sm">
+                  <div class="p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
+                      <div class="flex items-center gap-2 mb-2">
+                          <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                          <span class="font-bold text-emerald-400">Autonomous Agent</span>
+                      </div>
+                      <p class="text-[10px] text-gray-400">مزامنة تلقائية مع Cloudflare</p>
+                  </div>
+                  <div class="p-3 rounded-lg bg-white/5">
+                      <div class="flex items-center gap-2 mb-2">
+                          <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                          <span class="font-bold text-blue-400">Chat Interface</span>
+                      </div>
+                      <p class="text-[10px] text-gray-400">GPT-4 Integration</p>
+                  </div>
               </div>
-            </div>
           </div>
-        </div>
-
-        <!-- Error Message -->
-        <div v-if="error" class="flex justify-center">
-          <div class="bg-red-900/30 border border-red-800/50 rounded-xl px-4 py-3 text-red-300 text-sm flex items-center gap-2">
-            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span>{{ error }}</span>
-            <button @click="error = ''" class="text-red-400 hover:text-red-200 mr-2">&times;</button>
+          <div class="glass-card p-5 rounded-3xl">
+              <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">نشاط النظام</h3>
+              <div class="flex items-center gap-4">
+                  <div class="flex-1">
+                      <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                          <div id="ai-progress" class="w-[85%] h-full bg-emerald-500 transition-all duration-1000"></div>
+                      </div>
+                  </div>
+                  <span class="text-[10px] text-emerald-400 font-nexus uppercase">Active</span>
+              </div>
           </div>
-        </div>
-      </div>
+      </aside>
 
-      <!-- Input Area -->
-      <div class="border-t border-gray-800 bg-gray-900/50 backdrop-blur-md p-4">
-        <div class="max-w-4xl mx-auto">
-          <div class="flex gap-3 items-end">
-            <div class="flex-1 relative">
-              <textarea
-                ref="inputField"
-                v-model="input"
-                @keydown.enter.exact="handleEnter"
-                :placeholder="lang === 'ar' ? 'اكتب رسالتك هنا...' : 'Type your message...'"
-                :disabled="loading"
-                rows="1"
-                class="w-full bg-gray-800 border border-gray-700 focus:border-lex-500 focus:ring-1 focus:ring-lex-500/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 resize-none transition-all outline-none text-sm leading-relaxed max-h-32 overflow-y-auto"
-                :dir="lang === 'ar' ? 'rtl' : 'ltr'"
-              ></textarea>
-            </div>
-            <button
-              @click="sendMessage"
-              :disabled="loading || !input.trim()"
-              class="h-11 w-11 flex-shrink-0 bg-lex-600 hover:bg-lex-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-xl flex items-center justify-center transition-all shadow-lg shadow-lex-600/20 disabled:shadow-none"
-            >
-              <svg v-if="!loading" class="w-5 h-5 text-white rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-              </svg>
-              <svg v-else class="w-5 h-5 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-              </svg>
-            </button>
+      <section class="lg:col-span-6 flex flex-col gap-4 h-full">
+          <div class="glass-card p-6 rounded-[2rem] flex flex-col justify-center relative overflow-hidden h-32">
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-emerald-500/10 opacity-30"></div>
+              <h2 class="text-2xl font-black mb-1 font-nexus tracking-tighter text-white">BSM NEXUS CONTROL</h2>
+              <p class="text-gray-400 text-xs">نظام إدارة الوكلاء الذكي | <span class="text-blue-400">Integrated with CoreHub OS</span></p>
           </div>
-          <p class="text-xs text-gray-600 mt-2 text-center">
-            {{ lang === 'ar' ? 'LexBANK مدعوم بتقنية GPT | جميع المحادثات سرية' : 'LexBANK powered by GPT | All conversations are confidential' }}
-          </p>
-        </div>
-      </div>
-    </main>
 
-    <!-- Footer -->
-    <footer class="border-t border-gray-800/50 py-3 text-center">
-      <p class="text-xs text-gray-600">
-        <a href="https://www.lexdo.uk" class="hover:text-gray-400 transition-colors">lexdo.uk</a>
-        {{ lang === 'ar' ? ' | منصة LexBANK' : ' | LexBANK Platform' }}
-      </p>
-    </footer>
-  </div>
+          <div class="glass-card flex-1 rounded-[2rem] overflow-hidden flex flex-col">
+              <div class="bg-black/50 p-4 border-b border-white/5 flex justify-between items-center">
+                  <div class="flex items-center gap-2">
+                      <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                      <h3 class="text-[10px] font-nexus tracking-widest text-gray-500 uppercase">Neural Chat Stream</h3>
+                  </div>
+                  <select id="agent-select" class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[10px] text-gray-300 outline-none">
+                      <option value="default">Default Agent</option>
+                      <option value="legal">Legal Expert</option>
+                      <option value="research">Research Assistant</option>
+                  </select>
+              </div>
+              <div id="chat-container" class="flex-1 p-6 overflow-y-auto space-y-4 bg-[#010409]/40 font-code text-sm scroll-custom">
+                  <div class="chat-message text-blue-300/80">
+                      <span class="text-emerald-500 font-bold">[BSM-AI]:</span> مرحباً! نظام BSM Nexus جاهز. كيف يمكنني مساعدتك اليوم؟
+                  </div>
+              </div>
+              <div class="p-4 border-t border-white/5 bg-black/20">
+                  <div class="flex gap-2">
+                      <input type="text" id="chat-input" placeholder="اكتب رسالتك هنا..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-blue-500/50 transition text-right">
+                      <button onclick="sendMessage()" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-blue-900/40">إرسال</button>
+                  </div>
+              </div>
+          </div>
+      </section>
 
-  <script src="app.js"></script>
+      <aside class="lg:col-span-3 space-y-4 flex flex-col">
+          <div class="glass-card p-6 rounded-3xl flex-1 border-white/5 flex flex-col gap-4">
+              <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">أدوات التحكم</h3>
+              <button onclick="activateSync()" class="w-full py-3 bg-emerald-600/20 border border-emerald-500/30 rounded-xl text-[10px] text-emerald-400 hover:bg-emerald-600/30 transition text-right px-4">
+                  <div class="flex items-center gap-2">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                      <span>مزامنة Cloudflare</span>
+                  </div>
+              </button>
+              <div class="mt-auto p-4 bg-blue-600/10 rounded-2xl border border-blue-500/20">
+                  <p class="text-[9px] text-blue-400 italic text-center">BSM Nexus يعمل بالتكامل مع GitHub Actions وCloudflare.</p>
+              </div>
+          </div>
+          <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-6 shadow-xl shadow-blue-900/20">
+              <div class="flex justify-between items-center mb-2">
+                  <span class="text-[9px] text-white/60 font-nexus uppercase">API Status</span>
+                  <span class="text-[9px] bg-white/20 px-2 py-0.5 rounded text-white">ONLINE</span>
+              </div>
+              <h4 class="text-xl font-bold text-white font-nexus italic">CONNECTED</h4>
+          </div>
+      </aside>
+  </main>
+
+  <script>
+      function updateClock() {
+        const clock = document.getElementById('clock');
+        if (clock) clock.innerText = new Date().toLocaleTimeString('en-GB');
+      }
+      setInterval(updateClock, 1000); updateClock();
+
+      function appendMessage(text, className) {
+        const container = document.getElementById('chat-container');
+        const message = document.createElement('div');
+        message.className = `chat-message ${className}`;
+        message.textContent = text;
+        container.appendChild(message);
+        container.scrollTop = container.scrollHeight;
+      }
+
+      async function sendMessage() {
+          const input = document.getElementById('chat-input');
+          const msg = input.value.trim();
+          if (!msg) return;
+
+          appendMessage(`[أنت]: ${msg}`, 'text-right text-blue-400 font-bold');
+          input.value = '';
+
+          setTimeout(() => {
+              appendMessage('[BSM-AI]: جاري المعالجة...', 'text-emerald-400');
+          }, 500);
+      }
+
+      document.getElementById('chat-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+      });
+
+      function activateSync() {
+          document.getElementById('ai-progress').style.width = '100%';
+          appendMessage(`[${new Date().toLocaleTimeString('en-GB')}] > تمت المزامنة مع Cloudflare`, 'text-[10px] text-emerald-400');
+      }
+  </script>
 </body>
 </html>
