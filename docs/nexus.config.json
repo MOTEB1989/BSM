@@ -1,7 +1,7 @@
 {
   "project_name": "BSU Nexus Integrated",
   "version": "2.6.0-BSU",
-  "domain": "www.lexdo.uk",
+  "domain": "corehub.nexus",
   "infrastructure": {
     "cloud": "Cloudflare",
     "repository": "GitHub",
