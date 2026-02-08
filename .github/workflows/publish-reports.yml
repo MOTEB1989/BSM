@@ -2,7 +2,7 @@ name: Publish Reports
 
 on:
   workflow_run:
-    workflows: ["Run BSM Agents", "Weekly Agents Audit"]
+    workflows: ["Run BSU Agents", "Weekly Agents Audit"]
     types: [completed]
 
 permissions:

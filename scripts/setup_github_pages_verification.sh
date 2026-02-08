@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Cloudflare zone and GitHub Pages challenge details for LexBANK/BSM.
+# Cloudflare zone and GitHub Pages challenge details for LexBANK/BSU.
 # Note: Zone ID is not highly sensitive and is also present in dns/lexdo-uk-zone.txt
 # For additional security, you can set this via CLOUDFLARE_ZONE_ID environment variable
 ZONE_ID="${CLOUDFLARE_ZONE_ID:-1c32bc5010d8b0c4a501e8458fd2cc14}"
@@ -15,7 +15,7 @@ MAX_PROPAGATION_ATTEMPTS=20
 PROPAGATION_SLEEP_SECONDS=15
 
 API_BASE="https://api.cloudflare.com/client/v4"
-VERIFY_URL="https://github.com/LexBANK/BSM/settings/pages"
+VERIFY_URL="https://github.com/LexBANK/BSU/settings/pages"
 
 usage() {
   cat <<'USAGE'
@@ -184,7 +184,7 @@ main() {
   require_cmd dig
   require_cmd python3
 
-  echo "GitHub Pages Verification Setup for LexBANK/BSM"
+  echo "GitHub Pages Verification Setup for LexBANK/BSU"
   echo "==============================================="
   echo "Domain: lexdo.uk"
   echo "Record Name: ${RECORD_NAME}"

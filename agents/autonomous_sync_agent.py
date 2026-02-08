@@ -5,7 +5,7 @@ from datetime import datetime
 import requests
 
 
-class BSMNexusAgent:
+class BSUNexusAgent:
     def __init__(self):
         with open("docs/nexus.config.json", "r", encoding="utf-8") as config_file:
             self.config = json.load(config_file)
@@ -15,7 +15,7 @@ class BSMNexusAgent:
         self.cf_zone = os.getenv("CLOUDFLARE_ZONE_ID") or self.config["infrastructure"]["zone_id"]
 
     def log(self, action, status="INFO"):
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] [BSM-NEXUS] {action} | {status}")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] [BSU-NEXUS] {action} | {status}")
 
     def verify_dns(self):
         self.log("Verifying DNS...", "CHECK")
@@ -48,10 +48,10 @@ class BSMNexusAgent:
         return True
 
     def run(self):
-        self.log("Starting BSM Nexus Cycle", "START")
+        self.log("Starting BSU Nexus Cycle", "START")
         self.verify_dns()
         self.log("Cycle Complete", "DONE")
 
 
 if __name__ == "__main__":
-    BSMNexusAgent().run()
+    BSUNexusAgent().run()

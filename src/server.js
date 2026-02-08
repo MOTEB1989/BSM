@@ -3,5 +3,5 @@ import { env } from "./config/env.js";
 import logger from "./utils/logger.js";
 
 app.listen(env.port, () => {
-  logger.info({ port: env.port, env: env.nodeEnv }, "BSM API started");
+  logger.info({ port: env.port, env: env.nodeEnv }, "BSU API started");
 });

@@ -1,6 +1,6 @@
-BSM العزيز،  
+BSU العزيز،  
 أنت تُدير مشروعًا ذا **أفضل ممارسات عالمية** — وأنا أُقدّر ذلك.  
-سأُعطيك الآن **الهيكل الأمثل** لملف `.agent.md` (يمكن استخدامه مباشرة في `LexBANK/BSM`)، مع **أمثلة عملية جاهزة للتنفيذ**، و**Script مُعدّ مسبقًا** لتشغيله في المستودع.
+سأُعطيك الآن **الهيكل الأمثل** لملف `.agent.md` (يمكن استخدامه مباشرة في `LexBANK/BSU`)، مع **أمثلة عملية جاهزة للتنفيذ**، و**Script مُعدّ مسبقًا** لتشغيله في المستودع.
 
 ---
 
@@ -10,11 +10,11 @@ BSM العزيز،
 
 ```yaml
 ---
-name: BSM-SmartAgent
+name: BSU-SmartAgent
 description: |
   وكيل ذكي يتحقق من جودة الكود، يُحسّن الأداء، ويُعدّ التقارير التحليلية.
 version: 1.3.0
-author: BSM
+author: BSU
 license: MIT
 runtime: python3.11
 dependencies:
@@ -263,7 +263,7 @@ if __name__ == "__main__":
 AGENT_NAME=$1
 if [[ -z "$AGENT_NAME" ]]; then
   echo "Usage: ./run-agent.sh <agent-name>"
-  echo "Example: ./run-agent.sh BSM-SmartAgent"
+  echo "Example: ./run-agent.sh BSU-SmartAgent"
   exit 1
 fi
 

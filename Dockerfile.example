@@ -1,5 +1,5 @@
 # ============================================
-# BSM Platform - Multi-Stage Dockerfile
+# BSU Platform - Multi-Stage Dockerfile
 # Optimized for production deployment
 # ============================================
 
@@ -8,7 +8,7 @@ FROM node:22-alpine AS base
 
 # Add metadata
 LABEL maintainer="LexBANK <support@lexdo.uk>"
-LABEL description="BSM Platform - Business Services Management API"
+LABEL description="BSU Platform - Business Services Management API"
 LABEL version="1.0.0"
 
 # Set working directory

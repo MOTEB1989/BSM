@@ -1,13 +1,13 @@
-# LexBANK / BSM Platform
+# LexBANK / BSU Platform
 
 ## Overview
 
-The **LexBANK and BSM Platform** represent the next generation of intelligent infrastructure for knowledge management and legal services, powered by advanced AI technologies. Our platform combines cutting-edge artificial intelligence with robust legal and business service management capabilities to deliver unparalleled efficiency and accuracy.
+The **LexBANK and BSU Platform** represent the next generation of intelligent infrastructure for knowledge management and legal services, powered by advanced AI technologies. Our platform combines cutting-edge artificial intelligence with robust legal and business service management capabilities to deliver unparalleled efficiency and accuracy.
 
 ## Project Structure
 
 ```
-BSM/
+BSU/
 ├── data/                    # Data storage
 │   ├── agents/             # Agent configurations (YAML)
 │   └── knowledge/          # Knowledge documents
@@ -91,10 +91,10 @@ See [DNS Documentation](dns/GITHUB-PAGES-VERIFICATION.md) for detailed instructi
 
 ```bash
 # Clone the repository
-git clone https://github.com/LexBANK/BSM.git
+git clone https://github.com/LexBANK/BSU.git
 
 # Navigate to the project directory
-cd BSM
+cd BSU
 
 # Install dependencies
 npm install
@@ -115,7 +115,7 @@ PORT=3000
 LOG_LEVEL=info
 
 # OpenAI / model providers
-OPENAI_BSM_KEY=your_key_here
+OPENAI_BSU_KEY=your_key_here
 OPENAI_BRINDER_KEY=your_key_here
 OPENAI_LEXNEXUS_KEY=your_key_here
 OPENAI_MODEL=gpt-4o-mini

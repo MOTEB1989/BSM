@@ -1,12 +1,12 @@
 import fetch from "node-fetch";
 import { AppError } from "../utils/errors.js";
 
-const repo = "LexBANK/BSM";
+const repo = "LexBANK/BSU";
 
 const getToken = () => {
-  const token = process.env.GITHUB_BSM_TOKEN;
+  const token = process.env.GITHUB_BSU_TOKEN;
   if (!token) {
-    throw new AppError("Missing GITHUB_BSM_TOKEN", 500, "MISSING_GITHUB_TOKEN");
+    throw new AppError("Missing GITHUB_BSU_TOKEN", 500, "MISSING_GITHUB_TOKEN");
   }
   return token;
 };

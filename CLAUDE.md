@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-BSM (Business Service Management) is a Node.js/Express.js multi-agent AI platform for legal services and knowledge management. It integrates with OpenAI GPT-4o-mini, serves a Vue 3 chat frontend, and provides agent orchestration via YAML-configured agents.
+BSU (Business Service Management) is a Node.js/Express.js multi-agent AI platform for legal services and knowledge management. It integrates with OpenAI GPT-4o-mini, serves a Vue 3 chat frontend, and provides agent orchestration via YAML-configured agents.
 
 - **Language:** JavaScript (ES Modules)
 - **Runtime:** Node.js 22+
@@ -62,7 +62,7 @@ docs/                # Documentation and GitHub Pages frontend (lexdo.uk)
 
 See `.env.example` for the full list. Key variables:
 - `PORT` - Server port (default: 3000)
-- `OPENAI_BSM_KEY` - OpenAI API key
+- `OPENAI_BSU_KEY` - OpenAI API key
 - `ADMIN_TOKEN` - Admin authentication token (16+ chars in production)
 - `CORS_ORIGINS` - Allowed CORS origins
 - `NODE_ENV` - Environment (development/production)

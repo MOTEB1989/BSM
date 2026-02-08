@@ -1,10 +1,10 @@
 ---
-name: BSM Runner
+name: BSU Runner
 description: >
   Agent مسؤول عن تنفيذ اختبارات البناء، محاكاة النشر، وتحليل الـ logs.
 ---
 
-# BSM Runner
+# BSU Runner
 
 Purpose: تشغيل أوامر البناء والاختبار في بيئة معزولة، جمع الأخطاء، وإرجاع ملخص.
 Capabilities:

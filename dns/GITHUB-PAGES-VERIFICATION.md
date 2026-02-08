@@ -1,6 +1,6 @@
 # GitHub Pages Verification Setup
 
-This document describes how to verify the `lexdo.uk` custom domain with GitHub Pages for the LexBANK/BSM repository.
+This document describes how to verify the `lexdo.uk` custom domain with GitHub Pages for the LexBANK/BSU repository.
 
 ## Overview
 
@@ -22,7 +22,7 @@ We provide a script to automate the GitHub Pages verification process with Cloud
 
 ### Getting the Challenge Value
 
-1. Navigate to [GitHub Pages Settings](https://github.com/LexBANK/BSM/settings/pages)
+1. Navigate to [GitHub Pages Settings](https://github.com/LexBANK/BSU/settings/pages)
 2. Add your custom domain (`www.lexdo.uk` - note: the CNAME file in docs/ already contains this)
 3. GitHub will generate a TXT record challenge value for `_github-pages-challenge-LexBANK.lexdo.uk`
 4. Copy the challenge value (it will be a hex string like `abc123def456...`)
@@ -64,7 +64,7 @@ If you prefer to set up the DNS record manually:
 ## Verification Status
 
 After DNS propagation, GitHub Pages will automatically verify the domain. You can check the status at:
-https://github.com/LexBANK/BSM/settings/pages
+https://github.com/LexBANK/BSU/settings/pages
 
 ## Troubleshooting
 

@@ -1,10 +1,10 @@
 ---
-name: BSM Orchestrator
+name: BSU Orchestrator
 description: >
   Orchestrator ينسق تنفيذ Agents الأخرى، يدير تسلسل المهام، ويجمع نتائج التحليل.
 ---
 
-# BSM Orchestrator
+# BSU Orchestrator
 
 Purpose: تنفيذ تسلسل مهام مؤتمت، تجميع مخرجات Agents، وإصدار تقارير ملخصة.
 Flow:

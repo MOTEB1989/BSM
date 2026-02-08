@@ -1,6 +1,6 @@
 {
-  "project_name": "BSM Nexus Integrated",
-  "version": "2.6.0-BSM",
+  "project_name": "BSU Nexus Integrated",
+  "version": "2.6.0-BSU",
   "domain": "www.lexdo.uk",
   "infrastructure": {
     "cloud": "Cloudflare",

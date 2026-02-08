@@ -1,5 +1,5 @@
-# تقرير فحص الأمان لمنصة BSM
-## Security Audit Report - BSM Platform
+# تقرير فحص الأمان لمنصة BSU
+## Security Audit Report - BSU Platform
 
 **تاريخ الفحص:** 2025-02-06  
 **نوع الفحص:** فحص شامل للتهيئات، CI/CD، وإدارة المفاتيح  
@@ -9,7 +9,7 @@
 
 ## 📋 ملخص تنفيذي | Executive Summary
 
-تم إجراء فحص شامل لأمان منصة BSM يغطي:
+تم إجراء فحص شامل لأمان منصة BSU يغطي:
 - ✅ ملفات CI/CD والـ workflows
 - ✅ ملفات التهيئة والمتغيرات البيئية
 - ✅ الكود المصدري وطرق التعامل مع المفاتيح
@@ -71,7 +71,7 @@ env:
 
 #### ✅ .env.example (آمن):
 ```bash
-OPENAI_BSM_KEY=
+OPENAI_BSU_KEY=
 OPENAI_BRINDER_KEY=
 OPENAI_LEXNEXUS_KEY=
 ADMIN_TOKEN=change-me
@@ -114,10 +114,10 @@ POSTGRES_PASSWORD=CHANGE_ME_STRONG_PASSWORD
 ```javascript
 export const models = {
   openai: {
-    bsm: process.env.OPENAI_BSM_KEY,
+    bsm: process.env.OPENAI_BSU_KEY,
     brinder: process.env.OPENAI_BRINDER_KEY,
     lexnexus: process.env.OPENAI_LEXNEXUS_KEY,
-    default: process.env.OPENAI_BSM_KEY
+    default: process.env.OPENAI_BSU_KEY
   }
 };
 ```
@@ -263,10 +263,10 @@ import { secretsManager } from './secrets.js';
 export const getModels = async () => {
   return {
     openai: {
-      bsm: await secretsManager.getSecret('BSM_OPENAI_KEY'),
+      bsm: await secretsManager.getSecret('BSU_OPENAI_KEY'),
       brinder: await secretsManager.getSecret('BRINDER_OPENAI_KEY'),
       lexnexus: await secretsManager.getSecret('LEXNEXUS_OPENAI_KEY'),
-      default: await secretsManager.getSecret('BSM_OPENAI_KEY')
+      default: await secretsManager.getSecret('BSU_OPENAI_KEY')
     }
   };
 };
@@ -327,7 +327,7 @@ Settings → Security → Code security and analysis
 **إنشاء .gitleaks.toml:**
 ```toml
 # .gitleaks.toml
-title = "BSM Gitleaks Configuration"
+title = "BSU Gitleaks Configuration"
 
 [extend]
 useDefault = true
@@ -674,7 +674,7 @@ export const auditLogger = (req, res, next) => {
 
 mkdir -p certs
 openssl req -x509 -newkey rsa:4096 -keyout certs/key.pem -out certs/cert.pem -days 365 -nodes \
-  -subj "/C=UK/ST=England/L=London/O=BSM/CN=localhost"
+  -subj "/C=UK/ST=England/L=London/O=BSU/CN=localhost"
 
 echo "✅ SSL certificates generated in ./certs/"
 echo "⚠️ DO NOT commit these files to Git!"
@@ -800,7 +800,7 @@ certs/
 
 ---
 
-**تم إعداد التقرير بواسطة:** BSM Security Agent  
+**تم إعداد التقرير بواسطة:** BSU Security Agent  
 **النسخة:** 1.0  
 **آخر تحديث:** 2025-02-06
 

@@ -20,11 +20,11 @@ mkdir -p .github/agents .github/PULL_REQUEST_TEMPLATE .github/workflows scripts 
 # لتوفير المساحة، انسخ محتويات الملفات أعلاه إلى المسارات المقابلة يدوياً أو أطلب النسخة الكاملة المضمنة.
 
 git add .github/agents .github/PULL_REQUEST_TEMPLATE .github/workflows scripts
-git commit -m "Bootstrap BSM Agents automation and workflow" || true
+git commit -m "Bootstrap BSU Agents automation and workflow" || true
 git push --set-upstream "${REMOTE}" "${BRANCH}"
 
 if [ "${OPEN_PR}" = "true" ] && command -v gh >/dev/null 2>&1; then
-  gh pr create --title "BSM Agents Suggestions - ${TIMESTAMP}" --body "Bootstrap PR for BSM Agents" --label automation --draft
+  gh pr create --title "BSU Agents Suggestions - ${TIMESTAMP}" --body "Bootstrap PR for BSU Agents" --label automation --draft
   echo "Draft PR created"
 fi
 

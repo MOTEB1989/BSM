@@ -1,10 +1,10 @@
 ---
-name: BSM Security Agent
+name: BSU Security Agent
 description: >
   Agent يفحص التهيئات، ملفات CI، ويقترح تحسينات لإدارة المفاتيح والسرية.
 ---
 
-# BSM Security Agent
+# BSU Security Agent
 
 Purpose: فحص ملفات CI/CD، كشف تسريبات محتملة في الكود، اقتراح استخدام Key Management.
 Capabilities:

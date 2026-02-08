@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# BSM Security Check Script
+# BSU Security Check Script
 # Performs quick security validation checks
 # ==============================================================================
 
@@ -50,7 +50,7 @@ print_info() {
 # Security Checks
 # ==============================================================================
 
-print_header "🔐 BSM Security Validation"
+print_header "🔐 BSU Security Validation"
 
 # Check 1: .env file protection
 print_info "Checking .env file protection..."

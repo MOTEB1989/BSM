@@ -1,6 +1,6 @@
-# BSM Documentation Index
+# BSU Documentation Index
 
-Welcome to the BSM Platform documentation. This index provides quick access to all architectural and operational documentation.
+Welcome to the BSU Platform documentation. This index provides quick access to all architectural and operational documentation.
 
 ## 📚 Documentation Overview
 
@@ -233,8 +233,8 @@ To contribute to documentation:
 - DevOps Team: [Contact Info]
 
 ### External Resources
-- GitHub Repository: https://github.com/LexBANK/BSM
-- Issue Tracker: https://github.com/LexBANK/BSM/issues
+- GitHub Repository: https://github.com/LexBANK/BSU
+- Issue Tracker: https://github.com/LexBANK/BSU/issues
 - Documentation Source: `/docs` directory
 
 ### Feedback
@@ -250,7 +250,7 @@ To provide feedback on documentation:
 
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
-| 1.0.0 | 2026-02-06 | Initial documentation release | BSM Autonomous Architect |
+| 1.0.0 | 2026-02-06 | Initial documentation release | BSU Autonomous Architect |
 
 ---
 
@@ -286,6 +286,6 @@ npm ci
 
 ---
 
-**Documentation Maintained By**: BSM Development Team  
+**Documentation Maintained By**: BSU Development Team  
 **Last Updated**: 2026-02-06  
 **Next Review**: Q2 2026

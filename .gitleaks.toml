@@ -1,14 +1,14 @@
 # ============================================
-# BSM Platform - Gitleaks Configuration
+# BSU Platform - Gitleaks Configuration
 # Secret Scanning Rules
 # ============================================
 
-title = "BSM Gitleaks Configuration"
+title = "BSU Gitleaks Configuration"
 [extend]
 useDefault = true
 
 # ============================================
-# Custom Rules for BSM Platform
+# Custom Rules for BSU Platform
 # ============================================
 
 [[rules]]

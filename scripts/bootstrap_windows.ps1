@@ -1,11 +1,11 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Bootstrap BSM on Windows in one run.
+  Bootstrap BSU on Windows in one run.
 
 .DESCRIPTION
   - Installs Node.js LTS, Git, and GitHub CLI via winget when missing.
-  - Clones (or updates) LexBANK/BSM into a target folder.
+  - Clones (or updates) LexBANK/BSU into a target folder.
   - Generates .env.example when absent and creates .env.
   - Installs dependencies, runs validation, and starts the dev server.
 
@@ -16,9 +16,9 @@
 
 $ErrorActionPreference = 'Stop'
 
-$Repo = 'LexBANK/BSM'
+$Repo = 'LexBANK/BSU'
 $BaseDir = Join-Path $env:USERPROFILE 'Desktop'
-$ProjDir = Join-Path $BaseDir 'BSM'
+$ProjDir = Join-Path $BaseDir 'BSU'
 
 function Ensure-WingetApp {
   param(
@@ -82,9 +82,9 @@ $EnvExample = Join-Path $ProjDir '.env.example'
 if (-not (Test-Path $EnvExample)) {
   Write-Host '==> .env.example missing. Creating template...'
   @'
-# ===== BSM Env Template =====
+# ===== BSU Env Template =====
 # ضع مفاتيحك هنا عبر طبقة إدارة مفاتيح خارجية (Key Management Layer)
-OPENAI_BSM_KEY=
+OPENAI_BSU_KEY=
 OPENAI_BRINDER_KEY=
 OPENAI_LEXNEXUS_KEY=
 ADMIN_TOKEN=
@@ -114,18 +114,18 @@ function Set-EnvValue {
 }
 
 # Secrets should come from secure external sources, not hardcoded here.
-$OPENAI_BSM_KEY      = $env:OPENAI_BSM_KEY
+$OPENAI_BSU_KEY      = $env:OPENAI_BSU_KEY
 $OPENAI_BRINDER_KEY  = $env:OPENAI_BRINDER_KEY
 $OPENAI_LEXNEXUS_KEY = $env:OPENAI_LEXNEXUS_KEY
 $ADMIN_TOKEN         = $env:ADMIN_TOKEN
 $PORT                = if ($env:PORT) { $env:PORT } else { '3000' }
 
-if (-not $OPENAI_BSM_KEY -or -not $OPENAI_BRINDER_KEY -or -not $OPENAI_LEXNEXUS_KEY -or -not $ADMIN_TOKEN) {
+if (-not $OPENAI_BSU_KEY -or -not $OPENAI_BRINDER_KEY -or -not $OPENAI_LEXNEXUS_KEY -or -not $ADMIN_TOKEN) {
   Write-Warning 'One or more required secrets are missing from environment variables.'
   Write-Warning 'Populate them through a Key Management Layer, then rerun this script.'
 }
 
-if ($OPENAI_BSM_KEY)      { Set-EnvValue -Path $EnvFile -Key 'OPENAI_BSM_KEY' -Value $OPENAI_BSM_KEY }
+if ($OPENAI_BSU_KEY)      { Set-EnvValue -Path $EnvFile -Key 'OPENAI_BSU_KEY' -Value $OPENAI_BSU_KEY }
 if ($OPENAI_BRINDER_KEY)  { Set-EnvValue -Path $EnvFile -Key 'OPENAI_BRINDER_KEY' -Value $OPENAI_BRINDER_KEY }
 if ($OPENAI_LEXNEXUS_KEY) { Set-EnvValue -Path $EnvFile -Key 'OPENAI_LEXNEXUS_KEY' -Value $OPENAI_LEXNEXUS_KEY }
 if ($ADMIN_TOKEN)         { Set-EnvValue -Path $EnvFile -Key 'ADMIN_TOKEN' -Value $ADMIN_TOKEN }
