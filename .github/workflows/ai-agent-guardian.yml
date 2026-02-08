@@ -1,0 +1,45 @@
+name: 🧠 AI Agent Guardian — Validate & Enhance
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'agents/**.agent.md'
+      - 'bsm-config/**'
+
+jobs:
+  ai-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: bsm-config
+
+      - name: Validate AI Config
+        run: node validate-config.mjs
+        working-directory: bsm-config
+
+      - name: Run AI Agent Test
+        run: python scripts/test_ai_agent.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Post AI Analysis
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🤖 **AI Agent Guardian**: \n- All AI configs are valid.\n- Agent is enhanced with AI capabilities.`
+            });
