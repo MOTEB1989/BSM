@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSU Nexus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body{background:#0a0a0a;color:#fff;font-family:system-ui}
+        .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);border-radius:12px}
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+    <header class="glass m-4 p-4 flex justify-between items-center">
+        <h1 class="font-bold text-lg">BSU Nexus</h1>
+        <span class="text-green-400 text-sm">● متصل</span>
+    </header>
+    
+    <div id="chat" class="flex-1 overflow-y-auto p-4 space-y-4">
+        <div class="text-center text-gray-400 mt-8">مرحباً بك في النظام الذكي</div>
+    </div>
+    
+    <div class="glass m-4 p-4">
+        <div class="flex gap-2">
+            <input id="msg" type="text" placeholder="اكتب رسالتك..." class="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white" onkeypress="if(event.key==='Enter')send()">
+            <button onclick="send()" class="bg-blue-600 px-4 py-2 rounded-lg">إرسال</button>
+        </div>
+    </div>
+
+    <script>
+        const API='https://sr-bsm.onrender.com';
+        async function send(){
+            const input=document.getElementById('msg');
+            const text=input.value.trim();
+            if(!text)return;
+            
+            const chat=document.getElementById('chat');
+            chat.innerHTML+=`<div class="flex justify-start"><div class="bg-blue-600 rounded-lg p-3 max-w-[80%]">${text}</div></div>`;
+            input.value='';
+            
+            try{
+                const res=await fetch(`${API}/api/chat/direct`,{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({message:text,model:'gpt-4o-mini'})
+                });
+                const data=await res.json();
+                chat.innerHTML+=`<div class="flex justify-end"><div class="glass rounded-lg p-3 max-w-[80%]">${data.response||data.message}</div></div>`;
+            }catch(e){
+                chat.innerHTML+=`<div class="flex justify-end"><div class="bg-red-600/50 rounded-lg p-3">خطأ في الاتصال</div></div>`;
+            }
+            chat.scrollTop=chat.scrollHeight;
+        }
+    </script>
+</body>
+</html>
