@@ -31,6 +31,14 @@ router.post("/direct", async (req, res, next) => {
       throw new AppError("Message too long", 400, "INPUT_TOO_LONG");
     }
 
+    if (!Array.isArray(history)) {
+      throw new AppError("History must be an array", 400, "INVALID_HISTORY");
+    }
+
+    if (!["ar", "en"].includes(language)) {
+      throw new AppError("Unsupported language", 400, "INVALID_LANGUAGE");
+    }
+
     const apiKey = models.openai?.bsm || models.openai?.default;
     if (!apiKey) {
       throw new AppError("API key not configured", 500, "MISSING_API_KEY");
@@ -47,7 +55,11 @@ router.post("/direct", async (req, res, next) => {
     // Add conversation history (limit to last 20 messages)
     const recentHistory = history.slice(-20);
     for (const msg of recentHistory) {
-      if (msg.role === "user" || msg.role === "assistant") {
+      if (
+        msg &&
+        typeof msg === "object" &&
+        (msg.role === "user" || msg.role === "assistant")
+      ) {
         messages.push({ role: msg.role, content: String(msg.content).slice(0, env.maxAgentInputLength) });
       }
     }
