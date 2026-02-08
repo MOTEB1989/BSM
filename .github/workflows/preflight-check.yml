@@ -1,0 +1,80 @@
+name: Preflight / Repo Health Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Repo summary
+        run: |
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Commit:     $GITHUB_SHA"
+          echo "Branch:     $GITHUB_REF_NAME"
+          echo ""
+          echo "--- Top-level files ---"
+          ls -la
+
+      - name: Verify package.json
+        run: |
+          if [ ! -f package.json ]; then
+            echo "ERROR: package.json not found" >&2
+            exit 2
+          fi
+          echo "Name:    $(node -e "console.log(require('./package.json').name)")"
+          echo "Version: $(node -e "console.log(require('./package.json').version)")"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate agent configs
+        run: npm test
+
+      - name: Verify server starts
+        run: |
+          echo "Starting server for smoke test..."
+          node src/server.js &
+          SERVER_PID=$!
+          sleep 4
+
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health || true)
+          kill $SERVER_PID 2>/dev/null || true
+
+          if [ "$STATUS" = "200" ]; then
+            echo "Health check passed (HTTP $STATUS)"
+          else
+            echo "ERROR: Health check returned HTTP $STATUS" >&2
+            exit 1
+          fi
+
+      - name: Verify critical paths exist
+        run: |
+          MISSING=0
+          for path in src/server.js src/app.js data/agents/index.json; do
+            if [ -f "$path" ]; then
+              echo "OK: $path"
+            else
+              echo "MISSING: $path" >&2
+              MISSING=1
+            fi
+          done
+          exit $MISSING
+
+      - name: Preflight summary
+        run: echo "All preflight checks passed."
