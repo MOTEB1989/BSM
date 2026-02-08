@@ -1,0 +1,75 @@
+{
+  "runnerVersion": "1.0.0",
+  "timestamp": "2026-02-08T18:05:55Z",
+  "environment": {
+    "nodeVersion": "v24.13.0",
+    "npmVersion": "11.6.2",
+    "platform": "linux",
+    "cwd": "/home/runner/work/BSM/BSM"
+  },
+  "summary": {
+    "totalTests": 3,
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "duration": "42s",
+    "status": "success"
+  },
+  "tasks": [
+    {
+      "id": "dependency-install",
+      "name": "Install Dependencies (npm ci)",
+      "command": "npm ci",
+      "status": "success",
+      "duration": "2s",
+      "exitCode": 0,
+      "output": "added 144 packages, and audited 145 packages in 2s\nfound 0 vulnerabilities",
+      "warnings": [
+        "deprecated node-domexception@1.0.0: Use your platform's native DOMException instead"
+      ],
+      "errors": []
+    },
+    {
+      "id": "validation-tests",
+      "name": "Run Validation Tests (npm test)",
+      "command": "npm test",
+      "status": "success",
+      "duration": "1s",
+      "exitCode": 0,
+      "output": "OK: validation passed",
+      "warnings": [],
+      "errors": [],
+      "details": {
+        "agentsValidated": true,
+        "indexJsonValid": true,
+        "allAgentFilesExist": true,
+        "allAgentActionsAllowed": true
+      }
+    },
+    {
+      "id": "server-startup",
+      "name": "Test Server Startup (npm start)",
+      "command": "timeout 10 npm start",
+      "status": "success",
+      "duration": "10s",
+      "exitCode": 0,
+      "output": "BSU API started on port 3000 in development environment",
+      "warnings": [],
+      "errors": [],
+      "details": {
+        "port": 3000,
+        "environment": "development",
+        "startupTime": "<10s"
+      }
+    }
+  ],
+  "securityScan": {
+    "vulnerabilities": 0,
+    "npmAudit": "passed"
+  },
+  "recommendations": [],
+  "artifactPaths": {
+    "jsonReport": "/tmp/runner-results/runner-results-2026-02-08_18-05-55.json",
+    "markdownReport": "/tmp/runner-results/runner-summary-2026-02-08_18-05-55.md"
+  }
+}

@@ -2,9 +2,11 @@ node_modules
 .env
 .DS_Store
 
-# Reports - ignore most but keep security reports
+# Reports - ignore most but keep security and runner reports
 reports/*
 !reports/SECURITY-*.md
+!reports/runner-*.json
+!reports/runner-*.md
 
 # Sensitive files - Security
 *.key
