@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: bsm-api
+    name: bsu-api
     env: node
     plan: free
     buildCommand: "npm ci"

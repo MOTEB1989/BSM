@@ -46,7 +46,27 @@ app.use("/api", routes);
 
 // serve admin UI static
 app.use("/admin", adminUiAuth, express.static(path.join(process.cwd(), "src/admin")));
-app.use("/chat", express.static(path.join(process.cwd(), "src/chat")));
+app.use(
+  "/chat",
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-eval'",
+          "https://unpkg.com",
+          "https://cdn.tailwindcss.com",
+          "https://cdn.jsdelivr.net"
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"],
+        connectSrc: ["'self'", ...env.corsOrigins]
+      }
+    }
+  }),
+  express.static(path.join(process.cwd(), "src/chat"))
+);
 
 app.use(notFound);
 app.use(errorHandler);
