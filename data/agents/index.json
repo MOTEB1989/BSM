@@ -1,3 +1,10 @@
 {
-  "agents": ["legal-agent.yaml", "governance-agent.yaml"]
+  "agents": [
+    "legal-agent.yaml",
+    "governance-agent.yaml",
+    "code-review-agent.yaml",
+    "security-agent.yaml",
+    "pr-merge-agent.yaml",
+    "integrity-agent.yaml"
+  ]
 }

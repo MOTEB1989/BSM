@@ -6,7 +6,29 @@ const must = (cond, msg) => {
   if (!cond) throw new Error(msg);
 };
 
-const allowedActions = new Set(["create_file"]);
+const allowedActions = new Set([
+  "create_file",
+  "review_pr",
+  "request_changes",
+  "approve_pr",
+  "create_review_comment",
+  "generate_fix_suggestion",
+  "scan_vulnerabilities",
+  "block_pr",
+  "alert_security_team",
+  "generate_security_report",
+  "suggest_fixes",
+  "auto_merge",
+  "manual_review_request",
+  "run_tests",
+  "deploy_staging",
+  "rollback_merge",
+  "validate_structure",
+  "cleanup_stale_prs",
+  "archive_old_issues",
+  "optimize_database",
+  "generate_health_report"
+]);
 
 const agentsDir = path.join(process.cwd(), "data", "agents");
 must(fs.existsSync(agentsDir), "Missing data/agents directory");
