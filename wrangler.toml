@@ -1,0 +1,54 @@
+name = "orbit-workers"
+main = "src/agents/orbit/telegram.gateway.worker.ts"
+compatibility_date = "2026-02-06"
+
+# Node.js compatibility for npm packages
+node_compat = true
+
+# Production environment configuration
+[env.production]
+# Replace with your Cloudflare Account ID (32 hex characters)
+# Find it at: https://dash.cloudflare.com/ -> Workers & Pages -> Overview
+account_id = "YOUR_CF_ACCOUNT_ID"
+
+# Replace with your Cloudflare Zone ID (32 hex characters)
+# Find it at: https://dash.cloudflare.com/ -> Your domain -> Overview (scroll down to "API" section)
+zone_id = "YOUR_CF_ZONE_ID"
+
+# Workers route pattern (optional - only if using custom domain)
+# Format: "yourdomain.com/api/*"
+# Leave empty to use *.workers.dev subdomain
+route = ""
+
+# Staging environment configuration (optional)
+[env.staging]
+account_id = "YOUR_CF_ACCOUNT_ID"
+zone_id = "YOUR_CF_ZONE_ID"
+route = ""
+
+# Development environment configuration (optional)
+[env.development]
+account_id = "YOUR_CF_ACCOUNT_ID"
+zone_id = "YOUR_CF_ZONE_ID"
+
+# Secrets Configuration
+# Set secrets using: wrangler secret put SECRET_NAME --env production
+# Required secrets:
+# - ORBIT_GITHUB_TOKEN: GitHub PAT with repo and workflow scopes
+# - TELEGRAM_BOT_TOKEN: Telegram bot token from @BotFather
+# - ORBIT_ADMIN_CHAT_IDS: Comma-separated chat IDs for admin users
+
+# Bindings (if needed for KV, Durable Objects, etc.)
+# [[kv_namespaces]]
+# binding = "ORBIT_KV"
+# id = "YOUR_KV_NAMESPACE_ID"
+
+# [[d1_databases]]
+# binding = "ORBIT_DB"
+# database_name = "orbit-db"
+# database_id = "YOUR_D1_DATABASE_ID"
+
+# Observability
+[observability]
+enabled = true
+head_sampling_rate = 1
