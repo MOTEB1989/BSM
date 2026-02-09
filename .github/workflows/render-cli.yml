@@ -24,9 +24,11 @@ on:
           - status
           - logs
 
+permissions:
+  contents: read
+
 env:
   RENDER_CLI_VERSION: '2.7.1'
-  NODE_VERSION: '22'
 
 jobs:
   # ==================== Validate Blueprint ====================
@@ -39,13 +41,15 @@ jobs:
 
       - name: Install Render CLI v${{ env.RENDER_CLI_VERSION }}
         run: |
-          curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
-          echo "$HOME/.render/bin" >> $GITHUB_PATH
+          curl -fsSL https://github.com/render-oss/cli/releases/download/v${{ env.RENDER_CLI_VERSION }}/render_Linux_x86_64.tar.gz -o render-cli.tar.gz
+          tar -xzf render-cli.tar.gz -C /usr/local/bin render
+          rm render-cli.tar.gz
 
       - name: Verify CLI installation
         run: render --version
 
       - name: Validate render.yaml blueprint
+        if: ${{ secrets.RENDER_API_KEY != '' }}
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
         run: |
@@ -67,8 +71,9 @@ jobs:
 
       - name: Install Render CLI v${{ env.RENDER_CLI_VERSION }}
         run: |
-          curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
-          echo "$HOME/.render/bin" >> $GITHUB_PATH
+          curl -fsSL https://github.com/render-oss/cli/releases/download/v${{ env.RENDER_CLI_VERSION }}/render_Linux_x86_64.tar.gz -o render-cli.tar.gz
+          tar -xzf render-cli.tar.gz -C /usr/local/bin render
+          rm render-cli.tar.gz
 
       - name: Trigger deployment
         env:
@@ -88,8 +93,15 @@ jobs:
         run: |
           echo "Checking deployment status..."
           for i in {1..12}; do
-            status=$(render deploys list "$RENDER_SERVICE_ID" \
-              --output json | jq -r '.[0].status' 2>/dev/null || echo "unknown")
+            deploy_output=$(render deploys list "$RENDER_SERVICE_ID" \
+              --output json 2>/dev/null || echo "[]")
+            status=$(echo "$deploy_output" | jq -r '.[0].status // empty' 2>/dev/null)
+
+            if [ -z "$status" ] || [ "$status" = "null" ]; then
+              echo "Attempt $i/12 - No deployments found yet"
+              sleep 15
+              continue
+            fi
 
             echo "Attempt $i/12 - Status: $status"
 
@@ -116,8 +128,9 @@ jobs:
     steps:
       - name: Install Render CLI v${{ env.RENDER_CLI_VERSION }}
         run: |
-          curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
-          echo "$HOME/.render/bin" >> $GITHUB_PATH
+          curl -fsSL https://github.com/render-oss/cli/releases/download/v${{ env.RENDER_CLI_VERSION }}/render_Linux_x86_64.tar.gz -o render-cli.tar.gz
+          tar -xzf render-cli.tar.gz -C /usr/local/bin render
+          rm render-cli.tar.gz
 
       - name: Get service details
         env:
@@ -142,8 +155,9 @@ jobs:
     steps:
       - name: Install Render CLI v${{ env.RENDER_CLI_VERSION }}
         run: |
-          curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
-          echo "$HOME/.render/bin" >> $GITHUB_PATH
+          curl -fsSL https://github.com/render-oss/cli/releases/download/v${{ env.RENDER_CLI_VERSION }}/render_Linux_x86_64.tar.gz -o render-cli.tar.gz
+          tar -xzf render-cli.tar.gz -C /usr/local/bin render
+          rm render-cli.tar.gz
 
       - name: Fetch recent logs
         env:

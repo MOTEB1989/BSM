@@ -180,10 +180,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Render CLI
+      - name: Install Render CLI v2.7.1
         run: |
-          curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
-          echo "$HOME/.render/bin" >> $GITHUB_PATH
+          curl -fsSL https://github.com/render-oss/cli/releases/download/v2.7.1/render_Linux_x86_64.tar.gz -o render-cli.tar.gz
+          tar -xzf render-cli.tar.gz -C /usr/local/bin render
+          rm render-cli.tar.gz
+          render --version
 
       - name: Validate render.yaml blueprint
         env:
@@ -225,8 +227,15 @@ jobs:
         run: |
           echo "Checking deployment status..."
           for i in {1..12}; do
-            status=$(render deploys list "$RENDER_SERVICE_ID" \
-              --output json | jq -r '.[0].status' 2>/dev/null || echo "unknown")
+            deploy_output=$(render deploys list "$RENDER_SERVICE_ID" \
+              --output json 2>/dev/null || echo "[]")
+            status=$(echo "$deploy_output" | jq -r '.[0].status // empty' 2>/dev/null)
+
+            if [ -z "$status" ] || [ "$status" = "null" ]; then
+              echo "Attempt $i/12 - No deployments found yet"
+              sleep 15
+              continue
+            fi
 
             echo "Attempt $i/12 - Status: $status"
 
