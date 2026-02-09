@@ -190,7 +190,7 @@
 تم التقاط لقطة شاشة للواجهة:
 ![Chat Interface](https://github.com/user-attachments/assets/fa156d01-cea6-471f-be87-0f4daef1ea7f)
 
-**ملاحظة:** في بيئة الاختبار، بعض موارد CDN محظورة (Vue.js, Tailwind). في الإنتاج، تعمل جميع المكونات بشكل طبيعي.
+**ملاحظة:** في بيئة الاختبار، بعض موارد CDN محظورة (Vue.js, Tailwind)، لذلك قد تظهر الواجهة بدون تنسيقات كاملة أو مع حركة أقل، لكن الوظائف الأساسية تعمل بشكل طبيعي. في بيئة الإنتاج أو عند التشغيل محليًا مع اتصال إنترنت فعّال، تأكّد أن الواجهة تظهر بتنسيق كامل وبدون أخطاء متعلقة بـ CDN في وحدة تحكّم المتصفح (Browser Console).
 
 ---
 
@@ -207,7 +207,7 @@
    ```bash
    cp .env.example .env
    # ثم عدّل .env وأضف:
-   OPENAI_BSU_KEY=sk-your-actual-openai-key
+   OPENAI_BSU_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
    ```
 
 3. **تشغيل الخادم**
@@ -231,7 +231,7 @@
 
 2. **في لوحة Render**
    - اذهب إلى Environment Variables
-   - أضف: `OPENAI_BSU_KEY=sk-xxxxx`
+   - أضف: `OPENAI_BSU_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
    - أضف: `CORS_ORIGINS=https://your-domain.com`
    - احفظ التغييرات
 
@@ -328,8 +328,8 @@
 
 ### للبدء فوراً
 ```bash
-# 1. أضف مفتاح OpenAI
-echo 'OPENAI_BSU_KEY=sk-your-key' >> .env
+# 1. أضف مفتاح OpenAI (استبدل القيمة بمفتاحك الحقيقي)
+echo 'OPENAI_BSU_KEY=sk-your-openai-api-key-here' >> .env
 
 # 2. شغّل الخادم
 npm start
