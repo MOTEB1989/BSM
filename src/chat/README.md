@@ -90,6 +90,28 @@ Content-Type: application/json
 }
 ```
 
+#### 3. حالة مفاتيح الذكاء الاصطناعي
+```javascript
+GET /api/chat/key-status
+
+// Response
+{
+  "timestamp": "2026-01-01T10:00:00.000Z",
+  "status": {
+    "openai": true,
+    "anthropic": false,
+    "perplexity": true,
+    "google": false
+  },
+  "ui": {
+    "openai": "✅ GPT-4 Ready",
+    "anthropic": "🔴 Claude Offline",
+    "perplexity": "✅ Perplexity Ready",
+    "google": "🔴 Gemini Offline"
+  }
+}
+```
+
 ### مثال كود (Code Example)
 
 ```javascript

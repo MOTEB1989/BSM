@@ -63,7 +63,7 @@ class KeyStatusDisplay {
 
   async update() {
     try {
-      const response = await fetch("/status/ai-keys.json", {
+      const response = await fetch("/api/chat/key-status", {
         headers: { Accept: "application/json" },
         cache: "no-store"
       });
@@ -74,7 +74,10 @@ class KeyStatusDisplay {
       const data = await response.json();
       const html = Object.entries(data.ui || {})
         .map(([provider, text]) => {
-          const isActive = String(data.status?.[provider]) === "true";
+          const providerStatus = data.status?.[provider];
+          const isActive = typeof providerStatus === "boolean"
+            ? providerStatus
+            : providerStatus === "true";
           return `<span class="provider ${isActive ? "active" : "failed"}">${text}</span>`;
         })
         .join("");

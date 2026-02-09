@@ -18,6 +18,33 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+
+// AI key status for chat UI
+router.get("/key-status", async (_req, res, next) => {
+  try {
+    const status = {
+      openai: Boolean(models.openai?.bsm || models.openai?.default),
+      anthropic: false,
+      perplexity: Boolean(models.perplexity?.default),
+      google: false
+    };
+
+    const ui = {
+      openai: status.openai ? "✅ GPT-4 Ready" : "🔴 GPT-4 Offline",
+      anthropic: status.anthropic ? "✅ Claude Ready" : "🔴 Claude Offline",
+      perplexity: status.perplexity ? "✅ Perplexity Ready" : "🔴 Perplexity Offline",
+      google: status.google ? "✅ Gemini Ready" : "🔴 Gemini Offline"
+    };
+
+    res.json({
+      timestamp: new Date().toISOString(),
+      status,
+      ui
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 // Direct GPT chat (no agent required)
 router.post("/direct", async (req, res, next) => {
   try {
