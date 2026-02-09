@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { orchestrator } from "../runners/orchestrator.js";
+import { executeDecision } from "../actions/githubActions.js";
 import logger from "../utils/logger.js";
 
 export const handleGitHubWebhook = async (req, res, next) => {
@@ -17,20 +18,35 @@ export const handleGitHubWebhook = async (req, res, next) => {
 
     logger.info({ event, action: data?.action }, "Webhook received");
 
+    if (data?.pull_request?.draft) {
+      logger.info({ prNumber: data.number }, "Skipping draft PR");
+      return res.status(200).json({ status: "skipped", reason: "Draft PR" });
+    }
+
     const orchestrationPayload = transformGitHubEvent(event, data);
     const result = await orchestrator({
       event: `${event}.${data?.action || "unknown"}`,
       payload: orchestrationPayload
     });
 
-    return res.status(202).json({
+    // respond immediately, then execute the decision asynchronously
+    res.status(202).json({
       status: "processing",
       jobId: result.jobId,
       message: "Agents are analyzing your request"
     });
+
+    // execute the decision (merge, approve, request changes, etc.)
+    const prNumber = data?.pull_request?.number || data?.number;
+    if (result.decision && prNumber && process.env.GITHUB_BSU_TOKEN) {
+      const execution = await executeDecision(result.decision, prNumber);
+      logger.info({ jobId: result.jobId, prNumber, execution }, "Decision executed");
+    }
   } catch (error) {
     logger.error({ error }, "Webhook processing failed");
-    return next(error);
+    if (!res.headersSent) {
+      return next(error);
+    }
   }
 };
 
