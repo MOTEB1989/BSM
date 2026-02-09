@@ -7,6 +7,20 @@ import { env } from "../config/env.js";
 
 const router = Router();
 
+router.get("/key-status", (req, res) => {
+  res.json({
+    timestamp: Date.now(),
+    status: {
+      openai: Boolean(models.openai?.default || models.openai?.bsm || models.openai?.bsu),
+      perplexity: Boolean(models.perplexity?.default)
+    },
+    ui: {
+      openai: "🤖 OpenAI",
+      perplexity: "🔍 Perplexity"
+    }
+  });
+});
+
 // Agent-based chat
 router.post("/", async (req, res, next) => {
   try {
@@ -41,7 +55,7 @@ router.post("/direct", async (req, res, next) => {
 
     const apiKey = models.openai?.bsm || models.openai?.default;
     if (!apiKey) {
-      throw new AppError("API key not configured", 500, "MISSING_API_KEY");
+      throw new AppError("AI service is not configured", 503, "MISSING_API_KEY");
     }
 
     const systemPrompt = language === "ar"

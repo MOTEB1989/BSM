@@ -63,7 +63,7 @@ class KeyStatusDisplay {
 
   async update() {
     try {
-      const response = await fetch("/status/ai-keys.json", {
+      const response = await fetch("/api/chat/key-status", {
         headers: { Accept: "application/json" },
         cache: "no-store"
       });
