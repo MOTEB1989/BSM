@@ -65,6 +65,7 @@
             const input=document.getElementById('msg');
             const text=input.value.trim();
             // Basic input validation to avoid empty or excessively long messages
+            // 1000 char limit prevents potential DoS and keeps messages reasonable for API processing
             if(!text || text.length > 1000){
                 return;
             }
@@ -89,9 +90,7 @@
                     throw new Error('HTTP error '+res.status);
                 }
                 const data=await res.json();
-                const reply = (data && typeof data==='object')
-                    ? (data.response || data.message)
-                    : null;
+                const reply = data?.response ?? data?.message ?? null;
                 const safeReply = (typeof reply === 'string' && reply.trim().length>0)
                     ? reply
                     : 'حدث خطأ في معالجة الاستجابة';

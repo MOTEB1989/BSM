@@ -46,7 +46,7 @@ check_any "Security agent implementation" "src/agents/SecurityAgent.js" "src/age
 check_any "Worker implementation" "src/workers" "src/agents/orbit"
 
 if [[ -f "package.json" ]]; then
-  package_size=$(wc -c < package.json)
+  package_size=$(wc -c < package.json | xargs)
   echo "package.json size: ${package_size} bytes"
 
   if [[ "$package_size" -lt "$MIN_PACKAGE_JSON_SIZE_BYTES" ]]; then
