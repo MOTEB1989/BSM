@@ -1,5 +1,6 @@
 {
   "agents": [
+    "my-agent.yaml",
     "legal-agent.yaml",
     "governance-agent.yaml",
     "code-review-agent.yaml",
