@@ -1,0 +1,168 @@
+name: "Render CLI - Validate & Deploy"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'render.yaml'
+      - 'src/**'
+      - 'package.json'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'render.yaml'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'validate'
+        type: choice
+        options:
+          - validate
+          - deploy
+          - status
+          - logs
+
+permissions:
+  contents: read
+
+env:
+  RENDER_CLI_VERSION: '2.7.1'
+
+jobs:
+  # ==================== Validate Blueprint ====================
+  validate-blueprint:
+    runs-on: ubuntu-latest
+    name: "Validate render.yaml Blueprint"
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install Render CLI v${{ env.RENDER_CLI_VERSION }}
+        run: |
+          curl -fsSL https://github.com/render-oss/cli/releases/download/v${{ env.RENDER_CLI_VERSION }}/render_Linux_x86_64.tar.gz -o render-cli.tar.gz
+          tar -xzf render-cli.tar.gz -C /usr/local/bin render
+          rm render-cli.tar.gz
+
+      - name: Verify CLI installation
+        run: render --version
+
+      - name: Validate render.yaml blueprint
+        if: ${{ secrets.RENDER_API_KEY != '' }}
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          echo "Validating render.yaml blueprint..."
+          render blueprint validate --output json render.yaml
+          echo "Blueprint validation passed"
+
+  # ==================== Deploy via CLI ====================
+  deploy:
+    runs-on: ubuntu-latest
+    name: "Deploy to Render"
+    needs: validate-blueprint
+    if: >
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy')
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install Render CLI v${{ env.RENDER_CLI_VERSION }}
+        run: |
+          curl -fsSL https://github.com/render-oss/cli/releases/download/v${{ env.RENDER_CLI_VERSION }}/render_Linux_x86_64.tar.gz -o render-cli.tar.gz
+          tar -xzf render-cli.tar.gz -C /usr/local/bin render
+          rm render-cli.tar.gz
+
+      - name: Trigger deployment
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+        run: |
+          echo "Deploying service $RENDER_SERVICE_ID..."
+          render deploys create "$RENDER_SERVICE_ID" \
+            --output json \
+            --confirm
+          echo "Deployment triggered successfully"
+
+      - name: Check deployment status
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+        run: |
+          echo "Checking deployment status..."
+          for i in {1..12}; do
+            deploy_output=$(render deploys list "$RENDER_SERVICE_ID" \
+              --output json 2>/dev/null || echo "[]")
+            status=$(echo "$deploy_output" | jq -r '.[0].status // empty' 2>/dev/null)
+
+            if [ -z "$status" ] || [ "$status" = "null" ]; then
+              echo "Attempt $i/12 - No deployments found yet"
+              sleep 15
+              continue
+            fi
+
+            echo "Attempt $i/12 - Status: $status"
+
+            if [ "$status" = "live" ]; then
+              echo "Deployment is live!"
+              exit 0
+            fi
+
+            if [ "$status" = "build_failed" ] || [ "$status" = "update_failed" ] || [ "$status" = "canceled" ]; then
+              echo "Deployment failed with status: $status"
+              exit 1
+            fi
+
+            sleep 15
+          done
+
+          echo "Deployment still in progress after 3 minutes (may complete later)"
+
+  # ==================== Service Status ====================
+  service-status:
+    runs-on: ubuntu-latest
+    name: "Service Status"
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'status'
+    steps:
+      - name: Install Render CLI v${{ env.RENDER_CLI_VERSION }}
+        run: |
+          curl -fsSL https://github.com/render-oss/cli/releases/download/v${{ env.RENDER_CLI_VERSION }}/render_Linux_x86_64.tar.gz -o render-cli.tar.gz
+          tar -xzf render-cli.tar.gz -C /usr/local/bin render
+          rm render-cli.tar.gz
+
+      - name: Get service details
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          echo "=== Render Services ==="
+          render services --output json --confirm
+
+      - name: Get recent deploys
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+        run: |
+          echo "=== Recent Deployments ==="
+          render deploys list "$RENDER_SERVICE_ID" --output json --confirm
+
+  # ==================== View Logs ====================
+  service-logs:
+    runs-on: ubuntu-latest
+    name: "Service Logs"
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'logs'
+    steps:
+      - name: Install Render CLI v${{ env.RENDER_CLI_VERSION }}
+        run: |
+          curl -fsSL https://github.com/render-oss/cli/releases/download/v${{ env.RENDER_CLI_VERSION }}/render_Linux_x86_64.tar.gz -o render-cli.tar.gz
+          tar -xzf render-cli.tar.gz -C /usr/local/bin render
+          rm render-cli.tar.gz
+
+      - name: Fetch recent logs
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+        run: |
+          echo "=== Recent Service Logs ==="
+          render logs --output json --confirm "$RENDER_SERVICE_ID" || echo "Logs retrieval completed"

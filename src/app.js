@@ -44,6 +44,9 @@ app.use(
 );
 app.use("/api", routes);
 
+// root path redirects to chat UI
+app.get("/", (req, res) => res.redirect("/chat"));
+
 // serve admin UI static
 app.use("/admin", adminUiAuth, express.static(path.join(process.cwd(), "src/admin")));
 app.use(
