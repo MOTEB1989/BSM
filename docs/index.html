@@ -8,6 +8,7 @@
   <meta property="og:title" content="BSU Nexus Control" />
   <meta property="og:description" content="نظام إدارة الوكلاء الذكي المتكامل مع Cloudflare وGitHub." />
   <meta property="og:type" content="website" />
+  <meta name="api-base-url" content="https://sr-bsm.onrender.com" />
   <meta property="og:url" content="https://corehub.nexus" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -91,9 +92,8 @@
               <div class="glass-card m-4 p-4 rounded-xl border-t border-white/10">
                   <div class="flex gap-2">
                       <input type="text" id="input" placeholder="اكتب رسالتك هنا..."
-                          class="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500"
-                          onkeypress="if(event.key==='Enter') send()">
-                      <button onclick="send()" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition-colors">
+                          class="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+                      <button id="send-button" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition-colors">
                           إرسال
                       </button>
                   </div>
@@ -131,7 +131,8 @@
       }
       setInterval(updateClock, 1000); updateClock();
 
-      const API_URL = 'https://sr-bsm.onrender.com';
+      const apiMeta = document.querySelector('meta[name="api-base-url"]');
+      const API_URL = apiMeta && apiMeta.content ? apiMeta.content : 'https://sr-bsm.onrender.com';
 
       async function send() {
         const input = document.getElementById('input');
@@ -162,7 +163,7 @@
       function addMessage(text, sender) {
         const chat = document.getElementById('chat');
         const wrapper = document.createElement('div');
-        wrapper.className = 'msg flex ' + (sender === 'user' ? 'justify-start' : 'justify-end');
+        wrapper.className = 'msg flex ' + (sender === 'user' ? 'justify-end' : 'justify-start');
 
         const bubble = document.createElement('div');
         const bgClass = sender === 'user' ? 'bg-blue-600' : (sender === 'error' ? 'bg-red-600/70' : 'glass-card');
@@ -178,6 +179,12 @@
           document.getElementById('ai-progress').style.width = '100%';
           addMessage(`[${new Date().toLocaleTimeString('en-GB')}] > تمت المزامنة مع Cloudflare`, 'ai');
       }
+
+      // Add event listeners
+      document.getElementById('send-button').addEventListener('click', send);
+      document.getElementById('input').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') send();
+      });
   </script>
 </body>
 </html>

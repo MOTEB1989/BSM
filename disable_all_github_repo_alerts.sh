@@ -8,9 +8,12 @@ API_BASE="https://api.github.com"
 PER_PAGE=100
 DRY_RUN="${DRY_RUN:-false}"
 TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
+RESP_TMP_FILE="$(mktemp /tmp/gh-subscription-response.XXXXXX)"
+
+trap 'rm -f "$RESP_TMP_FILE"' EXIT INT TERM
 
 if [[ -z "$TOKEN" ]]; then
-  echo "[ERROR] Missing token. Set GITHUB_TOKEN or GH_TOKEN from your external Key Management Layer (never hardcode secrets)." >&2
+  echo "[ERROR] Missing token. Set GITHUB_TOKEN or GH_TOKEN from a secure source (never hardcode secrets)." >&2
   exit 1
 fi
 
@@ -43,7 +46,7 @@ api_put_ignore() {
   fi
 
   local http_code
-  http_code=$(curl -sS -o /tmp/gh-subscription-response.json -w "%{http_code}" -X PUT \
+  http_code=$(curl -sS -o "${RESP_TMP_FILE}" -w "%{http_code}" -X PUT \
     -H "Accept: application/vnd.github+json" \
     -H "Authorization: Bearer ${TOKEN}" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
@@ -56,7 +59,7 @@ api_put_ignore() {
   fi
 
   local message
-  message=$(jq -r '.message // "Unknown API error"' /tmp/gh-subscription-response.json 2>/dev/null || echo "Unknown API error")
+  message=$(jq -r '.message // "Unknown API error"' "${RESP_TMP_FILE}" 2>/dev/null || echo "Unknown API error")
   echo "[WARN] Failed ${repo_full_name} (HTTP ${http_code}): ${message}" >&2
   return 1
 }

@@ -6,8 +6,18 @@
     <title>BSU Nexus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body{background:#0a0a0a;color:#fff;font-family:system-ui}
-        .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);border-radius:12px}
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: system-ui;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -22,35 +32,81 @@
     
     <div class="glass m-4 p-4">
         <div class="flex gap-2">
-            <input id="msg" type="text" placeholder="اكتب رسالتك..." class="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white" onkeypress="if(event.key==='Enter')send()">
-            <button onclick="send()" class="bg-blue-600 px-4 py-2 rounded-lg">إرسال</button>
+            <input id="msg" type="text" placeholder="اكتب رسالتك..." class="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white">
+            <button id="send-btn" class="bg-blue-600 px-4 py-2 rounded-lg">إرسال</button>
         </div>
     </div>
 
     <script>
         const API='https://sr-bsm.onrender.com';
+        const AUTH_TOKEN = window.AUTH_TOKEN || '';
+
+        function appendMessage(text, isUser, isError = false) {
+            const chat = document.getElementById('chat');
+            const wrapper = document.createElement('div');
+            const messageDiv = document.createElement('div');
+
+            wrapper.className = isUser ? 'flex justify-start' : 'flex justify-end';
+
+            if (isError) {
+                messageDiv.className = 'bg-red-600/50 rounded-lg p-3';
+            } else if (isUser) {
+                messageDiv.className = 'bg-blue-600 rounded-lg p-3 max-w-[80%]';
+            } else {
+                messageDiv.className = 'glass rounded-lg p-3 max-w-[80%]';
+            }
+
+            messageDiv.textContent = text;
+            wrapper.appendChild(messageDiv);
+            chat.appendChild(wrapper);
+        }
+
         async function send(){
             const input=document.getElementById('msg');
             const text=input.value.trim();
-            if(!text)return;
+            // Basic input validation to avoid empty or excessively long messages
+            if(!text || text.length > 1000){
+                return;
+            }
             
             const chat=document.getElementById('chat');
-            chat.innerHTML+=`<div class="flex justify-start"><div class="bg-blue-600 rounded-lg p-3 max-w-[80%]">${text}</div></div>`;
+            appendMessage(text, true);
             input.value='';
             
             try{
+                const headers = {
+                    'Content-Type':'application/json'
+                };
+                if (AUTH_TOKEN) {
+                    headers['Authorization'] = 'Bearer ' + AUTH_TOKEN;
+                }
                 const res=await fetch(`${API}/api/chat/direct`,{
                     method:'POST',
-                    headers:{'Content-Type':'application/json'},
+                    headers:headers,
                     body:JSON.stringify({message:text,model:'gpt-4o-mini'})
                 });
+                if(!res.ok){
+                    throw new Error('HTTP error '+res.status);
+                }
                 const data=await res.json();
-                chat.innerHTML+=`<div class="flex justify-end"><div class="glass rounded-lg p-3 max-w-[80%]">${data.response||data.message}</div></div>`;
+                const reply = (data && typeof data==='object')
+                    ? (data.response || data.message)
+                    : null;
+                const safeReply = (typeof reply === 'string' && reply.trim().length>0)
+                    ? reply
+                    : 'حدث خطأ في معالجة الاستجابة';
+                appendMessage(safeReply, false);
             }catch(e){
-                chat.innerHTML+=`<div class="flex justify-end"><div class="bg-red-600/50 rounded-lg p-3">خطأ في الاتصال</div></div>`;
+                appendMessage('خطأ في الاتصال', false, true);
             }
             chat.scrollTop=chat.scrollHeight;
         }
+
+        // Add event listeners
+        document.getElementById('send-btn').addEventListener('click', send);
+        document.getElementById('msg').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') send();
+        });
     </script>
 </body>
 </html>

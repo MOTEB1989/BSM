@@ -4,6 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+MIN_PACKAGE_JSON_SIZE_BYTES=900
+
 required_paths=(
   "src/agents/CodeReviewAgent.js"
   "src/agents/PRMergeAgent.js"
@@ -30,7 +32,7 @@ check_any() {
   return 1
 }
 
-echo "== BSM Repo Integrity Check =="
+echo "== Repository Integrity Check =="
 for path in "${required_paths[@]}"; do
   if [[ -e "$path" ]]; then
     echo "[OK] $path"
@@ -44,10 +46,10 @@ check_any "Security agent implementation" "src/agents/SecurityAgent.js" "src/age
 check_any "Worker implementation" "src/workers" "src/agents/orbit"
 
 if [[ -f "package.json" ]]; then
-  package_size=$(wc -c < package.json | tr -d ' ')
+  package_size=$(wc -c < package.json)
   echo "package.json size: ${package_size} bytes"
 
-  if [[ "$package_size" -lt 900 ]]; then
+  if [[ "$package_size" -lt "$MIN_PACKAGE_JSON_SIZE_BYTES" ]]; then
     echo "[WARN] package.json appears unusually small; verify dependencies are complete."
   else
     echo "[OK] package.json size is within expected range."
