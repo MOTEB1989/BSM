@@ -1,5 +1,6 @@
 id: my-agent
 name: BSU Smart Agent
+role: Platform management and system oversight
 description: Main platform agent restored after accidental removal.
 version: 2.0.0
 capabilities:

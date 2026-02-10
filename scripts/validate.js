@@ -27,7 +27,12 @@ const allowedActions = new Set([
   "cleanup_stale_prs",
   "archive_old_issues",
   "optimize_database",
-  "generate_health_report"
+  "generate_health_report",
+  "audit_configuration",
+  "validate_guards",
+  "check_api_routes",
+  "verify_ui_config",
+  "generate_audit_report"
 ]);
 
 const agentsDir = path.join(process.cwd(), "data", "agents");

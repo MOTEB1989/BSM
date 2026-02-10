@@ -1,0 +1,65 @@
+name: BSU Audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: 'Audit scope (full, agents, api, ui, ci)'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - agents
+          - api
+          - ui
+          - ci
+  schedule:
+    # Run weekly audit on Mondays at 00:00 UTC
+    - cron: '0 0 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    env:
+      NODE_ENV: production
+      AUDIT_SCOPE: ${{ github.event.inputs.scope || 'full' }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4
+        with:
+          node-version: 22
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run BSU Audit
+        run: node scripts/audit-runner.js --scope=${{ env.AUDIT_SCOPE }}
+        continue-on-error: true
+      
+      - name: Upload audit report
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
+        if: always()
+        with:
+          name: bsu-audit-report-${{ github.run_number }}
+          path: reports/bsu-audit-report.md
+          retention-days: 90
+      
+      - name: Check for critical findings
+        if: always()
+        run: |
+          if [ -f reports/bsu-audit-report.md ]; then
+            if grep -q "CRITICAL" reports/bsu-audit-report.md; then
+              echo "::warning::Critical findings detected in audit report"
+            fi
+          fi
