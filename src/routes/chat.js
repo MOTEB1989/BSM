@@ -4,6 +4,7 @@ import { runGPT } from "../services/gptService.js";
 import { models } from "../config/models.js";
 import { AppError } from "../utils/errors.js";
 import { env } from "../config/env.js";
+import logger from "../utils/logger.js";
 
 const router = Router();
 
@@ -95,6 +96,29 @@ router.post("/direct", async (req, res, next) => {
     res.json({ output });
   } catch (err) {
     next(err);
+  }
+});
+
+// Key status endpoint for Vue.js frontend
+router.get("/key-status", async (req, res) => {
+  try {
+    // Check for OpenAI API key (bsm = Business Service Management product key)
+    const apiKey = models.openai?.bsm || models.openai?.default;
+    res.json({ 
+      configured: !!apiKey,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    logger.error({
+      correlationId: req.correlationId,
+      message: "Error checking API key status",
+      error: err.message
+    });
+    res.status(500).json({ 
+      configured: false, 
+      error: "Failed to check API key status",
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
