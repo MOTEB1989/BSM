@@ -6,6 +6,8 @@ import rateLimit from "express-rate-limit";
 
 import { correlationMiddleware } from "./middleware/correlation.js";
 import { requestLogger } from "./middleware/requestLogger.js";
+import { lanOnlyMiddleware } from "./middleware/lanOnly.js";
+import { mobileModeMiddleware } from "./middleware/mobileMode.js";
 import { notFound } from "./middleware/notFound.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { adminUiAuth } from "./middleware/auth.js";
@@ -32,6 +34,10 @@ app.use(express.json({ limit: '1mb' }));
 
 app.use(correlationMiddleware);
 app.use(requestLogger);
+
+// Apply security middleware
+app.use(lanOnlyMiddleware);
+app.use(mobileModeMiddleware);
 
 app.use(
   "/api",
