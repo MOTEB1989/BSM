@@ -1,0 +1,162 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://lexbank.com/schemas/agents-registry.schema.json",
+  "title": "BSU Agents Registry Schema",
+  "description": "Schema for BSU agents registry configuration with governance, risk management, and operational controls",
+  "type": "object",
+  "required": ["agents"],
+  "properties": {
+    "agents": {
+      "type": "array",
+      "description": "Array of agent configurations",
+      "items": {
+        "$ref": "#/definitions/agent"
+      }
+    }
+  },
+  "definitions": {
+    "agent": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "category",
+        "contexts",
+        "expose",
+        "risk",
+        "approval",
+        "startup",
+        "healthcheck"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "description": "Unique identifier for the agent (lowercase, alphanumeric with hyphens)"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable name of the agent"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["conversational", "infra", "system", "security", "audit"],
+          "description": "Agent category for organizational purposes"
+        },
+        "contexts": {
+          "type": "object",
+          "required": ["allowed"],
+          "properties": {
+            "allowed": {
+              "type": "array",
+              "description": "List of contexts where the agent is allowed to operate (enum, not booleans)",
+              "items": {
+                "type": "string",
+                "enum": ["chat", "api", "github", "ci", "system", "security", "mobile"]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "expose": {
+          "type": "object",
+          "required": ["selectable", "internal_only"],
+          "properties": {
+            "selectable": {
+              "type": "boolean",
+              "description": "Whether the agent can be selected by users"
+            },
+            "internal_only": {
+              "type": "boolean",
+              "description": "Whether the agent is for internal system use only"
+            }
+          },
+          "additionalProperties": false
+        },
+        "risk": {
+          "type": "object",
+          "required": ["level", "rationale"],
+          "properties": {
+            "level": {
+              "type": "string",
+              "enum": ["low", "medium", "high", "critical"],
+              "description": "Risk level associated with the agent"
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 10,
+              "description": "Explanation of the risk assessment"
+            }
+          },
+          "additionalProperties": false
+        },
+        "approval": {
+          "type": "object",
+          "required": ["required", "type", "approvers"],
+          "properties": {
+            "required": {
+              "type": "boolean",
+              "description": "Whether approval is required to run this agent"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["none", "manual", "automated"],
+              "description": "Type of approval process"
+            },
+            "approvers": {
+              "type": "array",
+              "description": "List of roles or individuals who can approve",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "startup": {
+          "type": "object",
+          "required": ["auto_start", "allowed_profiles"],
+          "properties": {
+            "auto_start": {
+              "type": "boolean",
+              "description": "Whether the agent should auto-start (should be false for security)"
+            },
+            "allowed_profiles": {
+              "type": "array",
+              "description": "List of environment profiles where agent can run",
+              "items": {
+                "type": "string",
+                "enum": ["development", "staging", "production"]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "healthcheck": {
+          "type": "object",
+          "required": ["endpoint", "interval_seconds"],
+          "properties": {
+            "endpoint": {
+              "type": "string",
+              "pattern": "^/api/agents/[a-z0-9-]+/health$",
+              "description": "Health check endpoint for the agent"
+            },
+            "interval_seconds": {
+              "type": "integer",
+              "minimum": 30,
+              "maximum": 300,
+              "description": "Health check interval in seconds (30-300)"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
