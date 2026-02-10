@@ -1,0 +1,259 @@
+name: PR Governance Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
+jobs:
+  governance-validation:
+    name: Validate PR Governance
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run agent validation
+        run: npm run validate
+        continue-on-error: false
+      
+      - name: Run PR governance checklist
+        id: pr-check
+        run: |
+          npm run pr-check:verbose > pr-check-output.txt 2>&1 || true
+          cat pr-check-output.txt
+          
+          # Check if validation passed
+          if grep -q "🎉 All governance checks passed" pr-check-output.txt; then
+            echo "status=passed" >> $GITHUB_OUTPUT
+            echo "## ✅ Governance Check: PASSED" > pr-comment.md
+          elif grep -q "No blocking issues" pr-check-output.txt; then
+            echo "status=warning" >> $GITHUB_OUTPUT
+            echo "## ⚠️ Governance Check: WARNINGS" > pr-comment.md
+          else
+            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "## ❌ Governance Check: BLOCKED" > pr-comment.md
+          fi
+          
+          echo "" >> pr-comment.md
+          echo "\`\`\`" >> pr-comment.md
+          cat pr-check-output.txt >> pr-comment.md
+          echo "\`\`\`" >> pr-comment.md
+          
+          echo "" >> pr-comment.md
+          echo "---" >> pr-comment.md
+          echo "_Automated governance validation by BSM Governance Agent_" >> pr-comment.md
+      
+      - name: Comment PR with results
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const comment = fs.readFileSync('pr-comment.md', 'utf8');
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Governance Check')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+      
+      - name: Label PR based on risk
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            
+            // Extract risk level from PR description
+            const riskMatch = prBody.match(/\*\*Risk Level\*\*:\s*(low|medium|high|critical)/i);
+            
+            if (riskMatch) {
+              const riskLevel = riskMatch[1].toLowerCase();
+              const labels = [`risk:${riskLevel}`];
+              
+              // Add governance label
+              labels.push('governance-check');
+              
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: labels
+              });
+            }
+      
+      - name: Check governance status
+        if: steps.pr-check.outputs.status == 'failed'
+        run: |
+          echo "❌ Governance check failed. PR is BLOCKED."
+          echo "Please review the governance violations above and address them."
+          exit 1
+
+  security-governance:
+    name: Security Governance Check
+    runs-on: ubuntu-latest
+    needs: governance-validation
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+      
+      - name: Check for wildcard patterns
+        run: |
+          echo "Checking for forbidden filesystem wildcards..."
+          
+          # Check for ** patterns in JS files (excluding safe contexts)
+          if git diff origin/main...HEAD -- '*.js' | grep -E '["'"'"']?\*\*["'"'"']?' | grep -v -E '(scripts/|tools/|test/)'; then
+            echo "❌ Found forbidden ** wildcard patterns in code"
+            echo "See SECURITY.md for filesystem security requirements"
+            exit 1
+          fi
+          
+          echo "✅ No forbidden wildcard patterns found"
+      
+      - name: Check admin token usage
+        run: |
+          echo "Checking admin endpoint security..."
+          
+          # Check if new admin routes have auth
+          if git diff origin/main...HEAD -- 'src/routes/**/*.js' | grep -E 'router\.(get|post|put|delete).*\/admin' | grep -v -E '(auth|requireAdmin)'; then
+            echo "⚠️ Warning: Admin routes should use auth middleware"
+          fi
+          
+          echo "✅ Admin security check completed"
+
+  documentation-check:
+    name: Documentation Compliance
+    runs-on: ubuntu-latest
+    needs: governance-validation
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Check documentation updates
+        run: |
+          echo "Checking documentation requirements..."
+          
+          # Get changed files
+          CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
+          
+          # Check if security files changed
+          if echo "$CHANGED_FILES" | grep -E '(middleware/auth|security|secrets)'; then
+            if ! echo "$CHANGED_FILES" | grep -q 'SECURITY.md'; then
+              echo "⚠️ Warning: Security-related changes should update SECURITY.md"
+            fi
+          fi
+          
+          # Check if architecture changed significantly
+          if echo "$CHANGED_FILES" | grep -E '(src/app.js|src/server.js)'; then
+            if ! echo "$CHANGED_FILES" | grep -q 'ARCHITECTURE.md'; then
+              echo "⚠️ Warning: Significant changes should update ARCHITECTURE.md"
+            fi
+          fi
+          
+          # Check if mobile mode changed
+          if echo "$CHANGED_FILES" | grep -E '(mobile|mobileMode)'; then
+            if ! echo "$CHANGED_FILES" | grep -q 'MOBILE_MODE.md'; then
+              echo "❌ Error: Mobile Mode changes MUST update MOBILE_MODE.md"
+              exit 1
+            fi
+          fi
+          
+          echo "✅ Documentation check completed"
+
+  approval-check:
+    name: Approval Requirements
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Check approval requirements
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            const riskMatch = prBody.match(/\*\*Risk Level\*\*:\s*(low|medium|high|critical)/i);
+            
+            if (riskMatch) {
+              const riskLevel = riskMatch[1].toLowerCase();
+              const requiredApprovals = {
+                low: 1,
+                medium: 1,
+                high: 2,
+                critical: 3
+              };
+              
+              const required = requiredApprovals[riskLevel] || 1;
+              
+              const { data: reviews } = await github.rest.pulls.listReviews({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number
+              });
+              
+              const approvals = reviews.filter(r => r.state === 'APPROVED').length;
+              
+              console.log(`Risk Level: ${riskLevel}`);
+              console.log(`Required Approvals: ${required}`);
+              console.log(`Current Approvals: ${approvals}`);
+              
+              if (approvals < required) {
+                core.warning(`This PR requires ${required} approvals but has only ${approvals}`);
+              }
+            }

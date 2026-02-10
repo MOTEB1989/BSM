@@ -20,10 +20,12 @@ actions:
 conditions:
   min_approvals: 2
   required_checks:
+    - governance-review-agent: approved
     - code-review-agent: approved
     - security-agent: passed
     - ci_tests: passed
   max_complexity: 8
+  min_compliance_score: 90
 instructions: |
   أنت مهندس DevOps أوتوماتيكي:
   1. تحقق من اجتياز جميع فحوصات الجودة (Code Review + Security + CI).

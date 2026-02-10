@@ -34,11 +34,11 @@ export async function selectAgentsForEvent(event) {
   const byId = new Map(allAgents.map(agent => [agent.id, agent]));
 
   if (event === "pull_request.opened" || event === "pull_request.synchronize") {
-    return ["code-review-agent", "security-agent", "integrity-agent"].map(id => byId.get(id)).filter(Boolean);
+    return ["governance-review-agent", "code-review-agent", "security-agent", "integrity-agent"].map(id => byId.get(id)).filter(Boolean);
   }
 
   if (event === "pull_request.ready_for_review") {
-    return ["code-review-agent", "security-agent"].map(id => byId.get(id)).filter(Boolean);
+    return ["governance-review-agent", "code-review-agent", "security-agent"].map(id => byId.get(id)).filter(Boolean);
   }
 
   if (event === "check_suite.completed") {
@@ -127,8 +127,21 @@ function buildUserPrompt(payload, context) {
 }
 
 function makeOrchestrationDecision(results) {
+  const governanceResult = results.find(result => result.agentId === "governance-review-agent");
   const securityResult = results.find(result => result.agentId === "security-agent");
   const codeReviewResult = results.find(result => result.agentId === "code-review-agent");
+
+  // Governance check takes priority
+  if (governanceResult) {
+    const governanceBlocked =
+      governanceResult.status === "failed" ||
+      String(governanceResult.result || "").includes("block") ||
+      String(governanceResult.result || "").includes("BLOCKED");
+
+    if (governanceBlocked) {
+      return { action: "block_pr", reason: "Governance violations detected" };
+    }
+  }
 
   const securityBlocked =
     securityResult?.status === "failed" ||

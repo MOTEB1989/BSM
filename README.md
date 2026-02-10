@@ -97,6 +97,55 @@ See [DNS Documentation](dns/GITHUB-PAGES-VERIFICATION.md) for detailed instructi
 - Node.js 22+
 - npm or equivalent package manager
 
+## Governance & Quality Process
+
+BSM enforces **governance-grade quality standards** for all code changes. Our comprehensive governance framework ensures security, compliance, and quality.
+
+### 📋 PR Review Checklist
+
+All pull requests must pass the BSM Governance Checklist covering:
+
+1. **🧭 Scope & Process** - Issue linking, milestone, acceptance criteria
+2. **🏛️ Governance & Ownership** - Risk assessment, approval rules, ownership
+3. **🔐 Security** - No wildcards, deny-by-default network, secrets management
+4. **📱 Mobile Constraints** - Mobile mode restrictions, no destructive actions
+5. **⚙️ Runtime Safety** - Agent behavior, startup safety, emergency controls
+6. **🧾 Audit & Logging** - Comprehensive audit trails, no sensitive data
+7. **🧪 Quality** - Tests, linting, code quality, breaking changes
+8. **📄 Documentation** - Traceability, required docs updated
+9. **⚠️ Red Flags** - Bypass detection, verifiability checks
+
+### Running Governance Checks
+
+```bash
+# Run comprehensive PR governance validation
+npm run pr-check
+
+# Verbose output
+npm run pr-check:verbose
+
+# Run agent validation
+npm run validate
+```
+
+### Key Documentation
+
+- **[GOVERNANCE.md](./GOVERNANCE.md)** - Governance policies and approval rules
+- **[SECURITY.md](./SECURITY.md)** - Security policies and requirements
+- **[MOBILE_MODE.md](./MOBILE_MODE.md)** - Mobile mode restrictions
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - System architecture
+
+### Automated Governance
+
+The platform includes automated governance checks via GitHub Actions:
+
+- ✅ **PR Governance Check** - Validates all checklist items automatically
+- 🔐 **Security Scans** - Gitleaks, wildcard detection, admin auth checks
+- 📄 **Documentation Compliance** - Ensures docs are updated
+- 🏷️ **Risk Labeling** - Automatic PR labeling based on risk level
+
+See `.github/workflows/pr-governance-check.yml` for implementation.
+
 ### Installation
 
 #### Quick Start (Automated)

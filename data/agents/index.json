@@ -3,6 +3,7 @@
     "my-agent.yaml",
     "legal-agent.yaml",
     "governance-agent.yaml",
+    "governance-review-agent.yaml",
     "code-review-agent.yaml",
     "security-agent.yaml",
     "pr-merge-agent.yaml",
