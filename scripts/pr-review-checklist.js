@@ -388,10 +388,16 @@ class PRGovernanceValidator {
       if (content) {
         // Look for fetch/http calls
         if (content.includes("fetch(") || content.includes("http.get") || content.includes("https.get")) {
-          // Check if it's to allowed hosts
-          const hasAllowlist = content.includes("allowedHosts") || content.includes("api.openai.com") || content.includes("api.github.com");
-          if (!hasAllowlist && !file.includes("gptService") && !file.includes("githubActions")) {
-            this.log(`  ⚠️ Network call without allowlist check in ${file}`, "yellow");
+          // Check if it's to allowed hosts (using hostname check, not substring)
+          // Valid patterns: checking hostname property, URL constructor
+          const hasProperValidation = 
+            content.includes("new URL(") && content.includes(".hostname") ||
+            content.includes("allowedHosts") ||
+            file.includes("gptService") || 
+            file.includes("githubActions");
+          
+          if (!hasProperValidation) {
+            this.log(`  ⚠️ Network call without proper hostname validation in ${file}`, "yellow");
             // Don't fail, but warn
           }
         }
