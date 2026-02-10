@@ -99,12 +99,41 @@ See [DNS Documentation](dns/GITHUB-PAGES-VERIFICATION.md) for detailed instructi
 
 ### Installation
 
+#### Quick Start (Automated)
+
+**Recommended**: Use our automated bootstrap scripts for easy setup:
+
+**Linux/macOS:**
+```bash
+git clone https://github.com/LexBANK/BSM.git
+cd BSM
+./scripts/bootstrap.sh
+```
+
+**Windows:**
+```powershell
+git clone https://github.com/LexBANK/BSM.git
+cd BSM
+.\scripts\bootstrap.ps1
+```
+
+The bootstrap script automatically:
+- Installs Node.js 18+ (if needed)
+- Creates `.env` from template
+- Installs dependencies
+- Validates configuration
+- Optionally starts dev server
+
+📖 See [BOOTSTRAP.md](./BOOTSTRAP.md) for detailed instructions and troubleshooting.
+
+#### Manual Installation
+
 ```bash
 # Clone the repository
-git clone https://github.com/LexBANK/BSU.git
+git clone https://github.com/LexBANK/BSM.git
 
 # Navigate to the project directory
-cd BSU
+cd BSM
 
 # Install dependencies
 npm install
