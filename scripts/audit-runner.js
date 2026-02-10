@@ -131,7 +131,7 @@ class AuditRunner {
         }
 
         // Check for consistent naming
-        const expectedId = file.replace(".yaml", "");
+        const expectedId = file.replace(/\.yaml$/, "");
         if (agent.id && agent.id !== expectedId) {
           this.addFinding(SEVERITY.LOW, "agents", 
             `AgentId mismatch: file=${file}, id=${agent.id}`,
@@ -250,7 +250,8 @@ class AuditRunner {
         this.addFinding(SEVERITY.INFO, "ui", "✓ API_BASE configured in chat UI");
       }
 
-      // Check for hardcoded URLs
+      // Check for hardcoded URLs (excluding CDNs and localhost)
+      // Note: Excludes common CDN domains (unpkg, cdn) and localhost for development
       const hardcodedUrlPattern = /https?:\/\/(?!unpkg|cdn|localhost)/g;
       const matches = content.match(hardcodedUrlPattern);
       if (matches && matches.length > 0) {

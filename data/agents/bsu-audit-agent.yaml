@@ -2,7 +2,7 @@ id: bsu-audit-agent
 name: BSU Audit Agent
 role: Safe audit-and-fix specialist for configuration, validation, and runtime safety
 description: Executes comprehensive audits to detect configuration issues, missing guards, and API/UI mismatches
-version: 1
+version: 1.0.0
 modelProvider: openai
 modelKey: bsm
 modelName: gpt-4o-mini
