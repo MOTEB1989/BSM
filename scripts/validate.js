@@ -54,4 +54,27 @@ idx.agents.forEach((file) => {
   }
 });
 
+// Validate registry
+const registryPath = path.join(process.cwd(), "agents", "registry.yaml");
+if (fs.existsSync(registryPath)) {
+  console.log("Validating agents registry...");
+  const registryContent = fs.readFileSync(registryPath, "utf8");
+  const registry = YAML.parse(registryContent);
+  must(registry && registry.agents, "Registry must contain agents array");
+  must(Array.isArray(registry.agents), "Registry agents must be an array");
+  
+  // Check that all registry agents have required governance fields
+  registry.agents.forEach((agent, idx) => {
+    const ref = `registry agent ${idx} (${agent.id})`;
+    must(agent.id, `${ref}: missing id`);
+    must(agent.risk, `${ref}: missing risk field`);
+    must(agent.approval, `${ref}: missing approval field`);
+    must(agent.startup, `${ref}: missing startup field`);
+    must(agent.healthcheck, `${ref}: missing healthcheck field`);
+    must(agent.contexts?.allowed, `${ref}: missing contexts.allowed array`);
+    must(agent.startup.auto_start === false, `${ref}: auto_start must be false`);
+  });
+  console.log(`✅ Registry validated: ${registry.agents.length} agents with governance fields`);
+}
+
 console.log("OK: validation passed");
