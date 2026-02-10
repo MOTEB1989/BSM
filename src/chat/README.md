@@ -206,8 +206,8 @@ const quickActions = computed(() => {
 
 ## استكشاف الأخطاء (Troubleshooting)
 
-### المشكلة: "API key not configured"
-**الحل**: أضف `OPENAI_BSU_KEY` إلى ملف `.env`
+### المشكلة: "AI service is not configured"
+**الحل**: أضف `OPENAI_BSM_KEY` أو `OPENAI_API_KEY` إلى ملف `.env`
 
 ### المشكلة: "CORS error"
 **الحل**: أضف أصل الطلب إلى `CORS_ORIGINS` في `.env`

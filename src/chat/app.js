@@ -161,7 +161,7 @@ createApp({
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.message || `HTTP ${res.status}`);
+          throw new Error(errData.message || errData.error || `HTTP ${res.status}`);
         }
 
         const data = await res.json();
