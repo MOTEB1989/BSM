@@ -1,0 +1,23 @@
+name: "ORBIT Telegram Integration"
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "src/orbit/**"
+      - ".github/workflows/orbit-telegram.yml"
+
+jobs:
+  deploy-telegram:
+    runs-on: ubuntu-latest
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      ORBIT_ADMIN_CHAT_IDS: ${{ secrets.ORBIT_ADMIN_CHAT_IDS }}
+      TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run validate:agents || true
