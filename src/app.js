@@ -12,6 +12,7 @@ import { notFound } from "./middleware/notFound.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { adminUiAuth } from "./middleware/auth.js";
 import { env } from "./config/env.js";
+import { getHealth } from "./controllers/healthController.js";
 
 import routes from "./routes/index.js";
 
@@ -49,6 +50,9 @@ app.use(
   })
 );
 app.use("/api", routes);
+
+// keep compatibility with health checks expecting a top-level route
+app.get("/health", getHealth);
 
 // root path redirects to chat UI
 app.get("/", (req, res) => res.redirect("/chat"));

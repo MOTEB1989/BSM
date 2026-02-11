@@ -8,6 +8,7 @@ import chat from "./chat.js";
 import orchestrator from "./orchestrator.js";
 import webhooks from "./webhooks.js";
 import emergency from "./emergency.js";
+import control from "./control.js";
 
 const router = Router();
 
@@ -18,6 +19,7 @@ router.use("/knowledge", knowledge);
 router.use("/admin", admin);
 router.use("/chat", chat);
 router.use("/orchestrator", orchestrator);
+router.use("/control", control);
 router.use("/webhooks", webhooks);
 router.use("/emergency", emergency);
 
