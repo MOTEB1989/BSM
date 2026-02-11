@@ -270,4 +270,4 @@ src/
 
 ## License
 
-Part of BSU (Business Service Management) platform.
+Part of BSM (Business Service Management) platform.
