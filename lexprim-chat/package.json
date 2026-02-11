@@ -1,0 +1,26 @@
+{
+  "name": "lexprim-chat",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Mobile-first Nuxt 3 chat interface for LexBANK BSM platform on lexprim.com",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@nuxt/ui": "^2.14.0",
+    "@pinia/nuxt": "^0.5.1",
+    "marked": "^11.2.0",
+    "nuxt": "^3.10.3",
+    "pinia": "^2.1.7",
+    "vue": "^3.4.19"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.11.4",
+    "sass": "^1.70.0"
+  }
+}
