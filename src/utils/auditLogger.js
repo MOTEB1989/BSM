@@ -1,4 +1,4 @@
-import { appendFile, readFile, mkdir, access } from "fs/promises";
+import { appendFile, mkdir, access } from "fs/promises";
 import { createReadStream } from "fs";
 import { createInterface } from "readline";
 import path from "path";
