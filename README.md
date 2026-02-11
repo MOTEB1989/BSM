@@ -73,10 +73,11 @@ BSU/
 - `/admin` - Admin UI dashboard (requires admin token via Basic Auth, `x-admin-token`, or `?token=...`)
 
 ### Standalone Frontend (GitHub Pages)
-- Hosted at `https://www.lexdo.uk` via GitHub Pages
+- Hosted at `https://www.lexdo.uk` or `https://lexprim.com` via GitHub Pages
 - Connects to the API backend (configurable URL)
 - Same chat interface with API URL configuration
 - Automated DNS verification setup available (see `dns/GITHUB-PAGES-VERIFICATION.md`)
+- **New:** Full deployment guide for lexprim.com available at [docs/LEXPRIM-DEPLOYMENT.md](docs/LEXPRIM-DEPLOYMENT.md)
 
 ## DNS Management
 

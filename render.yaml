@@ -8,5 +8,5 @@ services:
     # Environment variables should be set in Render dashboard:
     # - OPENAI_API_KEY or OPENAI_BSM_KEY or OPENAI_BSU_KEY (OpenAI API key)
     # - ADMIN_TOKEN (admin authentication token)
-    # - CORS_ORIGINS (comma-separated origins, e.g., https://www.lexdo.uk,https://lexdo.uk)
+    # - CORS_ORIGINS (comma-separated origins, e.g., https://www.lexdo.uk,https://lexdo.uk,https://lexprim.com,https://www.lexprim.com)
     # - NODE_ENV (production)

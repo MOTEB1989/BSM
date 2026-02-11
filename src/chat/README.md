@@ -145,7 +145,7 @@ PORT=3000
 NODE_ENV=production
 
 # CORS Origins
-CORS_ORIGINS=https://your-domain.com
+CORS_ORIGINS=https://your-domain.com,https://lexprim.com,https://www.lexprim.com
 
 # Admin Token
 ADMIN_TOKEN=secure-token-16-chars
