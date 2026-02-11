@@ -6,6 +6,28 @@ This document provides information about all BSM community and communication cha
 
 ## 📱 Public Telegram Channels
 
+### LexFix Support Bot
+
+**Status**: ✅ Active
+
+**Link**: https://t.me/LexFixBot
+
+**Purpose**:
+- Instant support and troubleshooting
+- Answer questions about BSM platform
+- Provide help with setup and configuration
+- General community assistance
+- Available 24/7
+
+**Audience**: All users, developers, and interested parties
+
+**Features**:
+- Quick responses to common questions
+- Help with getting started
+- Troubleshooting assistance
+- Direct link to documentation
+- Community support connection
+
 ### Official Announcements Channel
 
 **Status**: Coming Soon
@@ -193,7 +215,7 @@ When public channels are available:
 
 ### Q: Is there a Telegram channel I can join now?
 
-**A**: Public Telegram channels are currently in planning. When available, links will be posted in:
+**A**: Yes! The LexFix Support Bot is now available at https://t.me/LexFixBot for instant help and support. Additional public Telegram channels (announcements and community group) are in planning. When available, links will be posted in:
 - README.md
 - This document
 - GitHub announcements
@@ -226,6 +248,7 @@ When public channels are available:
 
 | Channel | Purpose | Status | Access |
 |---------|---------|--------|--------|
+| LexFix Bot | Quick support & help | ✅ Active | Public |
 | GitHub Issues | Bug reports, features | ✅ Active | Public |
 | GitHub Discussions | Q&A, ideas | ✅ Active | Public |
 | Telegram Announcements | Official updates | ⏳ Coming Soon | Public |

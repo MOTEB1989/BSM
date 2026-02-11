@@ -364,8 +364,9 @@ docker run -p 3000:3000 \
 ## الدعم (Support)
 
 للمشاكل والاستفسارات:
-- GitHub Issues: [LexBANK/BSM](https://github.com/LexBANK/BSM/issues)
-- Documentation: [lexdo.uk](https://lexdo.uk)
+- **🤖 بوت الدعم LexFixBot**: [https://t.me/LexFixBot](https://t.me/LexFixBot) - للمساعدة الفورية والدعم
+- **GitHub Issues**: [LexBANK/BSM](https://github.com/LexBANK/BSM/issues) - للإبلاغ عن المشاكل وطلبات الميزات
+- **Documentation**: [lexdo.uk](https://lexdo.uk) - الوثائق الكاملة
 
 ---
 

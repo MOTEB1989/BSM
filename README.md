@@ -421,6 +421,11 @@ Copyright © 2026 LexBANK. All rights reserved.
 
 We maintain active Telegram channels for community support and announcements:
 
+- **🤖 LexFix Support Bot** - Get instant help and support
+  - **Link**: https://t.me/LexFixBot
+  - Ask questions, get troubleshooting help, and community support
+  - Available 24/7 for assistance
+
 - **📢 Official Announcements Channel** - For project updates, releases, and official announcements
   - *Coming soon - Will be announced when available*
   
@@ -430,8 +435,6 @@ We maintain active Telegram channels for community support and announcements:
 - **🤖 ORBIT Admin Bot** - Private bot for repository management (admins only)
   - For administrators: See [ORBIT Quick Setup Guide](docs/ORBIT-QUICK-SETUP.md)
   - Not for general community support
-
-**Note**: We are currently setting up our public Telegram community channels. Once available, links will be posted here and in our documentation.
 
 ### 🐛 Report Issues
 
