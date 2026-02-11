@@ -88,6 +88,9 @@ The health score is calculated from multiple components:
   - -5 points per stale PR (>30 days)
   - -2 points per old issue (>90 days)
 
+**Final Score Calculation:**
+The final health score averages the Structure, License, and Documentation scores, then applies PR/issue penalties. For example, a repository with perfect structure (100) and documentation (100) but no license (0) would have a base score of 67/100 before any PR/issue penalties are applied.
+
 ### Score Thresholds
 
 - **90-100**: 🟢 Excellent - Repository is in great health
