@@ -176,7 +176,7 @@
 
         function updateDisplay() {
             currentDisplay.textContent = currentOperand;
-            if (operation != null) {
+            if (operation !== null) {
                 previousDisplay.textContent = `${previousOperand} ${operation}`;
             } else {
                 previousDisplay.textContent = '';
@@ -239,6 +239,14 @@
                     computation = prev / current;
                     break;
                 case '%':
+                    if (current === 0) {
+                        currentOperand = 'Error';
+                        operation = undefined;
+                        previousOperand = '';
+                        shouldResetScreen = true;
+                        updateDisplay();
+                        return;
+                    }
                     computation = prev % current;
                     break;
                 default:
@@ -260,7 +268,7 @@
         }
 
         function deleteNumber() {
-            if (currentOperand.length === 1) {
+            if (currentOperand === 'Error' || currentOperand.length === 1) {
                 currentOperand = '0';
             } else {
                 currentOperand = currentOperand.slice(0, -1);
