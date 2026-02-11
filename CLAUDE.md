@@ -39,12 +39,14 @@ src/
   middleware/        # Express middleware (auth, logging, correlation, errors)
   runners/           # Agent execution logic
   config/            # Environment and model configuration
+  database/          # Optional database connection helpers (MySQL)
   chat/              # Vue 3 + Tailwind chat UI
   admin/             # Admin dashboard UI
 data/
   agents/            # YAML agent definitions + index.json
   knowledge/         # Knowledge base documents
 scripts/             # Build and automation scripts
+  mysql/             # MySQL initialization scripts
 docs/                # Documentation and GitHub Pages frontend (lexdo.uk)
 ```
 
@@ -98,4 +100,16 @@ CI runs this validation on every PR and push to main (`.github/workflows/validat
 
 - **Render.com** - Default deployment target (`render.yaml`)
 - **Docker** - Multi-stage build available (`Dockerfile.example`)
+- **Docker Compose** - Multi-container setups:
+  - `docker-compose.mysql.yml` - MySQL 8.0 + Redis + Node.js
+  - `docker-compose.yml.example` - PostgreSQL 16 + Redis + Node.js
+  - `docker-compose.hybrid.yml` - Full stack with Go services
 - **GitHub Pages** - Frontend hosted at lexdo.uk (`docs/` directory)
+
+## Database Support (Optional)
+
+BSM includes optional database integration:
+- MySQL connection helper in `src/database/mysql.js`
+- Database initialization scripts in `scripts/mysql/`
+- See `docs/MYSQL-MULTI-CONTAINER.md` for setup guide
+- Requires `mysql2` package: `npm install mysql2`
