@@ -176,7 +176,7 @@
 
         function updateDisplay() {
             currentDisplay.textContent = currentOperand;
-            if (operation !== null) {
+            if (operation !== undefined) {
                 previousDisplay.textContent = `${previousOperand} ${operation}`;
             } else {
                 previousDisplay.textContent = '';
@@ -200,7 +200,7 @@
         }
 
         function chooseOperation(op) {
-            if (currentOperand === '') return;
+            if (currentOperand === '' || currentOperand === 'Error') return;
             if (previousOperand !== '') {
                 calculate();
             }
@@ -268,7 +268,9 @@
         }
 
         function deleteNumber() {
-            if (currentOperand === 'Error' || currentOperand.length === 1) {
+            if (currentOperand === 'Error') {
+                currentOperand = '0';
+            } else if (currentOperand.length === 1 || currentOperand === '0') {
                 currentOperand = '0';
             } else {
                 currentOperand = currentOperand.slice(0, -1);
