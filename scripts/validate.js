@@ -77,4 +77,30 @@ if (fs.existsSync(registryPath)) {
   console.log(`✅ Registry validated: ${registry.agents.length} agents with governance fields`);
 }
 
+// Validate orchestrator configuration
+const orchestratorConfigPath = path.join(process.cwd(), ".github", "agents", "orchestrator.config.json");
+if (fs.existsSync(orchestratorConfigPath)) {
+  console.log("Validating orchestrator configuration...");
+  try {
+    const configContent = fs.readFileSync(orchestratorConfigPath, "utf8");
+    const config = JSON.parse(configContent);
+    
+    // Basic validation
+    must(config.name, "Orchestrator config missing name");
+    must(config.version, "Orchestrator config missing version");
+    must(config.agents, "Orchestrator config missing agents array");
+    must(Array.isArray(config.agents) && config.agents.length > 0, "Orchestrator config must have non-empty agents array");
+    
+    // Validate secrets.logging.logSecrets is never true
+    if (config.secrets?.logging?.logSecrets === true) {
+      throw new Error("Security violation: secrets.logging.logSecrets must never be true");
+    }
+    
+    console.log(`✅ Orchestrator config validated: ${config.agents.length} agents configured`);
+  } catch (err) {
+    console.error("❌ Invalid orchestrator config:", err.message);
+    process.exit(1);
+  }
+}
+
 console.log("OK: validation passed");
