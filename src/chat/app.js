@@ -113,6 +113,10 @@ createApp({
       const text = input.value.trim();
       if (!text || loading.value) return;
 
+      const historyBeforeNewMessage = messages.value
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .map(m => ({ role: m.role, content: m.content }));
+
       error.value = '';
       input.value = '';
 
@@ -140,9 +144,7 @@ createApp({
           body = {
             message: text,
             language: lang.value,
-            history: messages.value
-              .filter(m => m.role === 'user' || m.role === 'assistant')
-              .map(m => ({ role: m.role, content: m.content }))
+            history: historyBeforeNewMessage
           };
         } else {
           // Agent-based chat

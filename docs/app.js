@@ -110,6 +110,10 @@ createApp({
       const text = input.value.trim();
       if (!text || loading.value) return;
 
+      const historyBeforeNewMessage = messages.value
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .map(m => ({ role: m.role, content: m.content }));
+
       const base = apiUrl.value.trim().replace(/\/+$/, '');
       if (!base) {
         showConfig.value = true;
@@ -143,9 +147,7 @@ createApp({
           body = {
             message: text,
             language: lang.value,
-            history: messages.value
-              .filter(m => m.role === 'user' || m.role === 'assistant')
-              .map(m => ({ role: m.role, content: m.content }))
+            history: historyBeforeNewMessage
           };
         } else {
           url = `${base}/api/chat`;
