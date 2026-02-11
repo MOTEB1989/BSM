@@ -1,164 +1,52 @@
+version: "1.0"
+
 agents:
+  - id: quality-governance
+    name: Quality & Governance Agent
+    category: governance
+    role: reviewer
+    execution:
+      runtime: node
+    safety:
+      mode: safe
+      requires_approval: false
 
-  - id: agent-auto
-    name: Auto Router
-    category: conversational
-    contexts:
-      allowed:
-        - chat
-        - api
-    expose:
-      selectable: true
-      internal_only: false
-    risk:
-      level: low
-      rationale: "Conversational agent with no system access or data modification capabilities"
-    approval:
-      required: false
-      type: none
-      approvers: []
-    startup:
-      auto_start: false
-      allowed_profiles:
-        - development
-        - production
-    healthcheck:
-      endpoint: /api/agents/agent-auto/health
-      interval_seconds: 60
+  - id: compliance-auditor
+    name: Compliance Auditor
+    category: audit
+    role: auditor
+    execution:
+      runtime: node
+    safety:
+      mode: safe
+      requires_approval: false
 
-  - id: agent-legal
-    name: Legal Expert
-    category: conversational
-    contexts:
-      allowed:
-        - chat
-        - api
-    expose:
-      selectable: true
-      internal_only: false
-    risk:
-      level: medium
-      rationale: "Handles sensitive legal information but read-only access"
-    approval:
-      required: true
-      type: manual
-      approvers:
-        - legal-team
-        - compliance-officer
-    startup:
-      auto_start: false
-      allowed_profiles:
-        - production
-    healthcheck:
-      endpoint: /api/agents/agent-legal/health
-      interval_seconds: 60
+  - id: legal-advisor
+    name: Legal Advisor
+    category: legal
+    role: advisor
+    execution:
+      runtime: node
+    safety:
+      mode: safe
+      requires_approval: false
 
-  - id: bsu-architect
-    name: BSU Autonomous Architect
-    category: infra
-    contexts:
-      allowed:
-        - github
-        - ci
-    expose:
-      selectable: false
-      internal_only: true
-    risk:
-      level: high
-      rationale: "Can modify infrastructure and codebase architecture"
-    approval:
-      required: true
-      type: automated
-      approvers:
-        - senior-architect
-        - tech-lead
-    startup:
-      auto_start: false
-      allowed_profiles:
-        - development
-    healthcheck:
-      endpoint: /api/agents/bsu-architect/health
-      interval_seconds: 120
+  - id: autonomous-architect
+    name: Autonomous Architect
+    category: architecture
+    role: planner
+    execution:
+      runtime: node
+    safety:
+      mode: destructive
+      requires_approval: true
 
-  - id: bsu-orchestrator
-    name: BSU Orchestrator
-    category: system
-    contexts:
-      allowed:
-        - api
-        - github
-        - system
-    expose:
-      selectable: false
-      internal_only: true
-    risk:
-      level: high
-      rationale: "Orchestrates multiple agents and has broad system access"
-    approval:
-      required: true
-      type: automated
-      approvers:
-        - platform-admin
-        - security-team
-    startup:
-      auto_start: false
-      allowed_profiles:
-        - production
-    healthcheck:
-      endpoint: /api/agents/bsu-orchestrator/health
-      interval_seconds: 90
-
-  - id: bsu-runner
-    name: BSU Runner
-    category: system
-    contexts:
-      allowed:
-        - ci
-        - system
-    expose:
-      selectable: false
-      internal_only: true
-    risk:
-      level: medium
-      rationale: "Executes tests and builds but in controlled CI environment"
-    approval:
-      required: false
-      type: none
-      approvers: []
-    startup:
-      auto_start: false
-      allowed_profiles:
-        - development
-        - staging
-        - production
-    healthcheck:
-      endpoint: /api/agents/bsu-runner/health
-      interval_seconds: 60
-
-  - id: bsu-security
-    name: BSU Security Agent
-    category: system
-    contexts:
-      allowed:
-        - github
-        - ci
-        - security
-    expose:
-      selectable: false
-      internal_only: true
-    risk:
-      level: critical
-      rationale: "Has access to security configurations and secret scanning"
-    approval:
-      required: true
-      type: automated
-      approvers:
-        - security-team
-        - ciso
-    startup:
-      auto_start: false
-      allowed_profiles:
-        - production
-    healthcheck:
-      endpoint: /api/agents/bsu-security/health
-      interval_seconds: 60
+  - id: pr-merge
+    name: PR Merge Agent
+    category: ci
+    role: executor
+    execution:
+      runtime: node
+    safety:
+      mode: restricted
+      requires_approval: true
