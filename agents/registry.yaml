@@ -1,10 +1,10 @@
 version: "1.0"
 
 agents:
-  - id: quality-governance
-    name: Quality & Governance Agent
+  - id: governance-agent
+    name: Governance Agent
     category: audit
-    role: reviewer
+    role: advisor
     execution:
       runtime: node
     safety:
@@ -14,14 +14,13 @@ agents:
       allowed:
         - chat
         - api
-        - ci
         - mobile
     expose:
       selectable: true
       internal_only: false
     risk:
       level: low
-      rationale: "Safe read-only governance review operations with no system modifications"
+      rationale: "Conversational governance advisory agent with no system modifications"
     approval:
       required: false
       type: none
@@ -33,46 +32,11 @@ agents:
         - staging
         - production
     healthcheck:
-      endpoint: /api/agents/quality-governance/health
+      endpoint: /api/agents/governance-agent/health
       interval_seconds: 60
 
-  - id: compliance-auditor
-    name: Compliance Auditor
-    category: audit
-    role: auditor
-    execution:
-      runtime: node
-    safety:
-      mode: safe
-      requires_approval: false
-    contexts:
-      allowed:
-        - chat
-        - api
-        - ci
-        - mobile
-    expose:
-      selectable: true
-      internal_only: false
-    risk:
-      level: low
-      rationale: "Safe audit operations with read-only access to configurations and logs"
-    approval:
-      required: false
-      type: none
-      approvers: []
-    startup:
-      auto_start: false
-      allowed_profiles:
-        - development
-        - staging
-        - production
-    healthcheck:
-      endpoint: /api/agents/compliance-auditor/health
-      interval_seconds: 60
-
-  - id: legal-advisor
-    name: Legal Advisor
+  - id: legal-agent
+    name: Legal Analysis Agent
     category: conversational
     role: advisor
     execution:
@@ -90,7 +54,7 @@ agents:
       internal_only: false
     risk:
       level: low
-      rationale: "Conversational agent providing legal information with no system access"
+      rationale: "Conversational legal advisory agent with no system modifications"
     approval:
       required: false
       type: none
@@ -102,44 +66,112 @@ agents:
         - staging
         - production
     healthcheck:
-      endpoint: /api/agents/legal-advisor/health
+      endpoint: /api/agents/legal-agent/health
       interval_seconds: 60
 
-  - id: autonomous-architect
-    name: Autonomous Architect
-    category: system
-    role: planner
+  - id: governance-review-agent
+    name: Governance Compliance Officer
+    category: audit
+    role: reviewer
     execution:
       runtime: node
     safety:
-      mode: destructive
-      requires_approval: true
+      mode: safe
+      requires_approval: false
     contexts:
       allowed:
         - api
         - ci
+        - github
     expose:
-      selectable: true
-      internal_only: false
+      selectable: false
+      internal_only: true
     risk:
-      level: high
-      rationale: "Can modify system architecture and generate destructive changes requiring careful review"
+      level: medium
+      rationale: "Reviews and blocks non-compliant changes but does not modify code directly"
     approval:
-      required: true
-      type: manual
-      approvers:
-        - admin
-        - architect
+      required: false
+      type: none
+      approvers: []
     startup:
       auto_start: false
       allowed_profiles:
         - development
         - staging
+        - production
     healthcheck:
-      endpoint: /api/agents/autonomous-architect/health
+      endpoint: /api/agents/governance-review-agent/health
+      interval_seconds: 90
+
+  - id: code-review-agent
+    name: Code Review Agent
+    category: audit
+    role: reviewer
+    execution:
+      runtime: node
+    safety:
+      mode: safe
+      requires_approval: false
+    contexts:
+      allowed:
+        - api
+        - ci
+        - github
+    expose:
+      selectable: false
+      internal_only: true
+    risk:
+      level: low
+      rationale: "Static code analysis and review with no system modifications"
+    approval:
+      required: false
+      type: none
+      approvers: []
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - development
+        - staging
+        - production
+    healthcheck:
+      endpoint: /api/agents/code-review-agent/health
+      interval_seconds: 90
+
+  - id: security-agent
+    name: Security Agent
+    category: security
+    role: auditor
+    execution:
+      runtime: node
+    safety:
+      mode: safe
+      requires_approval: false
+    contexts:
+      allowed:
+        - api
+        - ci
+        - github
+    expose:
+      selectable: false
+      internal_only: true
+    risk:
+      level: medium
+      rationale: "Security scanning and vulnerability detection with reporting capabilities"
+    approval:
+      required: false
+      type: none
+      approvers: []
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - development
+        - staging
+        - production
+    healthcheck:
+      endpoint: /api/agents/security-agent/health
       interval_seconds: 120
 
-  - id: pr-merge
+  - id: pr-merge-agent
     name: PR Merge Agent
     category: security
     role: executor
@@ -157,7 +189,7 @@ agents:
       internal_only: true
     risk:
       level: medium
-      rationale: "Automated PR merging with governance checks but requires careful quality gate validation"
+      rationale: "Automated PR merging with governance checks requires quality gate validation"
     approval:
       required: true
       type: automated
@@ -169,5 +201,106 @@ agents:
         - staging
         - production
     healthcheck:
-      endpoint: /api/agents/pr-merge/health
+      endpoint: /api/agents/pr-merge-agent/health
+      interval_seconds: 90
+
+  - id: integrity-agent
+    name: Repository Integrity Guardian
+    category: system
+    role: executor
+    execution:
+      runtime: node
+    safety:
+      mode: restricted
+      requires_approval: true
+    contexts:
+      allowed:
+        - api
+        - ci
+    expose:
+      selectable: true
+      internal_only: false
+    risk:
+      level: medium
+      rationale: "Repository maintenance operations including cleanup and validation"
+    approval:
+      required: true
+      type: manual
+      approvers:
+        - admin
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - development
+        - staging
+    healthcheck:
+      endpoint: /api/agents/integrity-agent/health
+      interval_seconds: 120
+
+  - id: bsu-audit-agent
+    name: BSU Audit Agent
+    category: audit
+    role: auditor
+    execution:
+      runtime: node
+    safety:
+      mode: safe
+      requires_approval: false
+    contexts:
+      allowed:
+        - api
+        - ci
+        - mobile
+    expose:
+      selectable: true
+      internal_only: false
+    risk:
+      level: low
+      rationale: "Safe audit operations detecting configuration issues with no modifications"
+    approval:
+      required: false
+      type: none
+      approvers: []
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - development
+        - staging
+        - production
+    healthcheck:
+      endpoint: /api/agents/bsu-audit-agent/health
+      interval_seconds: 90
+
+  - id: my-agent
+    name: BSU Smart Agent
+    category: system
+    role: executor
+    execution:
+      runtime: node
+    safety:
+      mode: restricted
+      requires_approval: true
+    contexts:
+      allowed:
+        - api
+        - ci
+    expose:
+      selectable: true
+      internal_only: false
+    risk:
+      level: medium
+      rationale: "Platform management with system oversight capabilities"
+    approval:
+      required: true
+      type: manual
+      approvers:
+        - admin
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - development
+        - staging
+        - production
+    healthcheck:
+      endpoint: /api/agents/my-agent/health
       interval_seconds: 90
