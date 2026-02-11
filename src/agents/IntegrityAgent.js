@@ -134,11 +134,13 @@ export class IntegrityAgent {
     try {
       const packageContent = await fs.readFile(packageJsonPath, "utf-8");
       const packageJson = JSON.parse(packageContent);
-      packageLicense = packageJson.license;
+      packageLicense = packageJson.license || null;
     } catch {
       // Package.json not found or invalid
     }
 
+    // Consider compliant only if EITHER license file exists OR package.json has license field
+    const compliant = licenseFound || (packageLicense !== null && packageLicense !== undefined);
     const score = licenseFound ? 100 : (packageLicense ? 50 : 0);
 
     return {
@@ -146,7 +148,7 @@ export class IntegrityAgent {
       licenseFileFound: licenseFound,
       licensePath,
       packageLicense,
-      compliant: licenseFound || packageLicense !== null
+      compliant
     };
   }
 
