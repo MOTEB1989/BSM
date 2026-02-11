@@ -1,6 +1,7 @@
 import { orchestrator } from "../runners/orchestrator.js";
 import { auditLogger } from "../utils/auditLogger.js";
 import { telegramAgent } from "../orbit/agents/TelegramAgent.js";
+import { buildTelegramStatusMessage } from "../services/telegramStatusService.js";
 import logger from "../utils/logger.js";
 
 const ADMIN_IDS = (process.env.ORBIT_ADMIN_CHAT_IDS || "")
@@ -75,7 +76,8 @@ export async function telegramWebhook(req, res) {
         return res.sendStatus(200);
       }
 
-      await reply(chatId, "✅ System online");
+      const statusMessage = buildTelegramStatusMessage();
+      await reply(chatId, statusMessage);
       return res.sendStatus(200);
     }
 
