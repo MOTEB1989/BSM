@@ -1,3 +1,0 @@
-{"timestamp":"2026-02-10T22:04:57.586Z","event":"agent","action":"start","agentId":"bsu-runner","success":true,"user":"system","ip":"::1","correlationId":"4693fd78-c84c-47df-9588-3154e07b093a"}
-{"timestamp":"2026-02-11T00:25:20.590Z","event":"access_denied","resource":"telegram_status","action":"status","reason":"Not admin","user":"telegram:12345","ip":"telegram","correlationId":"c676d256-167e-4590-b602-33aea8328a32"}
-{"timestamp":"2026-02-11T00:25:30.981Z","event":"access_denied","resource":"telegram_run","action":"run_agent","reason":"Not admin","user":"telegram:12345","ip":"telegram","correlationId":"d8f137fd-65a1-49b4-a1f6-7d6b298df2a8"}
