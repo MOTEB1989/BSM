@@ -1,7 +1,5 @@
 import { OrbitEngine } from './orbit.engine'
-
-const GITHUB_REPO = process.env.ORBIT_GITHUB_REPO || 'OWNER/REPO'
-const GITHUB_TOKEN = process.env.ORBIT_GITHUB_TOKEN
+import { dispatchToGitHub } from '../../utils/githubDispatch'
 
 export default {
   async scheduled() {
@@ -26,18 +24,4 @@ async function collectTelemetry() {
     duplicateFiles: 0,
     duplicateCodeBlocks: 0
   }
-}
-
-async function dispatchToGitHub(actions: string[]) {
-  await fetch(`https://api.github.com/repos/${GITHUB_REPO}/dispatches`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${GITHUB_TOKEN}`,
-      Accept: 'application/vnd.github+json'
-    },
-    body: JSON.stringify({
-      event_type: 'orbit_actions',
-      client_payload: { actions }
-    })
-  })
 }

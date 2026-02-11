@@ -3,21 +3,7 @@ import { loadAgents } from "../services/agentsService.js";
 import { auditLogger } from "../utils/auditLogger.js";
 import logger from "../utils/logger.js";
 import { AppError } from "../utils/errors.js";
-import YAML from "yaml";
-import fs from "fs";
-import path from "path";
-
-/**
- * Load registry configuration
- */
-const loadRegistry = () => {
-  const registryPath = path.join(process.cwd(), "agents", "registry.yaml");
-  if (!fs.existsSync(registryPath)) {
-    throw new AppError("Registry not found", 500, "REGISTRY_NOT_FOUND");
-  }
-  const content = fs.readFileSync(registryPath, "utf8");
-  return YAML.parse(content);
-};
+import { loadRegistry } from "../utils/registryCache.js";
 
 /**
  * POST /api/agents/start/:agentId

@@ -3,6 +3,7 @@ import { auditLogger } from "../utils/auditLogger.js";
 import { agentStateService } from "../services/agentStateService.js";
 import logger from "../utils/logger.js";
 import { env } from "../config/env.js";
+import { forbidden, serverError, success } from "../utils/httpResponses.js";
 
 const router = Router();
 
@@ -25,10 +26,7 @@ router.post("/shutdown", (req, res) => {
       correlationId: req.correlationId
     });
     
-    return res.status(403).json({
-      error: "Forbidden",
-      message: "Invalid admin token"
-    });
+    return forbidden(res, "Forbidden", "Invalid admin token");
   }
   
   // Log emergency shutdown
@@ -69,7 +67,7 @@ router.post("/shutdown", (req, res) => {
       }
     });
     
-    res.json({
+    success(res, {
       success: true,
       message: "Emergency shutdown initiated",
       agentsStopped: runningAgents.length,
@@ -86,10 +84,7 @@ router.post("/shutdown", (req, res) => {
   } catch (error) {
     logger.error({ error: error.message }, "Emergency shutdown failed");
     
-    res.status(500).json({
-      error: "Shutdown Failed",
-      message: error.message
-    });
+    serverError(res, "Shutdown Failed", error.message);
   }
 });
 
@@ -103,7 +98,7 @@ router.get("/status", (req, res) => {
     agentId => allStates[agentId].status === "running"
   );
   
-  res.json({
+  success(res, {
     emergencySystemReady: true,
     runningAgents: runningAgents.length,
     safeMode: env.safeMode,

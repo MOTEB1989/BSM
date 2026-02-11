@@ -8,32 +8,6 @@ import logger from "../utils/logger.js";
 
 const router = Router();
 
-router.get("/key-status", (req, res) => {
-  res.json({
-    timestamp: Date.now(),
-    status: {
-      openai: Boolean(models.openai?.default || models.openai?.bsm || models.openai?.bsu),
-      perplexity: Boolean(models.perplexity?.default)
-    },
-    ui: {
-      openai: "🤖 OpenAI",
-      perplexity: "🔍 Perplexity"
-    }
-  });
-});
-
-// Agent-based chat
-router.post("/", async (req, res, next) => {
-  try {
-    const { agentId, input } = req.body;
-    const result = await runAgent({ agentId, input });
-    res.json({ output: result.output });
-  } catch (err) {
-    next(err);
-  }
-});
-
-
 // AI key status for chat UI
 router.get("/key-status", async (_req, res, next) => {
   try {
@@ -56,6 +30,17 @@ router.get("/key-status", async (_req, res, next) => {
       status,
       ui
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Agent-based chat
+router.post("/", async (req, res, next) => {
+  try {
+    const { agentId, input } = req.body;
+    const result = await runAgent({ agentId, input });
+    res.json({ output: result.output });
   } catch (err) {
     next(err);
   }
@@ -123,29 +108,6 @@ router.post("/direct", async (req, res, next) => {
     res.json({ output });
   } catch (err) {
     next(err);
-  }
-});
-
-// Key status endpoint for Vue.js frontend
-router.get("/key-status", async (req, res) => {
-  try {
-    // Check for OpenAI API key (bsm = Business Service Management product key)
-    const apiKey = models.openai?.bsm || models.openai?.default;
-    res.json({ 
-      configured: !!apiKey,
-      timestamp: new Date().toISOString()
-    });
-  } catch (err) {
-    logger.error({
-      correlationId: req.correlationId,
-      message: "Error checking API key status",
-      error: err.message
-    });
-    res.status(500).json({ 
-      configured: false, 
-      error: "Failed to check API key status",
-      timestamp: new Date().toISOString()
-    });
   }
 });
 

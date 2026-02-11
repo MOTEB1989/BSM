@@ -1,6 +1,6 @@
+import { dispatchToGitHub } from '../../utils/githubDispatch'
+
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
-const GITHUB_REPO = process.env.ORBIT_GITHUB_REPO || 'OWNER/REPO'
-const GITHUB_TOKEN = process.env.ORBIT_GITHUB_TOKEN
 const ALLOWED_CHAT_IDS = (process.env.ORBIT_ADMIN_CHAT_IDS || '').split(',')
 
 export default {
@@ -56,20 +56,6 @@ async function sendTelegram(chatId: string, text: string) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text })
-  })
-}
-
-async function dispatchToGitHub(actions: string[]) {
-  await fetch(`https://api.github.com/repos/${GITHUB_REPO}/dispatches`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${GITHUB_TOKEN}`,
-      Accept: 'application/vnd.github+json'
-    },
-    body: JSON.stringify({
-      event_type: 'orbit_actions',
-      client_payload: { actions }
-    })
   })
 }
 
