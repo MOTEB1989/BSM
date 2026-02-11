@@ -52,7 +52,8 @@ The `orchestrator.config.json` file defines how the orchestrator coordinates mul
 
 #### Execution Settings
 - **mode**: `sequential` (run agents one after another) or `parallel` (run simultaneously)
-- **timeout**: Maximum total execution time in seconds (configured: 2400s / 40 minutes) - includes overhead beyond agent timeouts
+- **timeout**: Maximum total execution time in seconds (configured: 2400s / 40 minutes)
+  - Includes agent execution time (3×600s = 30 minutes) plus orchestrator overhead (10 minutes)
 - **timeoutRationale**: Explanation for timeout value (optional documentation field)
 - **continueOnError**: Whether to continue if an agent fails (default: false)
 
