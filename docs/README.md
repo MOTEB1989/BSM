@@ -40,6 +40,12 @@ The documentation is organized into the following categories:
 - API endpoints: See [README.md](../README.md#api-endpoints)
 - OpenAPI specification: Coming soon
 
+### 🛠️ Tools & Utilities
+
+| Tool | Description | Access |
+|------|-------------|--------|
+| [Calculator](calculator.html) | Modern calculator with keyboard support and dark theme | [Open Calculator](calculator.html) |
+
 ---
 
 ## 🎯 Quick Links by Role
