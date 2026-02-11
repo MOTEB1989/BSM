@@ -29,7 +29,7 @@ The `orchestrator.config.json` file defines how the orchestrator coordinates mul
   "version": "1.0.0",
   "execution": {
     "mode": "sequential",
-    "timeout": 1800,
+    "timeout": 2400,
     "continueOnError": false
   },
   "agents": [
