@@ -51,7 +51,7 @@ export async function logAgentExecution(agentId, userId, input, output, status, 
       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
     `, [agentId, userId, input, output, status, durationMs, startTime]);
     
-    console.log(\`✓ Logged execution for agent \${agentId}\`);
+    console.log(`✓ Logged execution for agent ${agentId}`);
   } catch (error) {
     // Log error but don't fail the agent execution
     console.error('Failed to log agent execution:', error.message);
@@ -67,7 +67,7 @@ router.get('/executions/recent', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
     
-    const executions = await query(\`
+    const executions = await query(`
       SELECT 
         e.id,
         e.agent_id,
@@ -80,7 +80,7 @@ router.get('/executions/recent', async (req, res) => {
       LEFT JOIN agents a ON e.agent_id = a.id
       ORDER BY e.started_at DESC
       LIMIT ?
-    \`, [limit]);
+    `, [limit]);
     
     res.json({
       success: true,
@@ -105,7 +105,7 @@ router.get('/agents/:agentId/stats', async (req, res) => {
   try {
     const { agentId } = req.params;
     
-    const stats = await queryOne(\`
+    const stats = await queryOne(`
       SELECT 
         COUNT(*) as total_executions,
         SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as successful,
@@ -115,7 +115,7 @@ router.get('/agents/:agentId/stats', async (req, res) => {
         MAX(duration_ms) as max_duration_ms
       FROM agent_executions
       WHERE agent_id = ?
-    \`, [agentId]);
+    `, [agentId]);
     
     res.json({
       success: true,
@@ -138,11 +138,11 @@ router.get('/agents/:agentId/stats', async (req, res) => {
  */
 export async function createAuditLog(eventType, action, req, details = {}) {
   try {
-    await query(\`
+    await query(`
       INSERT INTO audit_logs 
       (event_type, action, ip_address, user_agent, details, correlation_id)
       VALUES (?, ?, ?, ?, ?, ?)
-    \`, [
+    `, [
       eventType,
       action,
       req.ip,
@@ -171,12 +171,12 @@ router.get('/knowledge/search', async (req, res) => {
       });
     }
     
-    let sql = \`
+    let sql = `
       SELECT id, title, category, created_at,
              MATCH(title, content) AGAINST(? IN NATURAL LANGUAGE MODE) as relevance
       FROM knowledge_documents
       WHERE MATCH(title, content) AGAINST(? IN NATURAL LANGUAGE MODE)
-    \`;
+    `;
     
     const params = [q, q];
     

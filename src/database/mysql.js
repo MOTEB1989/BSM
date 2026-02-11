@@ -68,6 +68,9 @@ export function initPool() {
       })
       .catch(err => {
         console.error('✗ MySQL connection failed:', err.message);
+        console.error('  Check: 1) MySQL service is running (docker-compose ps)');
+        console.error('         2) Credentials in .env match docker-compose configuration');
+        console.error('         3) MySQL port 3306 is accessible');
         throw err;
       });
   }
