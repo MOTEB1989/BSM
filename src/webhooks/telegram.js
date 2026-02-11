@@ -4,13 +4,7 @@ import { telegramAgent } from "../orbit/agents/TelegramAgent.js";
 import { buildTelegramStatusMessage } from "../services/telegramStatusService.js";
 import { guardTelegramAgent, getAvailableTelegramAgents } from "../guards/telegramGuard.js";
 import logger from "../utils/logger.js";
-
-const ADMIN_IDS = (process.env.ORBIT_ADMIN_CHAT_IDS || "")
-  .split(",")
-  .map(v => v.trim())
-  .filter(Boolean);
-
-const SECRET_TOKEN = process.env.TELEGRAM_WEBHOOK_SECRET;
+import { verifyTelegramSecret, extractTelegramMessage, isAdminChatId } from "../utils/telegramUtils.js";
 
 /**
  * Telegram Webhook Handler
@@ -22,27 +16,15 @@ const SECRET_TOKEN = process.env.TELEGRAM_WEBHOOK_SECRET;
  */
 export async function telegramWebhook(req, res) {
   try {
-    // 1️⃣ Verify secret token (if set)
-    if (SECRET_TOKEN) {
-      const header = req.headers["x-telegram-bot-api-secret-token"];
-      if (header !== SECRET_TOKEN) {
-        auditLogger.logAccessDenied({
-          resource: "telegram_webhook",
-          action: "webhook_call",
-          reason: "Invalid secret token",
-          user: "telegram:unknown",
-          ip: "telegram",
-          correlationId: req.correlationId
-        });
-        return res.sendStatus(403);
-      }
+    // Verify secret token
+    if (!verifyTelegramSecret(req, res)) {
+      return; // Response already sent by verifyTelegramSecret
     }
 
-    const message = req.body?.message;
-    if (!message?.text) return res.sendStatus(200);
-
-    const chatId = String(message.chat.id);
-    const text = message.text.trim();
+    const parsed = extractTelegramMessage(req.body);
+    if (!parsed) return res.sendStatus(200);
+    
+    const { chatId, text } = parsed;
 
     logger.info({
       correlationId: req.correlationId,
@@ -50,7 +32,7 @@ export async function telegramWebhook(req, res) {
       text
     }, "Telegram message received");
 
-    // 2️⃣ /start & /help
+    // /start & /help
     if (text === "/start" || text === "/help") {
       await reply(chatId,
         "🤖 BSM Bot\n\n" +
@@ -61,9 +43,9 @@ export async function telegramWebhook(req, res) {
       return res.sendStatus(200);
     }
 
-    const isAdmin = ADMIN_IDS.includes(chatId);
+    const isAdmin = isAdminChatId(chatId);
 
-    // 3️⃣ /agents - List available agents
+    // /agents - List available agents
     if (text === "/agents") {
       try {
         const agents = getAvailableTelegramAgents(isAdmin);
@@ -82,7 +64,7 @@ export async function telegramWebhook(req, res) {
       return res.sendStatus(200);
     }
 
-    // 4️⃣ /status (admin only)
+    // /status (admin only)
     if (text === "/status") {
       if (!isAdmin) {
         auditLogger.logAccessDenied({
@@ -102,7 +84,7 @@ export async function telegramWebhook(req, res) {
       return res.sendStatus(200);
     }
 
-    // 5️⃣ /run <agent> (admin only)
+    // /run <agent> (admin only)
     if (text.startsWith("/run")) {
       if (!isAdmin) {
         auditLogger.logAccessDenied({

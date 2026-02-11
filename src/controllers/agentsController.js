@@ -3,6 +3,7 @@ import { runAgent } from "../runners/agentRunner.js";
 import { env } from "../config/env.js";
 import { loadRegistry } from "../utils/registryCache.js";
 import logger from "../utils/logger.js";
+import { badRequest, success } from "../utils/httpResponses.js";
 
 export const listAgents = async (req, res, next) => {
   try {
@@ -12,10 +13,11 @@ export const listAgents = async (req, res, next) => {
     // Validate mode parameter if provided
     const validModes = ["chat", "api", "ci", "mobile", "github", "system", "security"];
     if (mode && !validModes.includes(mode)) {
-      return res.status(400).json({
-        error: `Invalid mode parameter. Must be one of: ${validModes.join(", ")}`,
-        correlationId: req.correlationId
-      });
+      return badRequest(
+        res,
+        `Invalid mode parameter. Must be one of: ${validModes.join(", ")}`,
+        req.correlationId
+      );
     }
     
     // If mode filtering requested, load registry and filter
@@ -25,12 +27,11 @@ export const listAgents = async (req, res, next) => {
       if (!registry || !registry.agents) {
         logger.warn({ mode }, "Registry not available for mode filtering");
         // Fallback to unfiltered list
-        return res.json({ 
+        return success(res, { 
           agents, 
           mode,
-          filtered: false,
-          correlationId: req.correlationId 
-        });
+          filtered: false
+        }, req.correlationId);
       }
 
       // Filter agents by mode and enrich with context/safety info
@@ -62,13 +63,12 @@ export const listAgents = async (req, res, next) => {
         })
         .filter(Boolean); // Remove nulls
 
-      return res.json({
+      return success(res, {
         count: filteredAgents.length,
         agents: filteredAgents,
         mode,
-        filtered: true,
-        correlationId: req.correlationId
-      });
+        filtered: true
+      }, req.correlationId);
     }
 
     // No mode filtering - enrich all agents with registry info if available
@@ -89,14 +89,11 @@ export const listAgents = async (req, res, next) => {
         return agent;
       });
       
-      return res.json({ 
-        agents: enrichedAgents, 
-        correlationId: req.correlationId 
-      });
+      return success(res, { agents: enrichedAgents }, req.correlationId);
     }
 
     // Fallback to basic agent list
-    res.json({ agents, correlationId: req.correlationId });
+    success(res, { agents }, req.correlationId);
   } catch (err) {
     next(err);
   }
@@ -107,28 +104,23 @@ export const executeAgent = async (req, res, next) => {
     const { agentId, input } = req.body;
     
     if (!agentId || typeof agentId !== "string") {
-      return res.status(400).json({ 
-        error: "Invalid or missing agentId", 
-        correlationId: req.correlationId 
-      });
+      return badRequest(res, "Invalid or missing agentId", req.correlationId);
     }
     
     if (!input || typeof input !== "string") {
-      return res.status(400).json({ 
-        error: "Invalid or missing input", 
-        correlationId: req.correlationId 
-      });
+      return badRequest(res, "Invalid or missing input", req.correlationId);
     }
 
     if (input.length > env.maxAgentInputLength) {
-      return res.status(400).json({
-        error: `Input exceeds maximum length of ${env.maxAgentInputLength} characters`,
-        correlationId: req.correlationId
-      });
+      return badRequest(
+        res,
+        `Input exceeds maximum length of ${env.maxAgentInputLength} characters`,
+        req.correlationId
+      );
     }
     
     const result = await runAgent({ agentId, input });
-    res.json({ result, correlationId: req.correlationId });
+    success(res, { result }, req.correlationId);
   } catch (err) {
     next(err);
   }
