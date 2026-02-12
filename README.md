@@ -69,6 +69,13 @@ BSU/
 - `POST /api/chat` - Agent-based chat (requires `agentId` and `input`)
 - `POST /api/chat/direct` - Direct GPT chat with conversation history
 
+### Webhook Endpoints
+- `POST /webhook/github` - GitHub webhook endpoint (primary)
+- `POST /api/webhooks/github` - GitHub webhook endpoint (alternative)
+- `POST /api/webhooks/telegram` - Telegram bot webhook
+
+📖 See [GitHub Webhook Setup Guide](docs/GITHUB-WEBHOOK-SETUP.md) for configuration details.
+
 ### Chat Interface
 - `/chat` - Professional Arabic/English GPT chat interface (Vue 3 + Tailwind)
 

@@ -13,6 +13,7 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import { adminUiAuth } from "./middleware/auth.js";
 import { env } from "./config/env.js";
 import { getHealth } from "./controllers/healthController.js";
+import { handleGitHubWebhook } from "./controllers/webhookController.js";
 
 import routes from "./routes/index.js";
 
@@ -39,6 +40,9 @@ app.use(requestLogger);
 // Apply security middleware
 app.use(lanOnlyMiddleware);
 app.use(mobileModeMiddleware);
+
+// GitHub webhook endpoint (singular path for GitHub configuration)
+app.post("/webhook/github", handleGitHubWebhook);
 
 app.use(
   "/api",
