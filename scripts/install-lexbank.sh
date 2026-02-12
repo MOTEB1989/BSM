@@ -121,17 +121,30 @@ setup_database() {
     systemctl start postgresql
     systemctl enable postgresql
 
-    # Create database and user
+    # Create database and user (idempotent)
     sudo -u postgres psql << EOF
-CREATE DATABASE lexbank;
-CREATE USER lexbank WITH PASSWORD '${DB_PASSWORD}';
+DO
+\$\$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'lexbank') THEN
+        CREATE ROLE lexbank LOGIN PASSWORD '${DB_PASSWORD}';
+    ELSE
+        ALTER ROLE lexbank WITH PASSWORD '${DB_PASSWORD}';
+    END IF;
+END
+\$\$;
+
+SELECT 'CREATE DATABASE lexbank OWNER lexbank'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'lexbank')
+\gexec
+
 GRANT ALL PRIVILEGES ON DATABASE lexbank TO lexbank;
 ALTER DATABASE lexbank OWNER TO lexbank;
 \q
 EOF
 
     success "Database 'lexbank' created"
-    log "Database password: ${DB_PASSWORD} (save this!)"
+    log "Database credentials were saved in ${APP_DIR}/.env"
 }
 
 # ==============================================================================
@@ -191,11 +204,13 @@ app.use(helmet({
 }));
 
 app.use(cors({
-    origin: [
-        'https://lexbank.com',
-        'https://www.lexbank.com',
-        'http://localhost:3000'
-    ],
+    origin: (process.env.CORS_ORIGINS
+        ? process.env.CORS_ORIGINS.split(',').map((item) => item.trim())
+        : [
+            'https://lexbank.com',
+            'https://www.lexbank.com',
+            'http://localhost:3000'
+        ]),
     credentials: true
 }));
 
@@ -372,6 +387,7 @@ DATABASE_URL=postgresql://lexbank:${DB_PASSWORD}@localhost:5432/lexbank
 # === Security ===
 ADMIN_TOKEN=${ADMIN_TOKEN}
 JWT_SECRET=${JWT_SECRET}
+CORS_ORIGINS=https://${DOMAIN},https://www.${DOMAIN},http://localhost:3000
 
 # === AI APIs (Add your keys) ===
 # OPENAI_API_KEY=your_key_here
