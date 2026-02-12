@@ -24,7 +24,7 @@ actions:
 
 risk:
   level: medium
-  justification: "Governance agent reviews and blocks non-compliant changes but does not modify code directly"
+  rationale: "Reviews and blocks non-compliant changes but does not modify code directly"
 
 ownership:
   team: "Governance Team"
