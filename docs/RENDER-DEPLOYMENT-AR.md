@@ -192,8 +192,7 @@ ADMIN_TOKEN=<النص_المولد>
 
 ## المراجع
 
-- [Render Documentation](https://render.com/docs)
-- [GitHub Webhook Setup Guide](GITHUB-WEBHOOK-SETUP.md)
+- [GitHub Webhook Setup Guide](./GITHUB-WEBHOOK-SETUP.md)
 - [BSM Documentation](../README.md)
 - [Environment Variables Reference](../.env.example)
 

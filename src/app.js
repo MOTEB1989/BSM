@@ -37,12 +37,13 @@ app.use(express.json({ limit: '1mb' }));
 app.use(correlationMiddleware);
 app.use(requestLogger);
 
+// GitHub webhook endpoint (before security middleware to allow external requests)
+// GitHub webhooks come from GitHub's servers, not from LAN or mobile devices
+app.post("/webhook/github", handleGitHubWebhook);
+
 // Apply security middleware
 app.use(lanOnlyMiddleware);
 app.use(mobileModeMiddleware);
-
-// GitHub webhook endpoint (singular path for GitHub configuration)
-app.post("/webhook/github", handleGitHubWebhook);
 
 app.use(
   "/api",
