@@ -82,7 +82,14 @@ BSU/
 ### Admin Endpoints (requires x-admin-token header)
 - `GET /api/admin/agents` - Get agents configuration
 - `GET /api/admin/knowledge` - Get knowledge documents
-- `/admin` - Admin UI dashboard (requires admin token via Basic Auth, `x-admin-token`, or `?token=...`)
+- `/admin` - Admin UI dashboard
+
+#### Authentication Barrier
+- الخدمة تعرض مطالبة اسم مستخدم/كلمة مرور (HTTP Basic/Auth challenge) مع حالة `Unauthorized (401)` عند عدم تمرير بيانات اعتماد صحيحة.
+
+**احتمالات (غير جازمة):**
+- Basic Auth على مستوى البروكسي أو طبقة البوابة الأمامية.
+- حماية مصادقة داخلية على مستوى التطبيق نفسه.
 
 ### Standalone Frontend (GitHub Pages)
 - Hosted at `https://www.lexdo.uk` or `https://lexprim.com` via GitHub Pages
