@@ -9,14 +9,14 @@ export const handleGitHubWebhook = async (req, res, next) => {
     const payload = JSON.stringify(req.body);
     const secret = process.env.GITHUB_WEBHOOK_SECRET;
 
-    if (!secret) {
-      logger.error("Rejecting GitHub webhook: missing GITHUB_WEBHOOK_SECRET");
-      return res.status(401).send("Unauthorized");
-    }
-
     if (!verifySignature(payload, signature, secret)) {
-      logger.warn("Rejecting GitHub webhook: invalid signature");
-      return res.status(401).send("Unauthorized");
+      logger.warn("Rejecting GitHub webhook request: signature validation failed");
+      return res.status(401).json({
+        error: {
+          code: "INVALID_WEBHOOK_SIGNATURE",
+          message: "Unauthorized webhook request"
+        }
+      });
     }
 
     const event = req.headers["x-github-event"];
@@ -91,7 +91,7 @@ function transformGitHubEvent(event, data) {
 
 export function verifySignature(payload, signature, secret) {
   if (!secret) {
-    logger.error("Cannot verify GitHub webhook signature: missing secret");
+    logger.error("Cannot verify GitHub webhook signature: missing GITHUB_WEBHOOK_SECRET security configuration");
     return false;
   }
 
