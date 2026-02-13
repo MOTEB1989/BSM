@@ -419,6 +419,8 @@ The project includes GitHub Actions workflows:
 ### DNS and Infrastructure
 - [DNS Record Types](dns/DNS-RECORD-TYPES.md) - Cloudflare DNS configuration
 - [GitHub Pages Verification](dns/GITHUB-PAGES-VERIFICATION.md) - Custom domain setup
+- [Cloudflare API Names (Arabic)](docs/CLOUDFLARE-API-NAMES.md) - Complete Cloudflare API reference
+- [Cloudflare Quick Reference (Arabic)](docs/CLOUDFLARE-QUICK-REFERENCE-AR.md) - Quick guide to Cloudflare API variables
 
 ## Contributing
 
