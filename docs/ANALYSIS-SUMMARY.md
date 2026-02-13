@@ -1,12 +1,18 @@
-# BSM Architectural Analysis - Session Summary
+# LexBANK / BSU Platform - Analysis Session Summary
 
 > **Session Date**: 2026-02-06  
 > **Agent**: BSM Autonomous Architect  
 > **Task**: Initial platform analysis and documentation  
 
+## Scope Verified
+
+- **Repository Name**: `LexBANK/BSU` (aligned with `README.md` title: **LexBANK / BSU Platform**).
+- **Repository Type**: Multi-service platform (hybrid Node.js/Go microservices architecture).
+- **Session Scope**: This analysis session belongs to the current repository (`/workspace/BSM`), not an external repository.
+
 ## Objective
 
-Analyze the BSM platform architecture, identify improvement opportunities, and generate comprehensive documentation for developers, architects, and operations teams.
+Analyze the **LexBANK / BSU Platform** architecture, identify improvement opportunities, and generate comprehensive documentation for developers, architects, and operations teams.
 
 ## Analysis Conducted
 
