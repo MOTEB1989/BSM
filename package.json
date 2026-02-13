@@ -9,6 +9,7 @@
     "start": "node src/server.js",
     "validate": "node scripts/validate.js",
     "validate:registry": "node scripts/validate-registry.js",
+    "validate:agent-sync": "node scripts/validate-agent-sync.js",
     "test": "node scripts/validate.js",
     "health": "node scripts/health-check.js",
     "health:detailed": "node scripts/health-check.js --detailed",
