@@ -38,8 +38,8 @@ router.get("/key-status", async (_req, res, next) => {
 // Agent-based chat
 router.post("/", async (req, res, next) => {
   try {
-    const { agentId, input } = req.body;
-    const result = await runAgent({ agentId, input });
+    const { agentId, input, payload } = req.body;
+    const result = await runAgent({ agentId, input, payload });
     res.json({ output: result.output });
   } catch (err) {
     next(err);

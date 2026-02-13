@@ -479,6 +479,22 @@ monitoring:
     - error_rate
 ```
 
+### Prompt Template Variables (runAgent)
+
+When `systemPrompt` or `userPrompt` is provided in agent YAML, the runner now uses a lightweight `{{variable}}` template replacement.
+
+Supported placeholders:
+- `{{input}}`: raw user input text
+- `{{knowledge}}`: knowledge index entries joined by new lines
+- `{{agentName}}` / `{{agentRole}}`: agent identity fields
+- `{{payload}}`: full payload object serialized to string when needed
+- `{{payload.someKey}}`: nested payload values using dot notation
+- `{{someKey}}`: shortcut for top-level keys in `payload`
+
+Fallback behavior for backward compatibility:
+- If `systemPrompt` is missing, runner uses legacy prompt based on `name` + `role`.
+- If `userPrompt` is missing, runner uses legacy prompt containing knowledge + user input.
+
 ### Configuration Best Practices
 
 **1. Versioning**:

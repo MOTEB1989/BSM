@@ -101,7 +101,7 @@ export const listAgents = async (req, res, next) => {
 
 export const executeAgent = async (req, res, next) => {
   try {
-    const { agentId, input } = req.body;
+    const { agentId, input, payload } = req.body;
     
     if (!agentId || typeof agentId !== "string") {
       return badRequest(res, "Invalid or missing agentId", req.correlationId);
@@ -119,7 +119,7 @@ export const executeAgent = async (req, res, next) => {
       );
     }
     
-    const result = await runAgent({ agentId, input });
+    const result = await runAgent({ agentId, input, payload });
     success(res, { result }, req.correlationId);
   } catch (err) {
     next(err);

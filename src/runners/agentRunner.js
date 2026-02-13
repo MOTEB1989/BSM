@@ -7,7 +7,22 @@ import { createFile } from "../actions/githubActions.js";
 import { extractIntent, intentToAction } from "../utils/intent.js";
 import logger from "../utils/logger.js";
 
-export const runAgent = async ({ agentId, input }) => {
+const resolveTemplateValue = (context, keyPath) => {
+  return keyPath
+    .split(".")
+    .reduce((value, key) => (value && typeof value === "object" ? value[key] : undefined), context);
+};
+
+const renderPromptTemplate = (template, context) => {
+  if (typeof template !== "string") return "";
+
+  return template.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_match, keyPath) => {
+    const value = resolveTemplateValue(context, keyPath);
+    return value === undefined || value === null ? "" : String(value);
+  });
+};
+
+export const runAgent = async ({ agentId, input, payload = {} }) => {
   try {
     const agents = await loadAgents();
     const agent = agents.find(a => a.id === agentId);
@@ -19,8 +34,25 @@ export const runAgent = async ({ agentId, input }) => {
     const keyName = agent.modelKey || "bsm";
     const apiKey = models[provider]?.[keyName] || models[provider]?.default;
 
-    const systemPrompt = `You are ${agent.name}. Role: ${agent.role}. Use the knowledge responsibly.`;
-    const userPrompt = `Knowledge:\n${knowledge.join("\n")}\n\nUser Input:\n${input}`;
+    const defaultSystemPrompt = `You are ${agent.name}. Role: ${agent.role}. Use the knowledge responsibly.`;
+    const defaultUserPrompt = `Knowledge:\n${knowledge.join("\n")}\n\nUser Input:\n${input}`;
+
+    const promptContext = {
+      input,
+      knowledge: knowledge.join("\n"),
+      payload,
+      agentName: agent.name,
+      agentRole: agent.role,
+      ...payload
+    };
+
+    const systemPrompt = agent.systemPrompt
+      ? renderPromptTemplate(agent.systemPrompt, promptContext)
+      : defaultSystemPrompt;
+
+    const userPrompt = agent.userPrompt
+      ? renderPromptTemplate(agent.userPrompt, promptContext)
+      : defaultUserPrompt;
 
     const result = await runGPT({
       model: agent.modelName || process.env.OPENAI_MODEL,
