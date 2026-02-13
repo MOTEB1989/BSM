@@ -24,6 +24,7 @@ export const env = {
   maxAgentInputLength: parseNumber(process.env.MAX_AGENT_INPUT_LENGTH, 4000),
   defaultModel: process.env.DEFAULT_MODEL || "gpt-4o-mini",
   modelRouterStrategy: process.env.MODEL_ROUTER_STRATEGY || "balanced",
+  githubWebhookSecret: process.env.GITHUB_WEBHOOK_SECRET,
   fallbackEnabled: parseBoolean(process.env.FALLBACK_ENABLED, true),
   perplexityModel: process.env.PERPLEXITY_MODEL || "llama-3.1-sonar-large-128k-online",
   perplexityCitations: parseBoolean(process.env.PERPLEXITY_CITATIONS, true),
@@ -48,6 +49,10 @@ if (env.nodeEnv === "production" && !env.adminToken) {
 
 if (env.nodeEnv === "production" && env.adminToken && env.adminToken.length < 16) {
   throw new Error("ADMIN_TOKEN must be at least 16 characters in production");
+}
+
+if (env.nodeEnv === "production" && !env.githubWebhookSecret) {
+  throw new Error("GITHUB_WEBHOOK_SECRET must be set in production");
 }
 
 // Validate egress policy
