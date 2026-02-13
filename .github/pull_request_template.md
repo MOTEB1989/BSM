@@ -4,7 +4,6 @@
 
 <!-- Provide a brief description of the changes in this PR -->
 
-
 ## Related Issue
 
 <!-- Link to the issue this PR addresses -->
@@ -28,12 +27,41 @@ Closes #
 **Justification**:
 <!-- Explain why this risk level is appropriate -->
 
-
 ## Ownership
 
 **Team**: <!-- Platform Engineering / Security / Data / DevOps -->  
 **Owner**: @<!-- GitHub username -->  
 **Review By**: <!-- YYYY-MM-DD (within 90 days) -->
+
+---
+
+## ✅ Mandatory Engineering Checklist (Hard Gate)
+
+> **All items below are required before merge.** PR Checklist Gate will block merge until completed.
+
+- [ ] Lint pass
+- [ ] Build pass
+- [ ] Tests pass (if tests exist)
+- [ ] No secrets in code, logs, commits, or PR description
+- [ ] Migration notes added (required only if DB schema/data changed)
+
+---
+
+## Risk & Rollback
+
+> **Required when changes touch `server/api/` or database artifacts (migrations/schema/SQL).**
+
+### Risk
+
+<!-- Describe blast radius, user impact, and failure scenarios -->
+
+### Rollback Plan
+
+<!-- Exact rollback steps (revert commit, disable flag, restore DB backup, etc.) -->
+
+### Monitoring / Verification
+
+<!-- What metrics/logs/health checks will confirm successful rollout or rollback? -->
 
 ---
 
@@ -144,13 +172,11 @@ Closes #
 
 <!-- If UI changes, include before/after screenshots or a demo video -->
 
-
 ---
 
 ## 🔍 Reviewer Notes
 
 <!-- Any specific areas you'd like reviewers to focus on -->
-
 
 ---
 
@@ -158,13 +184,11 @@ Closes #
 
 <!-- Any special deployment considerations, environment variables, or migration steps -->
 
-
 ---
 
 ## 🚀 Post-Merge Actions
 
 <!-- Actions to be taken after merging (e.g., update documentation, notify users, monitor metrics) -->
-
 
 ---
 
@@ -187,7 +211,6 @@ Closes #
 
 **Reason**: 
 <!-- Required: Document specific reason for your decision -->
-
 
 ---
 
