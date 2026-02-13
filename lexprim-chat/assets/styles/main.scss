@@ -6,6 +6,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.app-shell {
+  min-height: 100dvh;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.chat-input-shell {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
 // RTL Support
 [dir="rtl"] {
   text-align: right;
@@ -53,7 +62,7 @@ body {
 .typing-dots {
   span {
     @apply w-2 h-2 bg-gray-400 rounded-full animate-bounce;
-    
+
     &:nth-child(1) {
       animation-delay: 0ms;
     }
@@ -71,11 +80,11 @@ body {
   &::-webkit-scrollbar {
     width: 6px;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     @apply bg-gray-700 rounded-full;
   }
-  
+
   &::-webkit-scrollbar-track {
     @apply bg-transparent;
   }

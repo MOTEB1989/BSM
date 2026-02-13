@@ -1,5 +1,5 @@
 <template>
-  <div class="border-t border-gray-800 bg-gray-900/50 backdrop-blur-md p-4">
+  <div class="chat-input-shell border-t border-gray-800 bg-gray-900/50 backdrop-blur-md p-4">
     <div class="max-w-4xl mx-auto">
       <div class="flex gap-3 items-end">
         <!-- Text Input -->
