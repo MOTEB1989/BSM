@@ -28,6 +28,7 @@ The documentation is organized into the following categories:
 |----------|-------------|------|----------|
 | [Security & Deployment Guide](SECURITY-DEPLOYMENT.md) | Security best practices, deployment procedures, and incident response | 17KB | DevOps, Security |
 | [CI/CD Recommendations](CICD-RECOMMENDATIONS.md) | Pipeline enhancements and automation strategies | 13KB | DevOps, Developers |
+| [Documentation Deployment Policy](DOCS-DEPLOYMENT.md) | Official policy for docs source, CI/CD publishing flow, and versioning | 6KB | DevOps, Tech Writers, Maintainers |
 
 ### 🧹 Repository Maintenance
 
@@ -90,8 +91,8 @@ The documentation is organized into the following categories:
 
 | Metric | Value |
 |--------|-------|
-| **Total Documents** | 5 major documents |
-| **Total Size** | 81KB |
+| **Total Documents** | 6 major documents |
+| **Total Size** | 87KB |
 | **Code Examples** | 50+ snippets |
 | **Diagrams** | 3 architecture diagrams |
 | **Recommendations** | 20+ actionable items |
