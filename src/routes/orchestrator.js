@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { triggerOrchestration } from "../controllers/orchestratorController.js";
+import { getAllEventStrategies } from "../config/orchestratorEvents.js";
 
 const router = Router();
 
@@ -12,5 +13,19 @@ const router = Router();
  * 4. Generates consolidated report
  */
 router.post("/run", triggerOrchestration);
+
+/**
+ * GET /orchestrator/config
+ * Returns the orchestrator event configuration
+ */
+router.get("/config", (req, res) => {
+  const strategies = getAllEventStrategies();
+  res.json({
+    success: true,
+    strategies,
+    totalEvents: strategies.length,
+    correlationId: req.correlationId
+  });
+});
 
 export default router;

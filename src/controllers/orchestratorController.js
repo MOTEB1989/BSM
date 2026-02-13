@@ -28,7 +28,7 @@ export const triggerOrchestration = async (req, res, next) => {
 
     // Generate and save report
     const report = generateReport(results);
-    saveReport(init.reportFile, report);
+    await saveReport(init.reportFile, report);
 
     res.json({ 
       success: true,
