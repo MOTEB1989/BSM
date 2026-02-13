@@ -17,9 +17,10 @@ NC='\033[0m' # No Color
 # Configuration
 DOMAIN="${DOMAIN:-lexbank.com}"
 EMAIL="${EMAIL:-admin@lexbank.com}"
-DB_PASSWORD="${DB_PASSWORD:-$(openssl rand -base64 32)}"
-ADMIN_TOKEN="${ADMIN_TOKEN:-$(openssl rand -hex 32)}"
-JWT_SECRET="${JWT_SECRET:-$(openssl rand -hex 64)}"
+DB_PASSWORD="${DB_PASSWORD:-}"
+ADMIN_TOKEN="${ADMIN_TOKEN:-}"
+JWT_SECRET="${JWT_SECRET:-}"
+NON_INTERACTIVE="${NON_INTERACTIVE:-false}"
 APP_DIR="/var/www/lexbank"
 LOG_DIR="/var/log/lexbank"
 
@@ -44,6 +45,64 @@ error() {
     exit 1
 }
 
+print_usage() {
+    cat <<'USAGEEOF'
+Usage: sudo bash scripts/install-lexbank.sh [OPTIONS]
+
+Options:
+  --non-interactive     Do not prompt for confirmation on unsupported OS.
+  -h, --help            Show this help message.
+
+Environment overrides:
+  DOMAIN, EMAIL, DB_PASSWORD, ADMIN_TOKEN, JWT_SECRET, NON_INTERACTIVE
+USAGEEOF
+}
+
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --non-interactive)
+                NON_INTERACTIVE="true"
+                shift
+                ;;
+            -h|--help)
+                print_usage
+                exit 0
+                ;;
+            *)
+                error "Unknown argument: $1"
+                ;;
+        esac
+    done
+}
+
+generate_secret() {
+    local mode="$1"
+    local length="$2"
+
+    if command -v openssl >/dev/null 2>&1; then
+        if [[ "$mode" == "hex" ]]; then
+            openssl rand -hex "$length"
+        else
+            openssl rand -base64 "$length"
+        fi
+        return
+    fi
+
+    warning "openssl not found. Falling back to /dev/urandom for secret generation."
+    if [[ "$mode" == "hex" ]]; then
+        head -c "$length" /dev/urandom | xxd -p -c "$length"
+    else
+        head -c "$length" /dev/urandom | base64
+    fi
+}
+
+ensure_runtime_config() {
+    [[ -z "$DB_PASSWORD" ]] && DB_PASSWORD="$(generate_secret base64 32)"
+    [[ -z "$ADMIN_TOKEN" ]] && ADMIN_TOKEN="$(generate_secret hex 32)"
+    [[ -z "$JWT_SECRET" ]] && JWT_SECRET="$(generate_secret hex 64)"
+}
+
 # ==============================================================================
 # Pre-flight Checks
 # ==============================================================================
@@ -57,6 +116,10 @@ check_root() {
 check_os() {
     if ! grep -q "Ubuntu 22.04\|Ubuntu 24.04" /etc/os-release; then
         warning "This script is optimized for Ubuntu 22.04/24.04 LTS"
+        if [[ "$NON_INTERACTIVE" == "true" ]]; then
+            warning "Continuing because NON_INTERACTIVE mode is enabled."
+            return
+        fi
         read -p "Continue anyway? (y/N): " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -1013,6 +1076,7 @@ main() {
 
     log "Starting installation for domain: ${DOMAIN}"
 
+    ensure_runtime_config
     check_root
     check_os
     update_system
@@ -1052,4 +1116,5 @@ main() {
 }
 
 # Run main
+parse_args "$@"
 main

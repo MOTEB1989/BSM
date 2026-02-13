@@ -215,6 +215,16 @@ cp .env.example .env
 # Edit .env with your configuration
 ```
 
+#### Production Host Installation (Ubuntu VPS)
+
+For one-command production provisioning (Nginx, PostgreSQL, Redis, PM2, SSL), use:
+
+```bash
+sudo bash scripts/install-lexbank.sh --non-interactive
+```
+
+You can override defaults via environment variables (for example `DOMAIN`, `EMAIL`, and `ADMIN_TOKEN`).
+
 ### ORBIT Self-Healing Agent Setup
 
 Set up automated monitoring, health checks, and self-healing capabilities:
