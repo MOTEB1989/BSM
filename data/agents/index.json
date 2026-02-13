@@ -10,6 +10,7 @@
     "security-agent.yaml",
     "pr-merge-agent.yaml",
     "integrity-agent.yaml",
-    "bsu-audit-agent.yaml"
+    "bsu-audit-agent.yaml",
+    "repository-review.yaml"
   ]
 }
