@@ -414,8 +414,11 @@ create_package_json() {
     "start": "node server.js",
     "dev": "nodemon server.js",
     "validate:agents": "echo 'Agent validation placeholder'",
-    "test": "echo 'Tests placeholder'",
-    "lint": "echo 'Lint placeholder'"
+    "test": "node --input-type=module -e \"import { spawn } from 'node:child_process'; import { setTimeout as delay } from 'node:timers/promises'; const port = process.env.PORT || '3000'; const server = spawn(process.execPath, ['server.js'], { stdio: 'ignore', env: { ...process.env, PORT: port } }); const healthUrl = `http://127.0.0.1:${port}/health`; let passed = false; for (let attempt = 0; attempt < 40; attempt += 1) { try { const response = await fetch(healthUrl); if (response.ok) { passed = true; break; } } catch {} await delay(250); } server.kill('SIGTERM'); if (!passed) { console.error(`Smoke test failed: ${healthUrl} did not respond with 2xx.`); process.exit(1); } console.log(`Smoke test passed: ${healthUrl}`);\"",
+    "lint": "eslint . --ext .js --max-warnings=0",
+    "format": "prettier --write .",
+    "check:format": "prettier --check .",
+    "ci": "npm run lint && npm run test"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -424,7 +427,27 @@ create_package_json() {
     "dotenv": "^16.3.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "eslint": "^8.57.1",
+    "nodemon": "^3.0.2",
+    "prettier": "^3.3.3"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true,
+      "es2022": true
+    },
+    "extends": [
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "ecmaVersion": "latest",
+      "sourceType": "module"
+    },
+    "ignorePatterns": [
+      "node_modules/",
+      "docs/"
+    ]
   },
   "engines": {
     "node": ">=22.0.0"
