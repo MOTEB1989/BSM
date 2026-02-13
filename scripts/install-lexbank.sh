@@ -461,6 +461,13 @@ PACKAGEEOF
 create_env_file() {
     log "Creating .env file..."
 
+    DB_PASSWORD_URLENC="$(python3 -c "import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=''))" "${DB_PASSWORD}")"
+    DATABASE_URL="postgresql://lexbank:${DB_PASSWORD_URLENC}@localhost:5432/lexbank"
+
+    if [[ "${DB_PASSWORD}" == *"/"* && "${DATABASE_URL}" == *"${DB_PASSWORD}"* ]]; then
+        error "Database URL contains a raw password with '/'. URL encoding failed."
+    fi
+
     cat > ${APP_DIR}/.env << ENVEOF
 # === LexBANK Environment Configuration ===
 NODE_ENV=production
@@ -468,7 +475,8 @@ PORT=3000
 DOMAIN=${DOMAIN}
 
 # === Database ===
-DATABASE_URL=postgresql://lexbank:${DB_PASSWORD}@localhost:5432/lexbank
+# NOTE: DATABASE_URL uses a URL-encoded DB password to avoid URI parsing issues.
+DATABASE_URL=${DATABASE_URL}
 
 # === Security ===
 ADMIN_TOKEN=${ADMIN_TOKEN}
