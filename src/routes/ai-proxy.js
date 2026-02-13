@@ -103,10 +103,11 @@ router.post("/", async (req, res, next) => {
 router.get("/status", async (_req, res) => {
   try {
     const hasKey = Boolean(models.openai?.bsm || models.openai?.default);
+    const modelName = process.env.OPENAI_MODEL || 'gpt-4o-mini';
     
     res.json({
       status: hasKey ? "active" : "inactive",
-      service: "GPT-4",
+      service: modelName,
       timestamp: new Date().toISOString()
     });
   } catch (err) {

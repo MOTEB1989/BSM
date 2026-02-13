@@ -429,6 +429,10 @@
   </div>
 
   <script>
+    // Configuration constants
+    const MAX_MESSAGE_LENGTH = 4000; // Matches backend maxAgentInputLength
+    const MAX_HISTORY_MESSAGES = 20; // Matches backend history limit
+    
     // Configuration
     const API_BASE = window.__ENV__?.API_BASE || window.location.origin;
     let currentMode = 'bsm';
@@ -565,12 +569,12 @@
 
       if (!message || isLoading) return;
 
-      // Validate input length (matches backend maxAgentInputLength default of 4000)
-      if (message.length > 4000) {
+      // Validate input length (matches backend maxAgentInputLength)
+      if (message.length > MAX_MESSAGE_LENGTH) {
         addMessage(
           currentLang === 'ar' 
-            ? 'الرسالة طويلة جداً. الحد الأقصى 4000 حرف.' 
-            : 'Message too long. Maximum 4000 characters.',
+            ? `الرسالة طويلة جداً. الحد الأقصى ${MAX_MESSAGE_LENGTH} حرف.` 
+            : `Message too long. Maximum ${MAX_MESSAGE_LENGTH} characters.`,
           'assistant',
           true
         );
@@ -602,7 +606,7 @@
             body: JSON.stringify({
               message: message,
               language: currentLang,
-              history: conversationHistory.slice(-20) // Last 20 messages (matches backend limit)
+              history: conversationHistory.slice(-MAX_HISTORY_MESSAGES)
             })
           });
         } else {
@@ -615,7 +619,7 @@
             body: JSON.stringify({
               message: message,
               language: currentLang,
-              history: conversationHistory.slice(-20) // Last 20 messages (matches backend limit)
+              history: conversationHistory.slice(-MAX_HISTORY_MESSAGES)
             })
           });
         }
