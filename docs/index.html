@@ -11,6 +11,7 @@
   <meta name="api-base-url" content="https://sr-bsm.onrender.com" />
   <meta name="description" content="LexBANK Chat Interface - Professional AI-powered chat for legal and business services. Deploy on lexprim.com or lexdo.uk" />
   <meta property="og:url" content="https://corehub.nexus" />
+  <script src="config.js" onerror="console.warn('config.js failed to load, using fallback API URL')"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background: radial-gradient(circle at top, #0b1220, #020617 50%, #010409); }
@@ -138,8 +139,10 @@
       }
       setInterval(updateClock, 1000); updateClock();
 
+      // Use API base from config.js (window.__ENV__) or fallback to meta tag or default
       const apiMeta = document.querySelector('meta[name="api-base-url"]');
-      const API_URL = apiMeta && apiMeta.content ? apiMeta.content : 'https://sr-bsm.onrender.com';
+      const metaApiUrl = apiMeta && apiMeta.content ? apiMeta.content : 'https://sr-bsm.onrender.com';
+      const API_URL = (window.__ENV__ && window.__ENV__.API_BASE) ? window.__ENV__.API_BASE : metaApiUrl;
 
       async function send() {
         const input = document.getElementById('input');
