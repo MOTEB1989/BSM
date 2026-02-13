@@ -2,17 +2,29 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>LexBANK - المساعد الذكي</title>
   <meta name="description" content="واجهة المساعد الذكي من منصة LexBANK - دردشة GPT مهنية" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4c6ef5" />
+
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="LexBANK" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="format-detection" content="telephone=no" />
+
   <script src="tailwind.config.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="dark bg-gray-950 text-white font-arabic min-h-screen flex flex-col" dir="rtl">
+<body class="dark bg-gray-950 text-white font-arabic min-h-screen flex flex-col safe-area-inset" dir="rtl">
 
   <div id="app" class="flex flex-col min-h-screen">
 
@@ -42,6 +54,9 @@
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </button>
             <div v-if="showModeMenu" class="absolute left-0 mt-1 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden">
+              <button @click="setMode('agent-auto')" class="w-full text-right px-4 py-2 text-sm hover:bg-gray-700 transition-colors" :class="{ 'bg-lex-600/20 text-lex-400': mode === 'agent-auto' }">
+                {{ lang === 'ar' ? 'ذكي (تلقائي)' : 'Smart (Auto)' }}
+              </button>
               <button @click="setMode('direct')" class="w-full text-right px-4 py-2 text-sm hover:bg-gray-700 transition-colors" :class="{ 'bg-lex-600/20 text-lex-400': mode === 'direct' }">
                 {{ lang === 'ar' ? 'دردشة مباشرة' : 'Direct Chat' }}
               </button>
@@ -177,5 +192,15 @@
 
   <script src="app.js"></script>
   <script src="key-status-display.js"></script>
+  <script>
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/chat/sw.js', { scope: '/chat' })
+          .then(reg => console.log('SW registered:', reg.scope))
+          .catch(err => console.log('SW registration skipped:', err.message));
+      });
+    }
+  </script>
 </body>
 </html>

@@ -10,7 +10,7 @@ createApp({
     const loading = ref(false);
     const error = ref('');
     const lang = ref('ar');
-    const mode = ref('direct');
+    const mode = ref('agent-auto');
     const showModeMenu = ref(false);
     const messagesContainer = ref(null);
     const inputField = ref(null);
@@ -34,11 +34,12 @@ createApp({
 
     const currentModeLabel = computed(() => {
       const labels = {
+        'agent-auto': lang.value === 'ar' ? '\u0630\u0643\u064A (\u062A\u0644\u0642\u0627\u0626\u064A)' : 'Smart (Auto)',
         direct: lang.value === 'ar' ? '\u062F\u0631\u062F\u0634\u0629 \u0645\u0628\u0627\u0634\u0631\u0629' : 'Direct Chat',
         'legal-agent': lang.value === 'ar' ? '\u0627\u0644\u0648\u0643\u064A\u0644 \u0627\u0644\u0642\u0627\u0646\u0648\u0646\u064A' : 'Legal Agent',
         'governance-agent': lang.value === 'ar' ? '\u0648\u0643\u064A\u0644 \u0627\u0644\u062D\u0648\u0643\u0645\u0629' : 'Governance Agent'
       };
-      return labels[mode.value] || labels.direct;
+      return labels[mode.value] || labels['agent-auto'];
     });
 
     function toggleLang() {
@@ -212,6 +213,16 @@ createApp({
           showModeMenu.value = false;
         }
       });
+
+      // iOS keyboard handling: scroll input into view when focused
+      if (inputField.value) {
+        inputField.value.addEventListener('focus', () => {
+          setTimeout(() => {
+            inputField.value?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          }, 300);
+        });
+      }
+
       inputField.value?.focus();
     });
 
