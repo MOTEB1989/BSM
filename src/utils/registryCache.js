@@ -3,7 +3,7 @@
  * Shared caching logic for agents/registry.yaml
  */
 
-import fs from "fs";
+import { readFile, access } from "fs/promises";
 import path from "path";
 import YAML from "yaml";
 import logger from "../utils/logger.js";
@@ -13,12 +13,15 @@ let registryCache = null;
 let registryLoadTime = 0;
 const CACHE_TTL = 60000; // 1 minute
 
+// In-flight promise to prevent cache stampede
+let loadingPromise = null;
+
 /**
- * Load and cache agents registry
+ * Load and cache agents registry (async, prevents cache stampede)
  * 
- * @returns {object|null} Parsed registry or null if not found
+ * @returns {Promise<object|null>} Parsed registry or null if not found
  */
-export function loadRegistry() {
+export async function loadRegistry() {
   const now = Date.now();
   
   // Return cached if still valid
@@ -26,30 +29,45 @@ export function loadRegistry() {
     return registryCache;
   }
 
-  const registryPath = path.join(process.cwd(), "agents", "registry.yaml");
-  
-  // Check if registry exists
-  if (!fs.existsSync(registryPath)) {
-    logger.warn("agents/registry.yaml not found, using permissive mode");
-    return null;
+  // If already loading, return the existing promise (prevents cache stampede)
+  if (loadingPromise) {
+    logger.debug("Registry load already in progress, waiting for result");
+    return loadingPromise;
   }
 
-  try {
-    // Load and parse registry
-    const content = fs.readFileSync(registryPath, "utf8");
-    registryCache = YAML.parse(content);
-    registryLoadTime = now;
-    
-    logger.debug({ 
-      agentCount: registryCache?.agents?.length,
-      cached: true 
-    }, "Registry loaded and cached");
-    
-    return registryCache;
-  } catch (error) {
-    logger.error({ error }, "Failed to load registry");
-    return null;
-  }
+  const registryPath = path.join(process.cwd(), "agents", "registry.yaml");
+  
+  // Create loading promise
+  loadingPromise = (async () => {
+    try {
+      // Check if registry exists
+      await access(registryPath);
+    } catch {
+      logger.warn("agents/registry.yaml not found, using permissive mode");
+      return null;
+    }
+
+    try {
+      // Load and parse registry
+      const content = await readFile(registryPath, "utf8");
+      registryCache = YAML.parse(content);
+      registryLoadTime = Date.now();
+      
+      logger.debug({ 
+        agentCount: registryCache?.agents?.length,
+        cached: true 
+      }, "Registry loaded and cached");
+      
+      return registryCache;
+    } catch (error) {
+      logger.error({ error }, "Failed to load registry");
+      return null;
+    } finally {
+      loadingPromise = null;
+    }
+  })();
+
+  return loadingPromise;
 }
 
 /**

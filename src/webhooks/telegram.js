@@ -49,7 +49,7 @@ export async function telegramWebhook(req, res) {
     // /agents - List available agents
     if (text === "/agents") {
       try {
-        const agents = getAvailableTelegramAgents(isAdmin);
+        const agents = await getAvailableTelegramAgents(isAdmin);
         if (agents.length === 0) {
           await reply(chatId, "ℹ️ No agents available in mobile context");
         } else {
@@ -108,7 +108,7 @@ export async function telegramWebhook(req, res) {
 
       // Apply Telegram guard (context-based restrictions)
       try {
-        guardTelegramAgent(agentId, isAdmin);
+        await guardTelegramAgent(agentId, isAdmin);
       } catch (guardError) {
         logger.warn({
           correlationId: req.correlationId,

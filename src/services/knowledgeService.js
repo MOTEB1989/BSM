@@ -8,6 +8,9 @@ let knowledgeCache = null;
 let cacheTimestamp = 0;
 const CACHE_TTL = 60000; // 1 minute
 
+// In-flight promise to prevent cache stampede
+let loadingPromise = null;
+
 export const loadKnowledgeIndex = async () => {
   try {
     // Return cached knowledge if still valid
@@ -16,35 +19,49 @@ export const loadKnowledgeIndex = async () => {
       return knowledgeCache;
     }
 
-    const dir = path.join(process.cwd(), "data", "knowledge");
-    mustExistDir(dir);
-
-    const indexPath = path.join(dir, "index.json");
-    const indexContent = await readFile(indexPath, "utf8");
-    const index = JSON.parse(indexContent);
-
-    if (!Array.isArray(index.documents)) {
-      throw new AppError("Invalid knowledge index.json", 500, "KNOWLEDGE_INDEX_INVALID");
+    // If already loading, return the existing promise (prevents cache stampede)
+    if (loadingPromise) {
+      return loadingPromise;
     }
 
-    // Read all knowledge documents in parallel
-    const documentPromises = index.documents.map(async (f) => {
-      const p = path.join(dir, f);
+    // Create loading promise
+    loadingPromise = (async () => {
       try {
-        await access(p);
-        return await readFile(p, "utf8");
-      } catch {
-        return "";
+        const dir = path.join(process.cwd(), "data", "knowledge");
+        mustExistDir(dir);
+
+        const indexPath = path.join(dir, "index.json");
+        const indexContent = await readFile(indexPath, "utf8");
+        const index = JSON.parse(indexContent);
+
+        if (!Array.isArray(index.documents)) {
+          throw new AppError("Invalid knowledge index.json", 500, "KNOWLEDGE_INDEX_INVALID");
+        }
+
+        // Read all knowledge documents in parallel
+        const documentPromises = index.documents.map(async (f) => {
+          const p = path.join(dir, f);
+          try {
+            await access(p);
+            return await readFile(p, "utf8");
+          } catch {
+            return "";
+          }
+        });
+
+        const documents = await Promise.all(documentPromises);
+        
+        // Update cache
+        knowledgeCache = documents;
+        cacheTimestamp = Date.now();
+
+        return documents;
+      } finally {
+        loadingPromise = null;
       }
-    });
+    })();
 
-    const documents = await Promise.all(documentPromises);
-    
-    // Update cache
-    knowledgeCache = documents;
-    cacheTimestamp = now;
-
-    return documents;
+    return loadingPromise;
   } catch (err) {
     throw new AppError(`Failed to load knowledge: ${err.message}`, 500, err.code || "KNOWLEDGE_LOAD_FAILED");
   }

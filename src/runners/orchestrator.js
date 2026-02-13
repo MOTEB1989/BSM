@@ -5,6 +5,7 @@ import { models } from "../config/models.js";
 import { runGPT } from "../services/gptService.js";
 import { AppError } from "../utils/errors.js";
 import { extractIntent, intentToAction } from "../utils/intent.js";
+import { getAgentsForEvent, getExecutionStrategy } from "../config/orchestratorEvents.js";
 import logger from "../utils/logger.js";
 
 export const agentEvents = new EventEmitter();
@@ -16,7 +17,12 @@ export const orchestrator = async ({ event, payload, context = {} }) => {
 
   try {
     const selectedAgents = await selectAgentsForEvent(event, payload);
-    const results = await executeAgentsParallel(selectedAgents, payload, context, jobId);
+    const executionStrategy = getExecutionStrategy(event);
+    
+    const results = executionStrategy === "parallel" 
+      ? await executeAgentsParallel(selectedAgents, payload, context, jobId)
+      : await executeAgentsSequential(selectedAgents, payload, context, jobId);
+      
     const decision = makeOrchestrationDecision(results);
 
     notifyWebSocket({ jobId, status: "completed", event, decision, results });
@@ -29,27 +35,31 @@ export const orchestrator = async ({ event, payload, context = {} }) => {
   }
 };
 
-export async function selectAgentsForEvent(event) {
+/**
+ * Select agents for an event using configuration-based routing
+ * @param {string} event - Event identifier
+ * @param {object} payload - Event payload (for future dynamic selection)
+ * @returns {Promise<Array>} Array of agent objects
+ */
+export async function selectAgentsForEvent(event, payload) {
   const allAgents = await loadAgents();
   const byId = new Map(allAgents.map(agent => [agent.id, agent]));
-
-  if (event === "pull_request.opened" || event === "pull_request.synchronize") {
-    return ["governance-review-agent", "code-review-agent", "security-agent", "integrity-agent"].map(id => byId.get(id)).filter(Boolean);
-  }
-
-  if (event === "pull_request.ready_for_review") {
-    return ["governance-review-agent", "code-review-agent", "security-agent"].map(id => byId.get(id)).filter(Boolean);
-  }
-
-  if (event === "check_suite.completed") {
-    return ["pr-merge-agent"].map(id => byId.get(id)).filter(Boolean);
-  }
-
-  if (event === "repository.health_check") {
-    return ["integrity-agent"].map(id => byId.get(id)).filter(Boolean);
-  }
-
-  return [byId.get("governance-agent")].filter(Boolean);
+  
+  // Get agent IDs from configuration
+  const agentIds = getAgentsForEvent(event);
+  
+  // Map IDs to agent objects
+  const selectedAgents = agentIds
+    .map(id => byId.get(id))
+    .filter(Boolean); // Remove any agents not found
+  
+  logger.info({ 
+    event, 
+    requestedAgents: agentIds, 
+    foundAgents: selectedAgents.map(a => a.id)
+  }, "Agents selected for event");
+  
+  return selectedAgents;
 }
 
 async function executeAgentsParallel(agents, payload, context, jobId) {
@@ -83,6 +93,48 @@ async function executeAgentsParallel(agents, payload, context, jobId) {
   });
 
   return Promise.all(work);
+}
+
+/**
+ * Execute agents sequentially (one after another)
+ * Useful for workflows where order matters or to reduce load
+ */
+async function executeAgentsSequential(agents, payload, context, jobId) {
+  const results = [];
+  
+  for (const agent of agents) {
+    const start = Date.now();
+    
+    try {
+      updateAgentState(agent.id, jobId, "running");
+      const result = await runSingleAgent(agent, payload, context);
+      const outputText = typeof result.output === "string" ? result.output : JSON.stringify(result.output);
+      updateAgentState(agent.id, jobId, "completed", outputText);
+      
+      results.push({
+        agentId: agent.id,
+        agentName: agent.name,
+        status: "success",
+        result: outputText,
+        metadata: result.metadata,
+        executionTime: Date.now() - start
+      });
+    } catch (error) {
+      updateAgentState(agent.id, jobId, "failed", null, error.message);
+      results.push({
+        agentId: agent.id,
+        agentName: agent.name,
+        status: "failed",
+        error: error.message,
+        executionTime: Date.now() - start
+      });
+      
+      // Optional: Stop on first failure
+      // break;
+    }
+  }
+  
+  return results;
 }
 
 async function runSingleAgent(agent, payload, context) {

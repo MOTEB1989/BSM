@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 import { env } from "../config/env.js";
+import { getAllCircuitBreakerStats } from "../utils/circuitBreaker.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,6 +38,9 @@ export const getHealthDetailed = async (req, res) => {
 
     // Check 4: Required Files
     checks.checks.requiredFiles = await checkRequiredFiles();
+
+    // Check 5: Circuit Breakers
+    checks.checks.circuitBreakers = checkCircuitBreakers();
 
     // Determine overall status
     const failedChecks = Object.values(checks.checks).filter(c => c.status !== "pass");
@@ -169,5 +173,27 @@ async function checkRequiredFiles() {
     status: missing.length > 0 ? "fail" : "pass",
     message: missing.length > 0 ? "Required files missing" : "All required files present",
     missing: missing.length > 0 ? missing : undefined
+  };
+}
+
+/**
+ * Check circuit breakers status
+ */
+function checkCircuitBreakers() {
+  const stats = getAllCircuitBreakerStats();
+  const openBreakers = Object.entries(stats).filter(([_, breaker]) => breaker.state === 'OPEN');
+  
+  if (openBreakers.length > 0) {
+    return {
+      status: "warn",
+      message: `${openBreakers.length} circuit breaker(s) OPEN`,
+      breakers: stats
+    };
+  }
+  
+  return {
+    status: "pass",
+    message: "All circuit breakers operational",
+    breakers: stats
   };
 }

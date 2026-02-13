@@ -16,11 +16,11 @@ import logger from "../utils/logger.js";
  * 
  * @param {string} agentId - Agent identifier
  * @param {boolean} isAdmin - Whether the user is an admin
- * @returns {object} Agent configuration if allowed
+ * @returns {Promise<object>} Agent configuration if allowed
  * @throws {Error} If agent is not allowed in Telegram/mobile context
  */
-export function guardTelegramAgent(agentId, isAdmin = false) {
-  const registry = loadRegistry();
+export async function guardTelegramAgent(agentId, isAdmin = false) {
+  const registry = await loadRegistry();
   
   // If no registry, be permissive (backward compatibility)
   if (!registry || !registry.agents) {
@@ -99,10 +99,10 @@ export function guardTelegramAgent(agentId, isAdmin = false) {
  * Get list of agents allowed in mobile/Telegram context
  * 
  * @param {boolean} isAdmin - Whether the user is an admin
- * @returns {Array} List of agent IDs allowed in mobile context
+ * @returns {Promise<Array>} List of agent IDs allowed in mobile context
  */
-export function getAvailableTelegramAgents(isAdmin = false) {
-  const registry = loadRegistry();
+export async function getAvailableTelegramAgents(isAdmin = false) {
+  const registry = await loadRegistry();
   
   if (!registry || !registry.agents) {
     return [];

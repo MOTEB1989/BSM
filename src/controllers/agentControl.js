@@ -14,7 +14,7 @@ export const startAgent = async (req, res, next) => {
     const { agentId } = req.params;
     
     // Load registry to get agent config
-    const registry = loadRegistry();
+    const registry = await loadRegistry();
     const agentConfig = registry.agents.find(a => a.id === agentId);
     
     if (!agentConfig) {
@@ -125,7 +125,7 @@ export const getAgentsStatus = async (req, res, next) => {
     const allStates = agentStateService.getAllAgentsStatus();
     
     // Load registry to include config info
-    const registry = loadRegistry();
+    const registry = await loadRegistry();
     const agents = await loadAgents();
     
     const result = registry.agents.map(agentConfig => {
@@ -166,7 +166,7 @@ export const getAgentStatus = async (req, res, next) => {
   try {
     const { agentId } = req.params;
     
-    const registry = loadRegistry();
+    const registry = await loadRegistry();
     const agentConfig = registry.agents.find(a => a.id === agentId);
     
     if (!agentConfig) {

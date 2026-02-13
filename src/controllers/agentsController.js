@@ -22,7 +22,7 @@ export const listAgents = async (req, res, next) => {
     
     // If mode filtering requested, load registry and filter
     if (mode) {
-      const registry = loadRegistry();
+      const registry = await loadRegistry();
       
       if (!registry || !registry.agents) {
         logger.warn({ mode }, "Registry not available for mode filtering");
@@ -72,7 +72,7 @@ export const listAgents = async (req, res, next) => {
     }
 
     // No mode filtering - enrich all agents with registry info if available
-    const registry = loadRegistry();
+    const registry = await loadRegistry();
     if (registry && registry.agents) {
       const enrichedAgents = agents.map(agent => {
         const registryAgent = registry.agents.find(ra => ra.id === agent.id);
