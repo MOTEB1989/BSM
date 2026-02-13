@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 )
 
@@ -27,6 +28,19 @@ type ParseResponse struct {
 	Text     string                 `json:"text"`
 	Pages    int                    `json:"pages"`
 	Metadata map[string]interface{} `json:"metadata"`
+}
+
+// MetadataResponse represents a document metadata response
+type MetadataResponse struct {
+	ID       string                 `json:"id"`
+	Title    string                 `json:"title"`
+	Author   string                 `json:"author"`
+	Format   string                 `json:"format"`
+	Pages    int                    `json:"pages"`
+	Created  string                 `json:"created"`
+	Modified string                 `json:"modified"`
+	Size     int64                  `json:"size"`
+	Extra    map[string]interface{} `json:"extra,omitempty"`
 }
 
 // ErrorResponse represents an error response
@@ -99,8 +113,32 @@ func ParseDocumentHandler(w http.ResponseWriter, r *http.Request) {
 
 // GetMetadataHandler handles metadata retrieval requests
 func GetMetadataHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement metadata retrieval
-	respondError(w, "Not implemented", http.StatusNotImplemented)
+	docID := chi.URLParam(r, "id")
+	if docID == "" {
+		respondError(w, "document id is required", http.StatusBadRequest)
+		return
+	}
+
+	log.Info().
+		Str("document_id", docID).
+		Msg("Processing metadata retrieval request")
+
+	// Mock metadata response (will be replaced with real storage lookup)
+	now := time.Now()
+	response := MetadataResponse{
+		ID:       docID,
+		Title:    "Sample Document",
+		Author:   "Unknown",
+		Format:   "pdf",
+		Pages:    10,
+		Created:  now.Add(-24 * time.Hour).Format(time.RFC3339),
+		Modified: now.Format(time.RFC3339),
+		Size:     204800,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
 
 // respondError sends an error response
