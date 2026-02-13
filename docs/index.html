@@ -140,12 +140,9 @@
       setInterval(updateClock, 1000); updateClock();
 
       // Use API base from config.js (window.__ENV__) or fallback to meta tag or default
-      const API_URL = (window.__ENV__ && window.__ENV__.API_BASE) 
-        ? window.__ENV__.API_BASE 
-        : (function() {
-            const apiMeta = document.querySelector('meta[name="api-base-url"]');
-            return apiMeta && apiMeta.content ? apiMeta.content : 'https://sr-bsm.onrender.com';
-          })();
+      const apiMeta = document.querySelector('meta[name="api-base-url"]');
+      const metaApiUrl = apiMeta && apiMeta.content ? apiMeta.content : 'https://sr-bsm.onrender.com';
+      const API_URL = (window.__ENV__ && window.__ENV__.API_BASE) ? window.__ENV__.API_BASE : metaApiUrl;
 
       async function send() {
         const input = document.getElementById('input');
