@@ -1,0 +1,272 @@
+name: PR CI Failure Governance
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  check_suite:
+    types: [completed]
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+env:
+  SLA_HOURS: '24'
+
+permissions:
+  contents: read
+  checks: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  merge-guard:
+    name: Block merge when checks fail
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any required check failed
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const sha = context.payload.pull_request.head.sha;
+
+            const failedConclusions = new Set([
+              'action_required',
+              'cancelled',
+              'failure',
+              'startup_failure',
+              'timed_out'
+            ]);
+
+            const runs = await github.paginate(github.rest.checks.listForRef, {
+              owner,
+              repo,
+              ref: sha,
+              per_page: 100
+            });
+
+            const failed = runs.filter((run) =>
+              run.status === 'completed' && failedConclusions.has(run.conclusion)
+            );
+
+            if (failed.length > 0) {
+              core.setFailed(
+                `PR has failed checks: ${failed.map((run) => run.name).join(', ')}`
+              );
+            } else {
+              core.info('No failed checks found.');
+            }
+
+  handle-failure:
+    name: Assign owner and notify on CI failure
+    if: github.event_name == 'check_suite' && github.event.check_suite.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create CI failure ownership comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const linkedPrs = context.payload.check_suite.pull_requests || [];
+            if (linkedPrs.length === 0) {
+              core.info('No PR is linked to this failing check suite.');
+              return;
+            }
+
+            const prNumber = linkedPrs[0].number;
+            const sha = context.payload.check_suite.head_sha;
+            const slaHours = Number(process.env.SLA_HOURS || '24');
+
+            const failedConclusions = new Set([
+              'action_required',
+              'cancelled',
+              'failure',
+              'startup_failure',
+              'timed_out'
+            ]);
+
+            const runs = await github.paginate(github.rest.checks.listForRef, {
+              owner,
+              repo,
+              ref: sha,
+              per_page: 100
+            });
+
+            const failed = runs.filter((run) =>
+              run.status === 'completed' && failedConclusions.has(run.conclusion)
+            );
+
+            if (failed.length === 0) {
+              core.info('No failed check runs found. Skipping notification.');
+              return;
+            }
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: prNumber
+            });
+
+            const ownerLogin = pr.user.login;
+
+            await github.rest.issues.update({
+              owner,
+              repo,
+              issue_number: prNumber,
+              assignees: [ownerLogin]
+            });
+
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: prNumber,
+              labels: ['ci-failed']
+            });
+
+            try {
+              await github.rest.issues.removeLabel({
+                owner,
+                repo,
+                issue_number: prNumber,
+                name: 'stale'
+              });
+            } catch (error) {
+              core.info('No stale label to remove.');
+            }
+
+            const deadline = new Date(Date.now() + slaHours * 60 * 60 * 1000);
+            const primary = failed[0];
+            const marker = '<!-- ci-failure-governance -->';
+
+            const body = `${marker}
+            🚨 **CI Failure Detected**
+
+            - **Failed job:** ${primary.name}
+            - **Log link:** ${primary.details_url || primary.html_url}
+            - **SLA deadline:** ${deadline.toISOString()} (within ${slaHours}h)
+            - **Assigned owner:** @${ownerLogin}
+
+            > This PR cannot be merged while checks are failing.
+            `;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: prNumber,
+              per_page: 100
+            });
+
+            const existing = comments.find((comment) =>
+              comment.user.type === 'Bot' && comment.body.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: prNumber,
+                body
+              });
+            }
+
+  enforce-sla:
+    name: Mark stale when CI SLA is missed
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label stale PRs that missed CI SLA
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const marker = '<!-- ci-failure-governance -->';
+            const deadlineRegex = /\*\*SLA deadline:\*\*\s*([0-9T:.\-]+Z)/;
+            const failedConclusions = new Set([
+              'action_required',
+              'cancelled',
+              'failure',
+              'startup_failure',
+              'timed_out'
+            ]);
+
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100
+            });
+
+            for (const pr of prs) {
+              const labels = (pr.labels || []).map((label) => label.name);
+              if (!labels.includes('ci-failed')) {
+                continue;
+              }
+
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner,
+                repo,
+                issue_number: pr.number,
+                per_page: 100
+              });
+
+              const ciComment = comments
+                .filter((comment) => comment.user.type === 'Bot' && comment.body.includes(marker))
+                .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0];
+
+              if (!ciComment) {
+                core.info(`PR #${pr.number}: missing CI marker comment, skipping.`);
+                continue;
+              }
+
+              const match = ciComment.body.match(deadlineRegex);
+              if (!match) {
+                core.info(`PR #${pr.number}: missing deadline in comment, skipping.`);
+                continue;
+              }
+
+              const deadline = new Date(match[1]);
+              if (Number.isNaN(deadline.getTime()) || new Date() <= deadline) {
+                continue;
+              }
+
+              const runs = await github.paginate(github.rest.checks.listForRef, {
+                owner,
+                repo,
+                ref: pr.head.sha,
+                per_page: 100
+              });
+
+              const stillFailing = runs.some((run) =>
+                run.status === 'completed' && failedConclusions.has(run.conclusion)
+              );
+
+              if (!stillFailing) {
+                core.info(`PR #${pr.number}: checks recovered, no stale label needed.`);
+                continue;
+              }
+
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: pr.number,
+                labels: ['stale']
+              });
+
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pr.number,
+                body: '⏰ SLA was missed and CI is still failing, so this PR was moved to `stale` until the failure is fixed.'
+              });
+            }
