@@ -160,6 +160,10 @@ Updated project README with:
 
 ## Key Findings
 
+### Infrastructure Verification Notes
+- `bsm.onrender.com` appears over HTTPS in the authentication window, which is a positive indicator for the Render-hosted service only.
+- HTTPS is visible for the Render service, while TLS status for `www.lexdo.uk` is not verifiable due to DNS resolution failure.
+
 ### Strengths ✅
 1. **Clean Architecture**: Well-organized modular structure with clear separation of concerns
 2. **Security Foundation**: Strong security measures (token auth, rate limiting, CORS, Helmet)
@@ -186,6 +190,11 @@ Updated project README with:
 #### Long-term (Priority 3)
 9. **Microservices**: Consider microservices architecture for scale
 10. **Advanced Features**: Multi-agent orchestration, RAG, vector DB
+
+## Technical Analysis
+
+- DNS resolution failure occurs before any TLS negotiation, so TLS validation for `www.lexdo.uk` cannot begin until DNS is resolved.
+- The observed HTTPS signal is therefore limited to `bsm.onrender.com` (Render path) and must not be generalized to both domains.
 
 ## Technical Metrics
 
