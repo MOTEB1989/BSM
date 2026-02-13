@@ -4,8 +4,15 @@ import logger from "../utils/logger.js";
 /**
  * Mobile mode middleware
  * Restricts certain operations when MOBILE_MODE=true
- * iPhone is used as UI client only, no write operations allowed
+ * Chat endpoints are always allowed for mobile (iPhone PWA)
  */
+
+// Endpoints that mobile clients CAN always access (chat is core mobile functionality)
+const mobileAllowedPaths = [
+  "/api/chat",
+  "/api/chat/direct",
+  "/api/chat/key-status"
+];
 
 const restrictedOperations = {
   // POST/PUT/DELETE to these endpoints are blocked in mobile mode
@@ -30,9 +37,15 @@ export const mobileModeMiddleware = (req, res, next) => {
     return next();
   }
   
-  // In mobile mode, only allow safe read operations
+  // Always allow chat endpoints for mobile (core PWA functionality)
+  const isChatEndpoint = mobileAllowedPaths.some(p => req.path.startsWith(p));
+  if (isChatEndpoint) {
+    return next();
+  }
+
+  // In mobile mode, only allow safe read operations for other endpoints
   const isSafeOperation = req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS";
-  
+
   if (!isSafeOperation && isOperationRestricted(req.path, req.method)) {
     logger.warn({
       method: req.method,
