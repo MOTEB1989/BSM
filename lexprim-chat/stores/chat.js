@@ -36,7 +36,23 @@ export const useChatStore = defineStore('chat', {
     },
 
     setAgents(agents) {
-      this.availableAgents = agents
+      const safeAgents = Array.isArray(agents) ? agents : []
+      this.availableAgents = safeAgents.filter((agent) => {
+        if (!agent?.id || agent.id === 'direct') return false
+
+        // Keep selectable agents only when expose metadata exists
+        if (agent?.expose && typeof agent.expose.selectable !== 'undefined') {
+          return Boolean(agent.expose.selectable)
+        }
+
+        return true
+      })
+
+      // Ensure selected agent remains valid
+      const stillValid = this.selectedAgent === 'direct' || this.availableAgents.some((a) => a.id === this.selectedAgent)
+      if (!stillValid) {
+        this.selectedAgent = 'direct'
+      }
     },
 
     setLoading(value) {

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col min-h-screen bg-gray-950" :dir="chatStore.language === 'ar' ? 'rtl' : 'ltr'">
+  <div class="app-shell flex flex-col bg-gray-950" :dir="chatStore.language === 'ar' ? 'rtl' : 'ltr'">
     <!-- Header -->
     <ChatHeader />
 

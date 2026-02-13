@@ -3,19 +3,35 @@ export const useApi = () => {
   const config = useRuntimeConfig()
   const apiBase = config.public.apiBase
 
+  const normalizeAgents = (response) => {
+    const rawAgents = Array.isArray(response)
+      ? response
+      : (Array.isArray(response?.agents) ? response.agents : [])
+
+    return rawAgents
+      .filter((agent) => agent?.id)
+      .map((agent) => ({
+        id: agent.id,
+        name: agent.name || agent.id,
+        expose: agent.expose || {},
+        contexts: agent.contexts || {}
+      }))
+  }
+
   const fetchAgents = async () => {
     try {
-      const response = await $fetch(`${apiBase}/agents`)
-      return response
-    } catch (error) {
-      console.error('Failed to fetch agents:', error)
-      throw error
+      const response = await $fetch(`${apiBase}/agents?mode=mobile`)
+      return normalizeAgents(response)
+    } catch (modeError) {
+      console.warn('Mobile agents endpoint fallback to /agents:', modeError)
+      const fallbackResponse = await $fetch(`${apiBase}/agents`)
+      return normalizeAgents(fallbackResponse)
     }
   }
 
   const sendMessage = async (message, agentId = 'direct', history = []) => {
     try {
-      const endpoint = agentId === 'direct' 
+      const endpoint = agentId === 'direct'
         ? `${apiBase}/chat/direct`
         : `${apiBase}/control/run`
 
@@ -33,7 +49,8 @@ export const useApi = () => {
             input: message,
             context: {
               mobile: true,
-              source: 'lexprim-chat'
+              source: 'lexprim-chat',
+              client: 'iphone-web'
             }
           }
 
