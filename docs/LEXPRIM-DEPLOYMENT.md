@@ -4,6 +4,41 @@
 
 هذا الدليل يشرح كيفية نشر منصة LexBANK على النطاق الجديد `lexprim.com` وربط واجهة الدردشة به.
 
+> **جديد:** النشر التلقائي على GitHub Pages متاح الآن! انظر القسم أدناه.
+
+## النشر التلقائي باستخدام GitHub Actions (موصى به)
+
+### الإعداد السريع
+
+1. **أضف GitHub Secret**
+   - اذهب إلى: `Settings → Secrets and variables → Actions`
+   - انقر `New repository secret`
+   - الاسم: `API_BASE_URL`
+   - القيمة: `https://sr-bsm.onrender.com`
+   - انقر `Add secret`
+
+2. **ادفع التغييرات إلى main**
+   ```bash
+   git push origin main
+   ```
+
+3. **تابع النشر**
+   - اذهب إلى `Actions` في GitHub
+   - شاهد workflow "Deploy Frontend to GitHub Pages"
+   - بعد النشر، اذهب إلى `Settings → Pages`
+   - تأكد من تفعيل `Enforce HTTPS`
+
+### كيف يعمل النشر التلقائي
+
+- عند الدفع إلى `main`، يعمل workflow تلقائياً
+- يتم إنشاء `docs/config.js` من Secret `API_BASE_URL`
+- يتم نشر محتوى `docs/` على GitHub Pages
+- النطاق المخصص `lexprim.com` يعمل تلقائياً
+
+للمزيد من التفاصيل، راجع [docs/GITHUB-PAGES-SETUP.md](GITHUB-PAGES-SETUP.md)
+
+---
+
 ## الخطوة 1: إعداد DNS
 
 ### تكوين Cloudflare
@@ -72,7 +107,7 @@
 
 ```bash
 # إضافة النطاق الجديد إلى CORS
-CORS_ORIGINS=https://lexprim.com,https://www.lexprim.com,https://lexdo.uk,https://www.lexdo.uk
+CORS_ORIGINS=https://lexprim.com,https://www.lexprim.com,https://lexdo.uk,https://www.lexdo.uk,https://corehub.nexus,https://www.corehub.nexus
 
 # التأكد من وجود المفاتيح الضرورية
 OPENAI_BSM_KEY=<your-openai-key>
