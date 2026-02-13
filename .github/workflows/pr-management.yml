@@ -1,0 +1,290 @@
+name: PR Management & Auto-Merge
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - analyze
+          - triage
+          - auto-merge-ready
+          - close-stale
+        default: 'analyze'
+  schedule:
+    # Run daily at 02:00 UTC
+    - cron: '0 2 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  checks: read
+
+jobs:
+  pr-management:
+    runs-on: ubuntu-latest
+    name: PR Management
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Determine action
+        id: action
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "action=triage" >> $GITHUB_OUTPUT
+          else
+            echo "action=${{ github.event.inputs.action || 'analyze' }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run PR Triage
+        if: steps.action.outputs.action == 'triage' || steps.action.outputs.action == 'analyze'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const STATUS_LABELS = ['ready', 'needs-changes', 'blocked', 'stale'];
+            
+            // Ensure labels exist
+            const LABELS = [
+              { name: 'ready', color: '0E8A16', description: 'PR is ready to merge' },
+              { name: 'needs-changes', color: 'D93F0B', description: 'PR needs fixes' },
+              { name: 'blocked', color: 'B60205', description: 'PR is blocked' },
+              { name: 'stale', color: '7F8C8D', description: 'PR has been inactive' },
+              { name: 'auto-merge', color: '1D76DB', description: 'PR will be auto-merged' },
+              { name: 'conflicts', color: 'E99695', description: 'PR has merge conflicts' }
+            ];
+
+            for (const label of LABELS) {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name: label.name });
+              } catch (error) {
+                if (error.status === 404) {
+                  await github.rest.issues.createLabel({ owner, repo, ...label });
+                  console.log(`Created label: ${label.name}`);
+                }
+              }
+            }
+
+            // Get all open PRs
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100
+            });
+
+            console.log(`Found ${prs.length} open PRs`);
+
+            const summary = {
+              ready: [],
+              needsChanges: [],
+              blocked: [],
+              stale: [],
+              conflicts: []
+            };
+
+            for (const pr of prs) {
+              if (pr.draft) continue; // Skip drafts
+
+              const daysSince = Math.floor((Date.now() - new Date(pr.updated_at)) / (1000 * 60 * 60 * 24));
+              
+              // Check reviews
+              const reviews = await github.rest.pulls.listReviews({
+                owner,
+                repo,
+                pull_number: pr.number
+              });
+
+              const hasApproval = reviews.data.some(r => r.state === 'APPROVED');
+              const hasChangesRequested = reviews.data.some(r => r.state === 'CHANGES_REQUESTED');
+
+              // Check CI status
+              const combinedStatus = await github.rest.repos.getCombinedStatusForRef({
+                owner,
+                repo,
+                ref: pr.head.sha
+              });
+
+              const ciPassing = combinedStatus.data.state === 'success';
+              const existingLabels = pr.labels.map(l => l.name);
+
+              let newLabel = null;
+              let reason = '';
+
+              // Classification logic
+              if (pr.mergeable === false) {
+                newLabel = 'conflicts';
+                reason = 'Has merge conflicts';
+                summary.conflicts.push({ number: pr.number, title: pr.title });
+              } else if (daysSince >= 14) {
+                newLabel = 'stale';
+                reason = `Inactive for ${daysSince} days`;
+                summary.stale.push({ number: pr.number, title: pr.title, days: daysSince });
+              } else if (hasChangesRequested || !ciPassing) {
+                newLabel = 'needs-changes';
+                reason = hasChangesRequested ? 'Changes requested' : 'CI failing';
+                summary.needsChanges.push({ number: pr.number, title: pr.title });
+              } else if (hasApproval && ciPassing) {
+                newLabel = 'ready';
+                reason = 'Ready to merge';
+                summary.ready.push({ number: pr.number, title: pr.title });
+              } else {
+                newLabel = 'needs-changes';
+                reason = 'Needs review and approval';
+                summary.needsChanges.push({ number: pr.number, title: pr.title });
+              }
+
+              // Update labels
+              const labelsToRemove = existingLabels.filter(l => 
+                STATUS_LABELS.includes(l) && l !== newLabel
+              );
+
+              for (const label of labelsToRemove) {
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner,
+                    repo,
+                    issue_number: pr.number,
+                    name: label
+                  });
+                } catch (e) {}
+              }
+
+              if (!existingLabels.includes(newLabel)) {
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number: pr.number,
+                  labels: [newLabel]
+                });
+              }
+
+              console.log(`#${pr.number}: ${newLabel} - ${reason}`);
+            }
+
+            // Generate summary issue comment
+            const summaryText = `## 📊 PR Management Summary
+            
+**Total Open PRs:** ${prs.length}
+
+### ✅ Ready to Merge (${summary.ready.length})
+${summary.ready.length > 0 ? summary.ready.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*'}
+
+### ⚠️ Needs Changes (${summary.needsChanges.length})
+${summary.needsChanges.length > 0 ? summary.needsChanges.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*'}
+
+### ⚔️ Has Conflicts (${summary.conflicts.length})
+${summary.conflicts.length > 0 ? summary.conflicts.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*'}
+
+### 🕰️ Stale (${summary.stale.length})
+${summary.stale.length > 0 ? summary.stale.map(p => `- #${p.number}: ${p.title} (${p.days}d)`).join('\n') : '*None*'}
+
+---
+*Last updated: ${new Date().toISOString()}*
+*Automated by PR Management workflow*`;
+
+            core.summary.addRaw(summaryText);
+            await core.summary.write();
+
+      - name: Auto-merge ready PRs
+        if: steps.action.outputs.action == 'auto-merge-ready'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Get PRs labeled as 'ready'
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100
+            });
+
+            const readyPRs = prs.filter(pr => 
+              !pr.draft && pr.labels.some(l => l.name === 'ready')
+            );
+
+            console.log(`Found ${readyPRs.length} PRs ready for auto-merge`);
+
+            for (const pr of readyPRs) {
+              try {
+                // Add auto-merge label
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number: pr.number,
+                  labels: ['auto-merge']
+                });
+
+                // Attempt to merge
+                await github.rest.pulls.merge({
+                  owner,
+                  repo,
+                  pull_number: pr.number,
+                  merge_method: 'squash',
+                  commit_title: `Merge #${pr.number}: ${pr.title}`,
+                  commit_message: 'Automated merge via PR Management workflow'
+                });
+
+                console.log(`✅ Merged #${pr.number}`);
+              } catch (error) {
+                console.log(`❌ Failed to merge #${pr.number}: ${error.message}`);
+              }
+            }
+
+      - name: Close stale PRs
+        if: steps.action.outputs.action == 'close-stale'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100
+            });
+
+            const stalePRs = prs.filter(pr => {
+              const daysSince = Math.floor((Date.now() - new Date(pr.updated_at)) / (1000 * 60 * 60 * 24));
+              return daysSince >= 30 && pr.labels.some(l => l.name === 'stale');
+            });
+
+            console.log(`Found ${stalePRs.length} stale PRs to close`);
+
+            for (const pr of stalePRs) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pr.number,
+                body: 'إغلاق تلقائي: هذا الطلب لم يشهد نشاطاً منذ 30 يوم. يمكن إعادة فتحه عند الحاجة.'
+              });
+
+              await github.rest.pulls.update({
+                owner,
+                repo,
+                pull_number: pr.number,
+                state: 'closed'
+              });
+
+              console.log(`Closed #${pr.number}`);
+            }
