@@ -22,18 +22,19 @@ export class IntegrityAgent {
     const structureValidation = await this.validateStructure();
     const licenseCheck = await this.checkLicense();
     const docsCheck = await this.checkDocumentation();
-    
-    const healthScore = this.calculateHealthScore(
-      stalePRs.length,
-      oldIssues.length,
-      structureValidation.score,
-      licenseCheck.score,
-      docsCheck.score
-    );
+
+    const health = this.calculateHealthScore({
+      staleCount: stalePRs.length,
+      oldCount: oldIssues.length,
+      structureScore: structureValidation.score,
+      licenseScore: licenseCheck.score,
+      docsScore: docsCheck.score
+    });
 
     return {
       agentId: this.id,
-      healthScore,
+      healthScore: health.finalScore,
+      health,
       stalePRs: stalePRs.length,
       oldIssues: oldIssues.length,
       structureValidation,
@@ -77,11 +78,11 @@ export class IntegrityAgent {
 
     const agentIndexPath = path.join(this.rootDir, "data/agents/index.json");
     let agentValidation = { valid: true, errors: [] };
-    
+
     try {
       const agentIndexContent = await fs.readFile(agentIndexPath, "utf-8");
       const agentIndex = JSON.parse(agentIndexContent);
-      
+
       if (!agentIndex.agents || !Array.isArray(agentIndex.agents)) {
         agentValidation.valid = false;
         agentValidation.errors.push("index.json missing 'agents' array");
@@ -130,7 +131,7 @@ export class IntegrityAgent {
 
     const packageJsonPath = path.join(this.rootDir, "package.json");
     let packageLicense = null;
-    
+
     try {
       const packageContent = await fs.readFile(packageJsonPath, "utf-8");
       const packageJson = JSON.parse(packageContent);
@@ -196,15 +197,27 @@ export class IntegrityAgent {
     };
   }
 
-  calculateHealthScore(staleCount, oldCount, structureScore, licenseScore, docsScore) {
-    const prPenalty = staleCount * 5;
-    const issuePenalty = oldCount * 2;
-    
+  calculateHealthScore({ staleCount, oldCount, structureScore, licenseScore, docsScore }) {
+    const penalties = {
+      prPenalty: staleCount * 5,
+      issuePenalty: oldCount * 2
+    };
+
+    const componentScores = {
+      structureScore,
+      licenseScore,
+      docsScore
+    };
+
     const avgSystemScore = (structureScore + licenseScore + docsScore) / 3;
-    
-    const finalScore = Math.max(0, avgSystemScore - prPenalty - issuePenalty);
-    
-    return Math.round(finalScore);
+    const finalScore = Math.max(0, avgSystemScore - penalties.prPenalty - penalties.issuePenalty);
+
+    return {
+      finalScore: Math.round(finalScore),
+      avgSystemScore: Math.round(avgSystemScore),
+      penalties,
+      componentScores
+    };
   }
 
   findStalePRs(prs = []) {
@@ -227,48 +240,53 @@ export class IntegrityAgent {
 
   generateRecommendations(staleCount, oldCount, structure, license, docs) {
     const recommendations = [];
-    
+
     if (staleCount > 0) {
       recommendations.push(`Close or re-triage ${staleCount} stale PR(s) (>30 days)`);
     }
-    
+
     if (oldCount > 0) {
       recommendations.push(`Archive or prioritize ${oldCount} old open issue(s) (>90 days)`);
     }
-    
+
     if (structure.missingCount > 0) {
       recommendations.push(`Fix ${structure.missingCount} missing critical file(s)`);
     }
-    
+
     if (structure.agentValidation && !structure.agentValidation.valid) {
       recommendations.push(`Resolve ${structure.agentValidation.errors.length} agent configuration error(s)`);
     }
-    
+
     if (!license.compliant) {
       recommendations.push("Add LICENSE file for legal compliance");
     }
-    
+
     if (docs.criticalMissing > 0) {
       recommendations.push(`Add ${docs.criticalMissing} critical documentation file(s)`);
     }
-    
+
     if (recommendations.length === 0) {
       recommendations.push("✅ Repository health is excellent - no issues found");
     }
-    
+
     return recommendations;
   }
 
   async generateHealthReport() {
     logger.info(`[${this.id}] Generating comprehensive health report`);
-    
+
     const report = await this.check({ prs: [], issues: [] });
-    
+
     const reportLines = [
       "# Repository Health Report",
       `Generated: ${new Date().toISOString()}`,
       "",
       `## Overall Health Score: ${report.healthScore}/100`,
+      "",
+      "### Health Score Breakdown",
+      `- Base System Score: ${report.health.avgSystemScore}/100`,
+      `- Penalties: PRs -${report.health.penalties.prPenalty}, Issues -${report.health.penalties.issuePenalty}`,
+      `- Component Scores: Structure ${report.health.componentScores.structureScore}, License ${report.health.componentScores.licenseScore}, Docs ${report.health.componentScores.docsScore}`,
       "",
       "### Status:",
       report.healthScore >= 90 ? "🟢 Excellent" :
@@ -281,12 +299,12 @@ export class IntegrityAgent {
       `Missing Files: ${report.structureValidation.missingCount}`,
       "",
       "### File Check Results:",
-      ...report.structureValidation.results.map(r => 
+      ...report.structureValidation.results.map(r =>
         `- [${r.status === "OK" ? "✓" : "✗"}] ${r.path}`
       ),
       "",
       "### Agent Configuration:",
-      report.structureValidation.agentValidation.valid 
+      report.structureValidation.agentValidation.valid
         ? "✅ All agent configurations are valid"
         : `❌ Issues found:\n${report.structureValidation.agentValidation.errors.map(e => `  - ${e}`).join("\n")}`,
       "",
@@ -302,7 +320,7 @@ export class IntegrityAgent {
       `Total Missing: ${report.docsCheck.totalMissing}`,
       "",
       "### Documentation Files:",
-      ...report.docsCheck.results.map(r => 
+      ...report.docsCheck.results.map(r =>
         `- [${r.status === "OK" ? "✓" : "✗"}] ${r.path} ${r.critical ? "(Critical)" : "(Optional)"} ${r.size ? `- ${r.size}` : ""}`
       ),
       "",
@@ -312,7 +330,7 @@ export class IntegrityAgent {
       "---",
       `Report generated by ${this.name} (${this.id})`,
     ];
-    
+
     return reportLines.filter(line => line !== "").join("\n");
   }
 }

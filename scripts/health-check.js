@@ -145,14 +145,11 @@ async function runIntegrityCheck() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
   
   try {
+    const result = await integrityAgent.check({ prs: [], issues: [] });
     const report = await integrityAgent.generateHealthReport();
     console.log(report);
-    
-    // Parse health score
-    const scoreMatch = report.match(/Overall Health Score: (\d+)\/100/);
-    const score = scoreMatch ? parseInt(scoreMatch[1], 10) : 0;
-    
-    return score >= 70;
+
+    return result.healthScore >= 70;
   } catch (error) {
     console.log(`❌ Integrity check failed: ${error.message}`);
     return false;

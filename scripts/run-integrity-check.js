@@ -20,6 +20,9 @@ async function main() {
   console.log("═══════════════════════════════════════════════════════\n");
 
   try {
+    // Collect structured metrics first to avoid brittle text parsing
+    const result = await integrityAgent.check({ prs: [], issues: [] });
+
     // Generate comprehensive health report
     const report = await integrityAgent.generateHealthReport();
     
@@ -40,9 +43,7 @@ async function main() {
     console.log(report);
     console.log(`\n✅ Report saved to: ${reportPath}`);
     
-    // Parse the health score from the report
-    const scoreMatch = report.match(/Overall Health Score: (\d+)\/100/);
-    const score = scoreMatch ? parseInt(scoreMatch[1], 10) : 0;
+    const score = result.healthScore;
     
     // Exit with appropriate code
     if (score >= 70) {
