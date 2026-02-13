@@ -339,3 +339,37 @@ agents:
     healthcheck:
       endpoint: /api/agents/my-agent/health
       interval_seconds: 90
+
+  - id: repository-review-agent
+    name: Repository Review Agent
+    category: audit
+    role: reviewer
+    execution:
+      runtime: node
+    safety:
+      mode: safe
+      requires_approval: false
+    contexts:
+      allowed:
+        - api
+        - ci
+        - github
+    expose:
+      selectable: true
+      internal_only: false
+    risk:
+      level: low
+      rationale: "Read-only repository analysis and reporting without automated code modification"
+    approval:
+      required: false
+      type: none
+      approvers: []
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - development
+        - staging
+        - production
+    healthcheck:
+      endpoint: /api/agents/repository-review-agent/health
+      interval_seconds: 90
