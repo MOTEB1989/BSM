@@ -565,12 +565,12 @@
 
       if (!message || isLoading) return;
 
-      // Validate input length
-      if (message.length > 5000) {
+      // Validate input length (matches backend maxAgentInputLength default of 4000)
+      if (message.length > 4000) {
         addMessage(
           currentLang === 'ar' 
-            ? 'الرسالة طويلة جداً. الحد الأقصى 5000 حرف.' 
-            : 'Message too long. Maximum 5000 characters.',
+            ? 'الرسالة طويلة جداً. الحد الأقصى 4000 حرف.' 
+            : 'Message too long. Maximum 4000 characters.',
           'assistant',
           true
         );
@@ -602,7 +602,7 @@
             body: JSON.stringify({
               message: message,
               language: currentLang,
-              history: conversationHistory.slice(-10) // Last 10 messages
+              history: conversationHistory.slice(-20) // Last 20 messages (matches backend limit)
             })
           });
         } else {
@@ -615,7 +615,7 @@
             body: JSON.stringify({
               message: message,
               language: currentLang,
-              history: conversationHistory.slice(-10)
+              history: conversationHistory.slice(-20) // Last 20 messages (matches backend limit)
             })
           });
         }

@@ -68,9 +68,12 @@ router.post("/", async (req, res, next) => {
     // Add current user message
     messages.push({ role: "user", content: message });
 
+    // Get model once to avoid inconsistencies
+    const modelName = process.env.OPENAI_MODEL || "gpt-4o-mini";
+
     // Call GPT service
     const result = await runGPT({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      model: modelName,
       apiKey,
       system: systemPrompt,
       user: message,
@@ -84,7 +87,7 @@ router.post("/", async (req, res, next) => {
 
     res.json({ 
       output,
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      model: modelName,
       timestamp: new Date().toISOString()
     });
 
