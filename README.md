@@ -124,6 +124,7 @@ Direct GPT-4o-mini chat endpoint with bilingual support (Arabic/English) and con
 
 #### Authentication Barrier
 - الخدمة تعرض مطالبة اسم مستخدم/كلمة مرور (HTTP Basic/Auth challenge) مع حالة `Unauthorized (401)` عند عدم تمرير بيانات اعتماد صحيحة.
+- لواجهة `/admin` استخدم فقط `x-admin-token` header أو `Authorization: Basic ...`؛ تمرير `token` عبر query string (مثل `?token=...`) غير مدعوم ومرفوض.
 
 **احتمالات (غير جازمة):**
 - Basic Auth على مستوى البروكسي أو طبقة البوابة الأمامية.

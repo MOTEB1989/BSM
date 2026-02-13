@@ -33,9 +33,14 @@ export const adminUiAuth = (req, res, next) => {
     return res.status(500).send("Admin token not configured");
   }
 
+  if (req.query?.token) {
+    return res
+      .status(401)
+      .send("Unauthorized: token in query parameters is not allowed. Use x-admin-token header or HTTP Basic Auth.");
+  }
+
   const token =
     req.headers["x-admin-token"] ||
-    req.query?.token ||
     tokenFromBasicAuth(req.headers.authorization);
 
   if (!token || !timingSafeEqual(token, env.adminToken)) {
