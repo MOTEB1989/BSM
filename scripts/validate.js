@@ -32,7 +32,12 @@ const allowedActions = new Set([
   "validate_guards",
   "check_api_routes",
   "verify_ui_config",
-  "generate_audit_report"
+  "generate_audit_report",
+  "audit_ios_ui",
+  "validate_mobile_api_contract",
+  "check_safe_area_support",
+  "test_keyboard_behavior",
+  "generate_ios_report"
 ]);
 
 const agentsDir = path.join(process.cwd(), "data", "agents");
