@@ -7,9 +7,15 @@ export const handleGitHubWebhook = async (req, res, next) => {
   try {
     const signature = req.headers["x-hub-signature-256"];
     const payload = JSON.stringify(req.body);
+    const secret = process.env.GITHUB_WEBHOOK_SECRET;
 
-    if (!verifySignature(payload, signature, process.env.GITHUB_WEBHOOK_SECRET)) {
-      logger.warn("Invalid webhook signature");
+    if (!secret) {
+      logger.error("Rejecting GitHub webhook: missing GITHUB_WEBHOOK_SECRET");
+      return res.status(401).send("Unauthorized");
+    }
+
+    if (!verifySignature(payload, signature, secret)) {
+      logger.warn("Rejecting GitHub webhook: invalid signature");
       return res.status(401).send("Unauthorized");
     }
 
@@ -83,14 +89,20 @@ function transformGitHubEvent(event, data) {
   return transformers[event] ? transformers[event]() : data;
 }
 
-function verifySignature(payload, signature, secret) {
+export function verifySignature(payload, signature, secret) {
   if (!secret) {
-    return true;
+    logger.error("Cannot verify GitHub webhook signature: missing secret");
+    return false;
   }
+
   if (!signature || !signature.startsWith("sha256=")) {
     return false;
   }
 
   const digest = `sha256=${crypto.createHmac("sha256", secret).update(payload).digest("hex")}`;
+  if (signature.length !== digest.length) {
+    return false;
+  }
+
   return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
 }
