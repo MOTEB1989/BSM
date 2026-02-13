@@ -34,6 +34,8 @@ The documentation is organized into the following categories:
 |----------|----------|-------------|
 | [DNS Record Types](../dns/DNS-RECORD-TYPES.md) | dns/ | Cloudflare DNS configuration reference |
 | [GitHub Pages Verification](../dns/GITHUB-PAGES-VERIFICATION.md) | dns/ | Custom domain setup guide |
+| [Cloudflare API Names](CLOUDFLARE-API-NAMES.md) | docs/ | Complete reference for all Cloudflare API variables (Arabic) |
+| [Cloudflare Quick Reference (AR)](CLOUDFLARE-QUICK-REFERENCE-AR.md) | docs/ | Quick reference guide for Cloudflare API names (Arabic) |
 
 ### 📖 API Documentation
 
