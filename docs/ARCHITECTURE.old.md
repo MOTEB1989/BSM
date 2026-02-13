@@ -306,7 +306,7 @@ The platform includes an intent extraction and action mapping system:
 - Multiple authentication methods:
   - Header: `x-admin-token`
   - Basic Auth: `admin:{token}`
-  - Query param: `?token={token}`
+- Query string token pattern (`?token=...`) is explicitly blocked.
 
 **Production Requirements**:
 - `ADMIN_TOKEN` must be set
