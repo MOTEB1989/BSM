@@ -180,9 +180,23 @@ createApp({
       } catch (err) {
         console.error('Chat error:', err);
         
-        // Provide clearer error messages based on error code or status
+        // Provide clearer error messages based on error type, code, or status
         let errorMessage = err.message;
-        if (err.code === 'MISSING_API_KEY' || err.status === 503) {
+        
+        // Check for network/connectivity errors (TypeError from fetch failures)
+        if (err instanceof TypeError || err.message?.includes('fetch') || err.message?.includes('ENOTFOUND')) {
+          errorMessage = lang.value === 'ar'
+            ? 'فشل الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.'
+            : 'Failed to connect to server. Please check your internet connection and try again.';
+        } else if (err.code === 'NETWORK_ERROR') {
+          errorMessage = lang.value === 'ar'
+            ? 'لا يمكن الاتصال بخدمة الذكاء الاصطناعي. يرجى الاتصال بالمسؤول.'
+            : 'Cannot connect to AI service. Please contact the administrator.';
+        } else if (err.code === 'GPT_TIMEOUT') {
+          errorMessage = lang.value === 'ar'
+            ? 'انتهت مهلة طلب الذكاء الاصطناعي. يرجى المحاولة مرة أخرى.'
+            : 'AI service request timed out. Please try again.';
+        } else if (err.code === 'MISSING_API_KEY' || err.status === 503) {
           errorMessage = lang.value === 'ar'
             ? 'خدمة الذكاء الاصطناعي غير متاحة حالياً. يرجى الاتصال بالمسؤول.'
             : 'AI service is not currently available. Please contact the administrator.';

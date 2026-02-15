@@ -72,6 +72,10 @@ export const runGPT = async ({ model, apiKey, system, user, messages, task, comp
       if (err.name === 'AbortError') {
         throw new AppError("GPT request timeout", 500, "GPT_TIMEOUT");
       }
+      // Handle network errors (DNS failures, connection refused, etc.)
+      if (err.code === 'ENOTFOUND' || err.code === 'ECONNREFUSED' || err.message?.includes('ENOTFOUND')) {
+        throw new AppError("Cannot connect to OpenAI API - network or DNS issue", 503, "NETWORK_ERROR");
+      }
       throw err;
     }
   });
