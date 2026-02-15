@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "main": "src/server.js",
+  "license": "UNLICENSED",
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
