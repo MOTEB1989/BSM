@@ -75,3 +75,28 @@ See `.github/workflows/pr-management.yml` for the automated workflow that uses s
 
 - **Complete Guide:** `docs/PR-MANAGEMENT-GUIDE.md` - Full guide on PR management processes
 - **Action Plan:** `docs/PR-ACTION-PLAN.md` - Step-by-step implementation plan
+
+---
+
+### sync-pr-branch.sh (Conflict Prevention)
+
+Keeps your PR branch synchronized with the base branch before review/merge.
+
+**Why this helps:**
+- Most merge conflicts happen when a PR branch stays stale for too long.
+- Running this script before opening (or updating) a PR drastically reduces conflict risk.
+
+**Usage:**
+```bash
+# Default: fetch origin and rebase onto origin/main (or remote default branch)
+scripts/sync-pr-branch.sh
+
+# Explicit branch + merge mode
+scripts/sync-pr-branch.sh --base main --mode merge
+```
+
+**Recommended flow:**
+1. `scripts/sync-pr-branch.sh --base main --mode rebase`
+2. Run tests locally.
+3. `git push --force-with-lease` (only if you used rebase).
+4. Open/update the PR.
