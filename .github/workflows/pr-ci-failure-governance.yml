@@ -58,7 +58,7 @@ jobs:
             }
 
   handle-failure:
-    name: Assign owner and notify on CI failure
+    name: Notify on CI failure without assignee
     if: github.event_name == 'check_suite' && github.event.check_suite.conclusion == 'failure'
     runs-on: ubuntu-latest
     steps:
@@ -108,14 +108,15 @@ jobs:
               pull_number: prNumber
             });
 
-            const ownerLogin = pr.user.login;
-
-            await github.rest.issues.update({
-              owner,
-              repo,
-              issue_number: prNumber,
-              assignees: [ownerLogin]
-            });
+            const assigneesToRemove = (pr.assignees || []).map((assignee) => assignee.login);
+            if (assigneesToRemove.length > 0) {
+              await github.rest.issues.removeAssignees({
+                owner,
+                repo,
+                issue_number: prNumber,
+                assignees: assigneesToRemove
+              });
+            }
 
             await github.rest.issues.addLabels({
               owner,
@@ -145,7 +146,7 @@ jobs:
             - **Failed job:** ${primary.name}
             - **Log link:** ${primary.details_url || primary.html_url}
             - **SLA deadline:** ${deadline.toISOString()} (within ${slaHours}h)
-            - **Assigned owner:** @${ownerLogin}
+            - **Assignment:** Unassigned automatically (self-service fix)
 
             > This PR cannot be merged while checks are failing.
             `;
@@ -206,6 +207,16 @@ jobs:
             });
 
             for (const pr of prs) {
+              const assigneesToRemove = (pr.assignees || []).map((assignee) => assignee.login);
+              if (assigneesToRemove.length > 0) {
+                await github.rest.issues.removeAssignees({
+                  owner,
+                  repo,
+                  issue_number: pr.number,
+                  assignees: assigneesToRemove
+                });
+              }
+
               const labels = (pr.labels || []).map((label) => label.name);
               if (!labels.includes('ci-failed')) {
                 continue;
