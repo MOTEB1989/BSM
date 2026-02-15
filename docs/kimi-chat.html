@@ -534,7 +534,8 @@
       if (role === 'assistant' && !isError && typeof marked !== 'undefined') {
         try {
           contentHtml = marked.parse(content, { breaks: true, gfm: true });
-        } catch {
+        } catch (err) {
+          console.warn('Markdown parsing failed, falling back to plain text:', err);
           contentHtml = `<p>${escapeHtml(content)}</p>`;
         }
       } else {
@@ -633,7 +634,10 @@
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
+          const errorData = await response.json().catch((err) => {
+            console.warn('Failed to parse error response as JSON:', err);
+            return {};
+          });
           throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
         }
 
