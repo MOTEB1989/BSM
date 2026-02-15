@@ -16,10 +16,14 @@ export const errorHandler = (err, req, res, next) => {
   // Handle specific error codes with user-friendly messages
   if (err.code === "MISSING_API_KEY") {
     clientMessage = "AI service is not configured. Please contact the administrator.";
+  } else if (err.code === "INVALID_API_KEY") {
+    clientMessage = "AI service credentials are invalid. Please contact the administrator.";
   } else if (err.code === "NETWORK_ERROR") {
     clientMessage = "Cannot connect to AI service. Please check server network configuration.";
   } else if (err.code === "GPT_TIMEOUT") {
     clientMessage = "AI service request timed out. Please try again.";
+  } else if (err.code === "RATE_LIMITED") {
+    clientMessage = "AI service rate limit exceeded. Please try again shortly.";
   } else if (status === 500) {
     // For all other 500 errors, use generic message
     clientMessage = "Internal Server Error";

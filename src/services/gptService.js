@@ -62,7 +62,16 @@ export const runGPT = async ({ model, apiKey, system, user, messages, task, comp
 
       if (!res.ok) {
         const text = await res.text();
-        throw new AppError(`GPT request failed: ${text}`, 500, "GPT_ERROR");
+
+        if (res.status === 401 || res.status === 403) {
+          throw new AppError("OpenAI API key is invalid or unauthorized", 503, "INVALID_API_KEY");
+        }
+
+        if (res.status === 429) {
+          throw new AppError("OpenAI rate limit exceeded", 429, "RATE_LIMITED");
+        }
+
+        throw new AppError(`GPT request failed: ${text}`, 502, "GPT_ERROR");
       }
 
       const data = await res.json();
