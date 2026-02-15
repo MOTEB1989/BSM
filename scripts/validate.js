@@ -40,7 +40,8 @@ const allowedActions = new Set([
   "generate_ios_report",
   "review_repository",
   "generate_repository_report",
-  "suggest_improvements"
+  "suggest_improvements",
+  "execute_command"
 ]);
 
 const agentsDir = path.join(process.cwd(), "data", "agents");
