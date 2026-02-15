@@ -8,5 +8,8 @@ export const models = {
   },
   perplexity: {
     default: process.env.PERPLEXITY_KEY
+  },
+  kimi: {
+    default: process.env.KIMI_API_KEY
   }
 };

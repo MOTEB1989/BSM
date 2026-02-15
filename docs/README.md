@@ -19,6 +19,7 @@ The documentation is organized into the following categories:
 |----------|-------------|------|----------|
 | [System Architecture](ARCHITECTURE.md) | Complete architectural overview, component breakdown, data flows, and scalability roadmap | 23KB | Developers, Architects |
 | [Agent Orchestration Patterns](AGENT-ORCHESTRATION.md) | Multi-agent design patterns, communication strategies, and workflow orchestration | 18KB | Developers, Architects |
+| [KIMI Agent Integration](KIMI-AGENT.md) | KIMI (Moonshot AI) agent setup, configuration, and usage guide | 4KB | Developers, Users |
 | [Analysis Summary](ANALYSIS-SUMMARY.md) | Session summary with findings, metrics, and recommendations | 10KB | All Stakeholders |
 | [Kimi Claims Fact Check](KIMI-CLAIMS-FACT-CHECK.md) | Verification note clarifying cross-repo mismatch claims and reproducible checks | 4KB | QA, Maintainers |
 
