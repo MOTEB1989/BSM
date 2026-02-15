@@ -5,6 +5,7 @@ import { runGPT } from "../services/gptService.js";
 import { AppError } from "../utils/errors.js";
 import { createFile } from "../actions/githubActions.js";
 import { extractIntent, intentToAction } from "../utils/intent.js";
+import { parseCommandBlocks, executeCommands } from "../utils/commandExecutor.js";
 import logger from "../utils/logger.js";
 
 const resolveTemplateValue = (context, keyPath) => {
@@ -79,6 +80,38 @@ export const runAgent = async ({ agentId, input, payload = {} }) => {
 
     if (intent === "update_file") {
       throw new AppError("Update file intent not implemented", 501, "UPDATE_FILE_NOT_IMPLEMENTED");
+    }
+
+    // Auto-execute terminal commands if present in the response
+    if (intent === "execute_command") {
+      const commands = parseCommandBlocks(result);
+      if (commands.length > 0) {
+        logger.info({ agentId, commandCount: commands.length }, "Auto-executing terminal commands");
+        const commandResults = executeCommands(commands);
+
+        // Build enriched output with command results
+        let enrichedOutput = result;
+
+        // Replace command blocks with their execution results
+        for (let i = 0; i < commands.length; i++) {
+          const cmdResult = commandResults[i];
+          const statusIcon = cmdResult.success ? "✅" : "❌";
+          const resultBlock = [
+            `\n---`,
+            `${statusIcon} **\`${cmdResult.command}\`** (${cmdResult.duration}ms)`,
+            "```",
+            cmdResult.output,
+            "```"
+          ].join("\n");
+
+          enrichedOutput = enrichedOutput.replace(
+            `[EXECUTE_COMMAND]${commands[i]}[/EXECUTE_COMMAND]`,
+            resultBlock
+          );
+        }
+
+        return { output: enrichedOutput, commandResults };
+      }
     }
 
     // Ensure output is always a string
