@@ -11,7 +11,7 @@ import { PRMergeAgent } from "../src/agents/PRMergeAgent.js";
 import logger from "../src/utils/logger.js";
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.GITHUB_BSU_TOKEN;
-const REPO = process.env.GITHUB_REPO || "LexBANK/BSM";
+const REPO = process.env.GITHUB_REPOSITORY || process.env.GITHUB_REPO || "LexBANK/BSM";
 
 if (!GITHUB_TOKEN) {
   console.error("❌ Error: GITHUB_TOKEN or GITHUB_BSU_TOKEN environment variable is required");
@@ -74,7 +74,8 @@ async function getPRDetails(prNumber) {
     const checkRunsResponse = await githubAPI(`commits/${pr.head.sha}/check-runs`);
     checkRuns = checkRunsResponse.check_runs || [];
   } catch (e) {
-    // Check runs API might not be available
+    // Check runs API might not be available or enabled
+    logger.debug({ error: e.message }, "Check runs API unavailable, continuing without checks");
     checkRuns = [];
   }
 
@@ -207,7 +208,7 @@ async function mergePR(prNumber, method = "squash", comment = null) {
   try {
     const result = await githubAPI(`pulls/${prNumber}/merge`, "PUT", {
       merge_method: method,
-      commit_title: `${method === "squash" ? "✨" : "🔀"} ${pr.title} (#${prNumber})`,
+      commit_title: `${pr.title} (#${prNumber})`,
       commit_message: comment || `Merged by BSU PR Merge Agent\n\nApprovals: ${approvals}\nAgent Decision: All quality gates passed`
     });
 
