@@ -76,6 +76,31 @@ app.get("/", (req, res) => res.redirect("/chat"));
 // /docs and /docs/* redirect to chat UI to prevent JSON 404
 app.get("/docs*", (req, res) => res.redirect("/chat"));
 
+// serve Kimi chat interface with CSP headers for external resources
+app.get("/kimi-chat", 
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://unpkg.com",
+          "https://cdn.tailwindcss.com",
+          "https://cdn.jsdelivr.net"
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:"],
+        connectSrc: ["'self'", ...env.corsOrigins]
+      }
+    }
+  }),
+  (req, res) => {
+    res.sendFile(path.join(process.cwd(), "docs/kimi-chat.html"));
+  }
+);
+
 // serve admin UI static
 app.use("/admin", adminUiAuth, express.static(path.join(process.cwd(), "src/admin")));
 app.use(
