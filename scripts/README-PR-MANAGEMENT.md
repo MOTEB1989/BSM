@@ -67,6 +67,33 @@ GITHUB_TOKEN=your_token node scripts/pr-manager.js
 - Weekly/monthly reviews
 - Management reporting
 
+
+---
+
+### close-conflicting-prs.sh (Bulk Closure)
+
+Bulk close known conflicting PRs to reduce noise from non-mergeable items.
+
+**Usage:**
+```bash
+# First authenticate gh
+gh auth login
+
+# Then close a list of PRs
+scripts/close-conflicting-prs.sh 282 274 251 250
+```
+
+**Optional environment variables:**
+```bash
+REPO=LexBANK/BSM \
+COMMENT="🔒 تم الإغلاق: PR يحتوي على تعارضات ولا يمكن دمجه" \
+scripts/close-conflicting-prs.sh 282 274
+```
+
+**Requirements:**
+- GitHub CLI (`gh`)
+- Authenticated session (`gh auth login`)
+
 ## Related Workflows
 
 See `.github/workflows/pr-management.yml` for the automated workflow that uses similar logic.
