@@ -11,6 +11,7 @@
     "pr-merge-agent.yaml",
     "integrity-agent.yaml",
     "bsu-audit-agent.yaml",
-    "repository-review.yaml"
+    "repository-review.yaml",
+    "kimi-agent.yaml"
   ]
 }

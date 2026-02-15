@@ -7,6 +7,7 @@ import { GroqClient } from './groq-client';
 import { CohereClient } from './cohere-client';
 import { MistralClient } from './mistral-client';
 import { PerplexityClient } from './perplexity-client';
+import { KimiClient } from './kimi-client';
 
 const PROVIDER_MAP: Record<string, () => AIProvider> = {
   openai: () => new OpenAIClient(),
@@ -17,6 +18,7 @@ const PROVIDER_MAP: Record<string, () => AIProvider> = {
   cohere: () => new CohereClient(),
   mistral: () => new MistralClient(),
   perplexity: () => new PerplexityClient(),
+  kimi: () => new KimiClient(),
 };
 
 export class APIClientFactory {

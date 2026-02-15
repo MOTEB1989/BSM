@@ -1,0 +1,37 @@
+id: kimi-agent
+name: KIMI AI Agent
+role: Moonshot AI conversational assistant with Chinese language expertise
+version: 1.0.0
+modelProvider: kimi
+modelKey: default
+modelName: moonshot-v1-8k
+actions:
+  - create_file
+contexts:
+  allowed:
+    - chat
+    - api
+    - mobile
+safety:
+  mode: safe
+  requires_approval: false
+risk:
+  level: low
+  rationale: "Conversational AI assistant powered by Moonshot AI (Kimi) with no system modifications"
+approval:
+  required: false
+  type: none
+  approvers: []
+expose:
+  selectable: true
+  internal_only: false
+description: >
+  KIMI agent powered by Moonshot AI, specializing in Chinese language understanding
+  and generation. Provides intelligent conversational assistance with strong 
+  contextual awareness and multi-turn dialogue capabilities.
+capabilities:
+  - chinese_language_expertise
+  - long_context_understanding
+  - conversational_ai
+  - knowledge_retrieval
+status: active
