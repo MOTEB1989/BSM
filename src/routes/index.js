@@ -11,6 +11,7 @@ import webhooks from "./webhooks.js";
 import emergency from "./emergency.js";
 import control from "./control.js";
 import pr from "./pr.js";
+import agentExecutor from "./agent-executor.js";
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.use("/control", control);
 router.use("/webhooks", webhooks);
 router.use("/emergency", emergency);
 router.use("/pr", pr);
+router.use("/agent", agentExecutor);
 
 export default router;
