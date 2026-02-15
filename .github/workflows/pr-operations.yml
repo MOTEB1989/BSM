@@ -1,0 +1,129 @@
+name: PR Operations
+ 
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Operation to perform'
+        required: true
+        type: choice
+        options:
+          - list
+          - review
+          - approve
+          - merge
+          - close
+          - auto
+        default: 'list'
+      pr_number:
+        description: 'PR number (required for review/approve/merge/close)'
+        required: false
+        type: string
+      reason:
+        description: 'Reason (optional, for close operation)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+  issues: write
+
+jobs:
+  pr-operation:
+    runs-on: ubuntu-latest
+    name: Execute PR Operation
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate inputs
+        id: validate
+        run: |
+          operation="${{ github.event.inputs.operation }}"
+          pr_number="${{ github.event.inputs.pr_number }}"
+          
+          # Operations that require PR number
+          if [[ "$operation" == "review" || "$operation" == "approve" || "$operation" == "merge" || "$operation" == "close" ]]; then
+            if [ -z "$pr_number" ]; then
+              echo "❌ PR number is required for operation: $operation"
+              exit 1
+            fi
+          fi
+          
+          echo "operation=$operation" >> $GITHUB_OUTPUT
+          echo "pr_number=$pr_number" >> $GITHUB_OUTPUT
+
+      - name: Execute operation
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_BSU_TOKEN: ${{ secrets.GITHUB_BSU_TOKEN }}
+          GITHUB_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO: ${{ github.event.repository.name }}
+        run: |
+          operation="${{ steps.validate.outputs.operation }}"
+          pr_number="${{ steps.validate.outputs.pr_number }}"
+          reason="${{ github.event.inputs.reason }}"
+          
+          echo "🚀 Executing operation: $operation"
+          
+          case "$operation" in
+            list)
+              node scripts/pr-operations.js list
+              ;;
+            review)
+              node scripts/pr-operations.js review "$pr_number"
+              ;;
+            approve)
+              node scripts/pr-operations.js approve "$pr_number"
+              ;;
+            merge)
+              node scripts/pr-operations.js merge "$pr_number" squash
+              ;;
+            close)
+              if [ -n "$reason" ]; then
+                node scripts/pr-operations.js close "$pr_number" "$reason"
+              else
+                node scripts/pr-operations.js close "$pr_number"
+              fi
+              ;;
+            auto)
+              node scripts/pr-operations.js auto
+              ;;
+            *)
+              echo "❌ Unknown operation: $operation"
+              exit 1
+              ;;
+          esac
+
+      - name: Post summary
+        if: always()
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          script: |
+            const operation = '${{ steps.validate.outputs.operation }}';
+            const prNumber = '${{ steps.validate.outputs.pr_number }}';
+            
+            let summary = `## 🤖 PR Operation: ${operation}\n\n`;
+            
+            if (prNumber) {
+              summary += `**PR Number:** #${prNumber}\n`;
+            }
+            
+            summary += `**Operation:** ${operation}\n`;
+            summary += `**Status:** ${{ job.status }}\n`;
+            summary += `**Triggered by:** @${{ github.actor }}\n`;
+            summary += `**Time:** ${new Date().toISOString()}\n`;
+            
+            core.summary.addRaw(summary);
+            await core.summary.write();
