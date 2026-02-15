@@ -5,6 +5,7 @@ import { models } from "../config/models.js";
 import { AppError } from "../utils/errors.js";
 import { env } from "../config/env.js";
 import logger from "../utils/logger.js";
+import { hasUsableApiKey } from "../utils/apiKey.js";
 
 const router = Router();
 
@@ -12,9 +13,9 @@ const router = Router();
 router.get("/key-status", async (_req, res, next) => {
   try {
     const status = {
-      openai: Boolean(models.openai?.bsm || models.openai?.default),
+      openai: hasUsableApiKey(models.openai?.bsm || models.openai?.default),
       anthropic: false,
-      perplexity: Boolean(models.perplexity?.default),
+      perplexity: hasUsableApiKey(models.perplexity?.default),
       google: false
     };
 
@@ -67,7 +68,7 @@ router.post("/direct", async (req, res, next) => {
     }
 
     const apiKey = models.openai?.bsm || models.openai?.default;
-    if (!apiKey) {
+    if (!hasUsableApiKey(apiKey)) {
       throw new AppError("AI service is not configured", 503, "MISSING_API_KEY");
     }
 

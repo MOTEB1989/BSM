@@ -200,6 +200,10 @@ createApp({
           errorMessage = lang.value === 'ar'
             ? 'خدمة الذكاء الاصطناعي غير متاحة حالياً. يرجى الاتصال بالمسؤول.'
             : 'AI service is not currently available. Please contact the administrator.';
+        } else if (err.code === 'INVALID_API_KEY') {
+          errorMessage = lang.value === 'ar'
+            ? 'مفتاح خدمة الذكاء الاصطناعي غير صحيح. يرجى إبلاغ المسؤول.'
+            : 'AI service credentials are invalid. Please notify the administrator.';
         } else if (err.status === 500) {
           errorMessage = lang.value === 'ar'
             ? 'حدث خطأ في الخادم. يرجى المحاولة لاحقاً.'
