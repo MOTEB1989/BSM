@@ -6,6 +6,12 @@ on:
     branches:
       - main
       - develop
+    paths:
+      - 'src/**'
+      - 'server/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/pr-governance-check.yml'
 
 permissions:
   contents: read

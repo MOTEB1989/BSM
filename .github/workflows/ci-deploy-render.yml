@@ -3,8 +3,6 @@ name: 🤖 BSU CI/CD - Build, Test & Deploy to Render
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 env:
