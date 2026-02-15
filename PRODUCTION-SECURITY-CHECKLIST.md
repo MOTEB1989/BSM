@@ -19,7 +19,7 @@ Before deploying BSM to production, ensure all security measures are in place. U
   - [ ] `GRAFANA_PASSWORD` is NOT "admin"
 
 - [ ] Secrets are properly configured
-  - [ ] `GITHUB_WEBHOOK_SECRET` is set (64+ characters recommended)
+  - [ ] `GITHUB_WEBHOOK_SECRET` is set (64+ characters recommended) - **Optional: only if using GitHub webhooks**
   - [ ] `ENCRYPTION_KEY` is set (64 hex characters)
   - [ ] All secrets use strong random generation
   - [ ] No secrets are committed to git

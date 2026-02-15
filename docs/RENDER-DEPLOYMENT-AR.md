@@ -15,7 +15,7 @@ CORS_ORIGINS=https://www.lexdo.uk,https://lexdo.uk,https://lexprim.com,https://w
 - **تنسيق**: قائمة مفصولة بفواصل، بدون مسافات
 - **ملاحظة**: لا تضع / في النهاية
 
-#### 2. GITHUB_WEBHOOK_SECRET (إلزامي للـ webhooks)
+#### 2. GITHUB_WEBHOOK_SECRET (اختياري - للـ webhooks فقط)
 ```
 GITHUB_WEBHOOK_SECRET=your-secret-token-here
 ```
@@ -23,6 +23,7 @@ GITHUB_WEBHOOK_SECRET=your-secret-token-here
 - **التوليد**: استخدم نص عشوائي قوي (32+ حرف)
 - **أمر التوليد**: `openssl rand -hex 32`
 - **التطبيق**: يجب أن يتطابق مع السر المعيَّن في GitHub Webhook Settings
+- **ملاحظة**: اختياري - مطلوب فقط إذا كنت تستخدم GitHub webhooks. بدونه، سيرفض التطبيق أي webhooks واردة.
 
 #### 3. ADMIN_TOKEN (إلزامي للإنتاج)
 ```
@@ -91,11 +92,11 @@ Plan: Free (أو حسب الحاجة)
 ### الخطوة 3: إضافة Environment Variables
 1. في صفحة الخدمة، اذهب إلى "Environment"
 2. أضف المتغيرات المطلوبة:
-   - `CORS_ORIGINS`
-   - `GITHUB_WEBHOOK_SECRET`
-   - `ADMIN_TOKEN`
-   - `OPENAI_BSU_KEY`
-   - `NODE_ENV=production`
+   - `CORS_ORIGINS` (إلزامي)
+   - `ADMIN_TOKEN` (إلزامي)
+   - `OPENAI_BSU_KEY` (إلزامي)
+   - `NODE_ENV=production` (موصى به)
+   - `GITHUB_WEBHOOK_SECRET` (اختياري - فقط إذا كنت تستخدم GitHub webhooks)
 3. انقر "Save Changes"
 
 ### الخطوة 4: Deploy
