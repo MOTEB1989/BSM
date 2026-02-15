@@ -122,6 +122,35 @@ Direct GPT-4o-mini chat endpoint with bilingual support (Arabic/English) and con
 - `GET /api/admin/knowledge` - Get knowledge documents
 - `/admin` - Admin UI dashboard
 
+### PR Management Endpoints
+- `POST /api/pr/evaluate` - Evaluate PR merge readiness
+- `POST /api/pr/batch-evaluate` - Evaluate multiple PRs
+- `GET /api/pr/config` - Get PR Merge Agent configuration
+- `GET /api/pr/health` - PR operations health check
+
+**CLI Tool:**
+```bash
+# List all open PRs with status
+node scripts/pr-operations.js list
+
+# Review a specific PR
+node scripts/pr-operations.js review <pr-number>
+
+# Approve a PR if quality gates pass
+node scripts/pr-operations.js approve <pr-number>
+
+# Merge an approved PR
+node scripts/pr-operations.js merge <pr-number>
+
+# Close a PR with reason
+node scripts/pr-operations.js close <pr-number> "reason"
+
+# Auto-merge all ready PRs
+node scripts/pr-operations.js auto
+```
+
+📖 See [PR Management Guide](docs/PR-MANAGEMENT.md) for comprehensive documentation.
+
 #### Authentication Barrier
 - الخدمة تعرض مطالبة اسم مستخدم/كلمة مرور (HTTP Basic/Auth challenge) مع حالة `Unauthorized (401)` عند عدم تمرير بيانات اعتماد صحيحة.
 - لواجهة `/admin` استخدم فقط `x-admin-token` header أو `Authorization: Basic ...`؛ تمرير `token` عبر query string (مثل `?token=...`) غير مدعوم ومرفوض.
