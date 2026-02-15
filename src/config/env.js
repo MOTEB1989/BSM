@@ -51,8 +51,10 @@ if (env.nodeEnv === "production" && env.adminToken && env.adminToken.length < 16
   throw new Error("ADMIN_TOKEN must be at least 16 characters in production");
 }
 
+// GitHub webhook secret is optional - warn if missing but don't fail
 if (env.nodeEnv === "production" && !env.githubWebhookSecret) {
-  throw new Error("GITHUB_WEBHOOK_SECRET must be set in production");
+  console.warn("⚠️  WARNING: GITHUB_WEBHOOK_SECRET is not set. GitHub webhooks will be rejected.");
+  console.warn("   Set GITHUB_WEBHOOK_SECRET if you plan to use GitHub webhook integration.");
 }
 
 // Validate egress policy

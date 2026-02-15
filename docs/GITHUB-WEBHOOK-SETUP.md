@@ -15,6 +15,13 @@ Both endpoints use the same handler and support full webhook functionality.
 
 ## Configuration
 
+### Important Note
+
+**GITHUB_WEBHOOK_SECRET is optional** - you only need to set it if you plan to use GitHub webhooks. Without this secret:
+- The application will start normally
+- GitHub webhook endpoints will be available but will reject all incoming webhooks
+- A warning will be logged at startup
+
 ### 1. GitHub Repository Settings
 
 Navigate to your repository settings:
@@ -70,12 +77,13 @@ All webhook requests are verified using HMAC-SHA256:
 - BSM verifies the signature before processing
 - Invalid signatures return `401 Unauthorized`
 
-### No Secret (Development Only)
+### No Secret Configuration
 
 If `GITHUB_WEBHOOK_SECRET` is not set:
-- Signature verification is **bypassed**
-- ⚠️ Only use in development/testing environments
-- Never deploy to production without a secret
+- The application starts normally with a warning
+- All incoming webhooks are **rejected** with `401 Unauthorized`
+- Safe for deployments that don't use GitHub webhooks
+- To enable webhooks, set `GITHUB_WEBHOOK_SECRET` and configure GitHub repository webhook settings
 
 ## Webhook Handler Behavior
 
