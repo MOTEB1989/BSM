@@ -3,11 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Kimi Chat - BSM AI Assistant</title>
-  <meta name="description" content="واجهة محادثة Kimi الذكية - منصة BSM">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+  <title>Kimi AI - مساعد Moonshot الذكي</title>
+  <meta name="description" content="واجهة Kimi AI من Moonshot - مساعد ذكي متخصص باللغة الصينية والعربية">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌙</text></svg>">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+    
     * {
       margin: 0;
       padding: 0;
@@ -15,9 +21,9 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'Tajawal', sans-serif;
-      background: #1a1a1a;
-      color: #e0e0e0;
+      font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #e2e8f0;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -26,13 +32,15 @@
 
     /* Header */
     .header {
-      background: #252525;
-      border-bottom: 1px solid #333;
+      background: rgba(30, 41, 59, 0.6);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
       padding: 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-shrink: 0;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
     .header-title {
@@ -42,25 +50,29 @@
     }
 
     .header-icon {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 10px;
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #3b82f6 0%, #a855f7 100%);
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
+      font-size: 1.75rem;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
 
     .header-text h1 {
-      font-size: 1.25rem;
+      font-size: 1.5rem;
       font-weight: 700;
-      color: #fff;
+      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .header-text p {
       font-size: 0.75rem;
-      color: #999;
+      color: #94a3b8;
     }
 
     .header-controls {
@@ -79,56 +91,29 @@
     }
 
     .btn-secondary {
-      background: #333;
-      color: #e0e0e0;
+      background: rgba(51, 65, 85, 0.6);
+      backdrop-filter: blur(10px);
+      color: #e2e8f0;
+      border: 1px solid rgba(148, 163, 184, 0.2);
     }
 
     .btn-secondary:hover {
-      background: #404040;
+      background: rgba(71, 85, 105, 0.8);
+      border-color: rgba(148, 163, 184, 0.3);
     }
 
-    .btn-danger {
-      background: #dc3545;
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #a855f7 100%);
       color: white;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
 
-    .btn-danger:hover {
-      background: #c82333;
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #2563eb 0%, #9333ea 100%);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
     }
 
-    /* Mode Selector */
-    .mode-selector {
-      background: #252525;
-      border-bottom: 1px solid #333;
-      padding: 0.75rem 1rem;
-      display: flex;
-      gap: 0.5rem;
-      overflow-x: auto;
-      flex-shrink: 0;
-    }
-
-    .mode-btn {
-      padding: 0.5rem 1.25rem;
-      border: 1px solid #444;
-      border-radius: 20px;
-      background: #2a2a2a;
-      color: #999;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s;
-      font-size: 0.875rem;
-    }
-
-    .mode-btn:hover {
-      border-color: #667eea;
-      color: #e0e0e0;
-    }
-
-    .mode-btn.active {
-      background: #667eea;
-      border-color: #667eea;
-      color: white;
-    }
+    /* Removed Mode Selector - Using Kimi Agent Only */
 
     /* Chat Container */
     .chat-container {
@@ -176,29 +161,62 @@
     }
 
     .message.user .message-avatar {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
     }
 
     .message.assistant .message-avatar {
-      background: #333;
+      background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+      box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3);
     }
 
     .message-content {
-      background: #252525;
-      padding: 0.875rem 1rem;
-      border-radius: 12px;
-      line-height: 1.6;
+      background: rgba(30, 41, 59, 0.6);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      padding: 1rem 1.25rem;
+      border-radius: 16px;
+      line-height: 1.8;
       word-wrap: break-word;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
     .message.user .message-content {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0.4) 100%);
+      border: 1px solid rgba(59, 130, 246, 0.3);
       color: white;
     }
 
     .message.error .message-content {
-      background: #dc3545;
-      color: white;
+      background: rgba(220, 38, 38, 0.3);
+      border: 1px solid rgba(220, 38, 38, 0.5);
+      color: #fecaca;
+    }
+    
+    .prose {
+      max-width: none;
+      color: #e2e8f0;
+    }
+    
+    .prose code {
+      background: rgba(15, 23, 42, 0.5);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      color: #a5b4fc;
+    }
+    
+    .prose pre {
+      background: rgba(15, 23, 42, 0.8);
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    
+    .prose pre code {
+      background: none;
+      padding: 0;
     }
 
     /* Typing Indicator */
@@ -221,7 +239,7 @@
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #667eea;
+      background: #a78bfa;
       animation: typing 1.4s infinite;
     }
 
@@ -246,62 +264,68 @@
 
     /* Input Area */
     .input-area {
-      background: #252525;
-      border-top: 1px solid #333;
+      background: rgba(30, 41, 59, 0.6);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
       padding: 1rem;
       flex-shrink: 0;
+      box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
     }
 
     .input-wrapper {
       display: flex;
       gap: 0.75rem;
-      max-width: 900px;
+      max-width: 1200px;
       margin: 0 auto;
     }
 
     .input-field {
       flex: 1;
-      background: #1a1a1a;
-      border: 1px solid #444;
-      border-radius: 12px;
+      background: rgba(51, 65, 85, 0.5);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 16px;
       padding: 0.875rem 1rem;
-      color: #e0e0e0;
+      color: #e2e8f0;
       font-size: 1rem;
       resize: none;
       max-height: 150px;
       font-family: inherit;
+      transition: all 0.2s;
     }
 
     .input-field:focus {
       outline: none;
-      border-color: #667eea;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
     .input-field::placeholder {
-      color: #666;
+      color: #64748b;
     }
 
     .btn-send {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #3b82f6 0%, #a855f7 100%);
       color: white;
       padding: 0.875rem 1.5rem;
       border: none;
-      border-radius: 12px;
+      border-radius: 16px;
       cursor: pointer;
       font-size: 1rem;
       font-weight: 600;
       transition: all 0.2s;
       white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
 
     .btn-send:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      background: linear-gradient(135deg, #2563eb 0%, #9333ea 100%);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
     }
 
     .btn-send:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+      box-shadow: none;
     }
 
     /* Status Badge */
@@ -378,36 +402,28 @@
   <!-- Header -->
   <div class="header">
     <div class="header-title">
-      <div class="header-icon">🤖</div>
+      <div class="header-icon">🌙</div>
       <div class="header-text">
-        <h1>Kimi Chat</h1>
-        <p id="status-text">جاهز للمحادثة</p>
+        <h1>Kimi AI</h1>
+        <p id="status-text">مساعد Moonshot الذكي</p>
       </div>
     </div>
     <div class="header-controls">
       <button class="btn btn-secondary" onclick="toggleLanguage()">
         <span id="lang-btn">EN</span>
       </button>
-      <button class="btn btn-danger" onclick="clearChat()">مسح</button>
+      <button class="btn btn-primary" onclick="clearChat()">
+        <span id="clear-btn">🔄 محادثة جديدة</span>
+      </button>
     </div>
-  </div>
-
-  <!-- Mode Selector -->
-  <div class="mode-selector">
-    <button class="mode-btn active" data-mode="bsm" onclick="setMode('bsm')">
-      💼 BSM Agent
-    </button>
-    <button class="mode-btn" data-mode="gpt" onclick="setMode('gpt')">
-      🧠 GPT-4
-    </button>
   </div>
 
   <!-- Chat Container -->
   <div class="chat-container" id="chat">
     <div class="message assistant">
-      <div class="message-avatar">🤖</div>
+      <div class="message-avatar">🌙</div>
       <div class="message-content">
-        <p>مرحباً! أنا مساعد Kimi الذكي. كيف يمكنني مساعدتك اليوم؟</p>
+        <p>مرحبًا! أنا Kimi، مساعد Moonshot AI الذكي. أتخصص في الفهم العميق للسياق والحوارات الطويلة. كيف يمكنني مساعدتك اليوم؟</p>
       </div>
     </div>
   </div>
@@ -418,12 +434,12 @@
       <textarea 
         id="input" 
         class="input-field" 
-        placeholder="اكتب رسالتك هنا..."
+        placeholder="اكتب رسالتك هنا... (Enter للإرسال، Shift+Enter لسطر جديد)"
         rows="1"
         onkeydown="handleKeyDown(event)"
       ></textarea>
       <button class="btn-send" id="send-btn" onclick="sendMessage()">
-        إرسال
+        <span id="send-text">إرسال ✨</span>
       </button>
     </div>
   </div>
@@ -435,7 +451,6 @@
     
     // Configuration
     const API_BASE = window.__ENV__?.API_BASE || window.location.origin;
-    let currentMode = 'bsm';
     let currentLang = 'ar';
     let isLoading = false;
     let conversationHistory = [];
@@ -464,45 +479,42 @@
       const langBtn = document.getElementById('lang-btn');
       const statusText = document.getElementById('status-text');
       const inputField = document.getElementById('input');
+      const clearBtn = document.getElementById('clear-btn');
+      const sendText = document.getElementById('send-text');
       
       if (currentLang === 'ar') {
         langBtn.textContent = 'EN';
-        statusText.textContent = 'جاهز للمحادثة';
-        inputField.placeholder = 'اكتب رسالتك هنا...';
+        statusText.textContent = 'مساعد Moonshot الذكي';
+        inputField.placeholder = 'اكتب رسالتك هنا... (Enter للإرسال، Shift+Enter لسطر جديد)';
+        clearBtn.textContent = '🔄 محادثة جديدة';
+        sendText.textContent = 'إرسال ✨';
       } else {
         langBtn.textContent = 'عربي';
-        statusText.textContent = 'Ready to chat';
-        inputField.placeholder = 'Type your message...';
+        statusText.textContent = 'Moonshot AI Assistant';
+        inputField.placeholder = 'Type your message... (Enter to send, Shift+Enter for new line)';
+        clearBtn.textContent = '🔄 New Chat';
+        sendText.textContent = 'Send ✨';
       }
-    }
-
-    // Set Mode
-    function setMode(mode) {
-      currentMode = mode;
-      const buttons = document.querySelectorAll('.mode-btn');
-      buttons.forEach(btn => {
-        if (btn.dataset.mode === mode) {
-          btn.classList.add('active');
-        } else {
-          btn.classList.remove('active');
-        }
-      });
     }
 
     // Clear Chat
     function clearChat() {
       const confirmMsg = currentLang === 'ar' 
-        ? 'هل تريد مسح المحادثة؟' 
-        : 'Clear conversation?';
+        ? 'هل تريد بدء محادثة جديدة؟' 
+        : 'Start a new conversation?';
       
       if (confirm(confirmMsg)) {
         conversationHistory = [];
         const chat = document.getElementById('chat');
+        const welcomeMsg = currentLang === 'ar' 
+          ? 'مرحبًا! أنا Kimi، مساعد Moonshot AI الذكي. أتخصص في الفهم العميق للسياق والحوارات الطويلة. كيف يمكنني مساعدتك اليوم؟'
+          : 'Hello! I am Kimi, the Moonshot AI intelligent assistant. I specialize in deep context understanding and long conversations. How can I help you today?';
+        
         chat.innerHTML = `
           <div class="message assistant">
-            <div class="message-avatar">🤖</div>
+            <div class="message-avatar">🌙</div>
             <div class="message-content">
-              <p>${currentLang === 'ar' ? 'مرحباً! أنا مساعد Kimi الذكي. كيف يمكنني مساعدتك اليوم؟' : 'Hello! I am Kimi AI assistant. How can I help you today?'}</p>
+              <p>${welcomeMsg}</p>
             </div>
           </div>
         `;
@@ -515,12 +527,24 @@
       const messageDiv = document.createElement('div');
       messageDiv.className = `message ${role}${isError ? ' error' : ''}`;
       
-      const avatar = role === 'user' ? '👤' : '🤖';
+      const avatar = role === 'user' ? '👤' : '🌙';
+      
+      // Use marked.js for markdown rendering if available and assistant message
+      let contentHtml;
+      if (role === 'assistant' && !isError && typeof marked !== 'undefined') {
+        try {
+          contentHtml = marked.parse(content, { breaks: true, gfm: true });
+        } catch {
+          contentHtml = `<p>${escapeHtml(content)}</p>`;
+        }
+      } else {
+        contentHtml = `<p>${escapeHtml(content)}</p>`;
+      }
       
       messageDiv.innerHTML = `
         <div class="message-avatar">${avatar}</div>
-        <div class="message-content">
-          <p>${escapeHtml(content)}</p>
+        <div class="message-content${role === 'assistant' && !isError ? ' prose' : ''}">
+          ${contentHtml}
         </div>
       `;
       
@@ -535,7 +559,7 @@
       typingDiv.id = 'typing-indicator';
       typingDiv.className = 'typing-indicator';
       typingDiv.innerHTML = `
-        <div class="message-avatar">🤖</div>
+        <div class="message-avatar">🌙</div>
         <div class="typing-dots">
           <span></span>
           <span></span>
@@ -594,42 +618,27 @@
       showTyping();
 
       try {
-        let response;
-        
-        if (currentMode === 'bsm') {
-          // Call BSM Agent via /api/chat/direct
-          response = await fetch(`${API_BASE}/api/chat/direct`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              message: message,
-              language: currentLang,
-              history: conversationHistory.slice(-MAX_HISTORY_MESSAGES)
-            })
-          });
-        } else {
-          // Call GPT-4 via /api/ai-proxy
-          response = await fetch(`${API_BASE}/api/ai-proxy`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              message: message,
-              language: currentLang,
-              history: conversationHistory.slice(-MAX_HISTORY_MESSAGES)
-            })
-          });
-        }
+        // Call Kimi Agent via /api/chat endpoint
+        const response = await fetch(`${API_BASE}/api/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: message,
+            agentId: 'kimi-agent',
+            language: currentLang,
+            history: conversationHistory.slice(-MAX_HISTORY_MESSAGES)
+          })
+        });
 
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
         }
 
         const data = await response.json();
-        const output = data.output || data.response || (currentLang === 'ar' ? 'لا يوجد رد' : 'No response');
+        const output = data.response || data.message || data.output || (currentLang === 'ar' ? 'لا يوجد رد' : 'No response');
 
         // Update conversation history
         conversationHistory.push(
@@ -644,9 +653,25 @@
         console.error('Error:', error);
         hideTyping();
         
-        const errorMsg = currentLang === 'ar'
-          ? `عذراً، حدث خطأ: ${error.message}`
-          : `Sorry, an error occurred: ${error.message}`;
+        // Bilingual error messages
+        let errorMsg;
+        if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+          errorMsg = currentLang === 'ar'
+            ? '❌ خطأ في الاتصال بالشبكة. تحقق من اتصالك بالإنترنت.'
+            : '❌ Network connection error. Check your internet connection.';
+        } else if (error.message.includes('MISSING_API_KEY')) {
+          errorMsg = currentLang === 'ar'
+            ? '⚠️ مفتاح API مفقود. تواصل مع المسؤول.'
+            : '⚠️ API key is missing. Contact the administrator.';
+        } else if (error.message.includes('timeout') || error.message.includes('GPT_TIMEOUT')) {
+          errorMsg = currentLang === 'ar'
+            ? '⏱️ انتهت مهلة الطلب. حاول مرة أخرى.'
+            : '⏱️ Request timeout. Please try again.';
+        } else {
+          errorMsg = currentLang === 'ar'
+            ? `❌ حدث خطأ: ${error.message}`
+            : `❌ Error: ${error.message}`;
+        }
         
         addMessage(errorMsg, 'assistant', true);
       } finally {

@@ -76,6 +76,11 @@ app.get("/", (req, res) => res.redirect("/chat"));
 // /docs and /docs/* redirect to chat UI to prevent JSON 404
 app.get("/docs*", (req, res) => res.redirect("/chat"));
 
+// serve Kimi chat interface
+app.get("/kimi-chat", (req, res) => {
+  res.sendFile(path.join(process.cwd(), "docs/kimi-chat.html"));
+});
+
 // serve admin UI static
 app.use("/admin", adminUiAuth, express.static(path.join(process.cwd(), "src/admin")));
 app.use(
