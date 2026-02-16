@@ -32,6 +32,9 @@ export const runGPT = async ({ model, apiKey, system, user, messages, task, comp
 
   if (!apiKey) throw new AppError("Missing API key for model provider", 500, "MISSING_API_KEY");
 
+  // Sanitize API key: remove any whitespace, newlines, or invisible characters
+  const cleanKey = apiKey.replace(/[\s\r\n\t\u200B-\u200D\uFEFF]/g, '');
+
   // Wrap OpenAI API call in circuit breaker
   return openaiCircuitBreaker.execute(async () => {
     const controller = new AbortController();
@@ -47,7 +50,7 @@ export const runGPT = async ({ model, apiKey, system, user, messages, task, comp
       const res = await fetch(API_URL, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${apiKey}`,
+          "Authorization": `Bearer ${cleanKey}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
