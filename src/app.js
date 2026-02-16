@@ -19,6 +19,9 @@ import routes from "./routes/index.js";
 
 const app = express();
 
+// Trust proxy when behind reverse proxy (Render, Cloudflare, etc.)
+app.set("trust proxy", 1);
+
 const corsOptions = env.corsOrigins.length
   ? {
       origin: (origin, callback) => {
