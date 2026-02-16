@@ -169,7 +169,7 @@ export class MultiModelRouter {
   }
 
   async callKimi(model, prompt, options) {
-    const apiKey = process.env.KIMI_API_KEY;
+    const apiKey = process.env.KIMI_API_KEY || process.env.KIM_API_KEY;
     if (!apiKey) {
       throw new AppError("Missing Kimi API key", 500, "MISSING_API_KEY");
     }

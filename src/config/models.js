@@ -10,6 +10,6 @@ export const models = {
     default: process.env.PERPLEXITY_KEY
   },
   kimi: {
-    default: process.env.KIMI_API_KEY
+    default: process.env.KIMI_API_KEY || process.env.KIM_API_KEY
   }
 };
