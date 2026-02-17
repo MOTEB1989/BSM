@@ -1,12 +1,13 @@
 import { loadAgents } from "../services/agentsService.js";
 import { loadKnowledgeIndex } from "../services/knowledgeService.js";
 import { models } from "../config/models.js";
-import { runGPT } from "../services/gptService.js";
+import { runChat } from "../services/gptService.js";
 import { AppError } from "../utils/errors.js";
 import { createFile } from "../actions/githubActions.js";
 import { extractIntent, intentToAction } from "../utils/intent.js";
 import { parseCommandBlocks, executeCommands } from "../utils/commandExecutor.js";
 import logger from "../utils/logger.js";
+import { hasUsableApiKey } from "../utils/apiKey.js";
 
 const resolveTemplateValue = (context, keyPath) => {
   return keyPath
@@ -23,6 +24,42 @@ const renderPromptTemplate = (template, context) => {
   });
 };
 
+const providerCandidates = ["openai", "kimi", "perplexity"];
+
+const resolveProviderKey = (provider, keyName) => {
+  const selectedKey = models[provider]?.[keyName];
+  if (hasUsableApiKey(selectedKey)) return selectedKey;
+
+  const fallbackKey = models[provider]?.default;
+  return hasUsableApiKey(fallbackKey) ? fallbackKey : null;
+};
+
+export const buildAgentProviders = (agent) => {
+  const providers = [];
+  const seen = new Set();
+
+  const preferredProvider = agent.modelProvider || "openai";
+  const preferredKeyName = agent.modelKey || "default";
+
+  const preferredKey = resolveProviderKey(preferredProvider, preferredKeyName);
+  if (preferredKey) {
+    providers.push({ type: preferredProvider, apiKey: preferredKey });
+    seen.add(preferredProvider);
+  }
+
+  for (const provider of providerCandidates) {
+    if (seen.has(provider)) continue;
+
+    const apiKey = resolveProviderKey(provider, "default");
+    if (apiKey) {
+      providers.push({ type: provider, apiKey });
+      seen.add(provider);
+    }
+  }
+
+  return providers;
+};
+
 export const runAgent = async ({ agentId, input, payload = {} }) => {
   try {
     const agents = await loadAgents();
@@ -31,9 +68,11 @@ export const runAgent = async ({ agentId, input, payload = {} }) => {
 
     const knowledge = await loadKnowledgeIndex();
 
-    const provider = agent.modelProvider || "openai";
-    const keyName = agent.modelKey || "bsm";
-    const apiKey = models[provider]?.[keyName] || models[provider]?.default;
+    const providers = buildAgentProviders(agent);
+
+    if (providers.length === 0) {
+      throw new AppError("No AI service is configured", 503, "MISSING_API_KEY");
+    }
 
     const defaultSystemPrompt = `You are ${agent.name}. Role: ${agent.role}. Use the knowledge responsibly.`;
     const defaultUserPrompt = `Knowledge:\n${knowledge.join("\n")}\n\nUser Input:\n${input}`;
@@ -55,11 +94,17 @@ export const runAgent = async ({ agentId, input, payload = {} }) => {
       ? renderPromptTemplate(agent.userPrompt, promptContext)
       : defaultUserPrompt;
 
-    const result = await runGPT({
+    const messages = [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt }
+    ];
+
+    const result = await runChat({
       model: agent.modelName || process.env.OPENAI_MODEL,
-      apiKey,
       system: systemPrompt,
-      user: userPrompt
+      user: userPrompt,
+      messages,
+      providers
     });
 
     const intent = extractIntent(result);
