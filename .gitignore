@@ -6,7 +6,7 @@ node_modules
 logs/
 *.log
 
-# Reports - ignore most but keep security, audit, integrity, and runner reports
+# Reports - ignore most but keep security, audit, integrity, runner, and CI reports
 reports/*
 !reports/SECURITY-*.md
 !reports/runner-*.json
@@ -15,6 +15,7 @@ reports/*
 !reports/COMPREHENSIVE-AUDIT-SUMMARY.md
 !reports/INTEGRITY-*.md
 !reports/integrity-*.md
+!reports/CI-*.md
 
 # Sensitive files - Security
 *.key
