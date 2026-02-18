@@ -2,9 +2,12 @@ import fetch from "node-fetch";
 import logger from "../utils/logger.js";
 import { AppError } from "../utils/errors.js";
 import { env } from "./env.js";
+import { models } from "./models.js";
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 const PERPLEXITY_URL = "https://api.perplexity.ai/chat/completions";
+const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const REQUEST_TIMEOUT_MS = 45000;
 
 export class MultiModelRouter {
@@ -16,6 +19,7 @@ export class MultiModelRouter {
       "claude-3-opus": { reasoning: 10, speed: 5, cost: 9, search: false },
       "claude-3-sonnet": { reasoning: 8, speed: 8, cost: 5, search: false },
       "gemini-pro": { reasoning: 7, speed: 7, cost: 3, search: true },
+      "llama-3.1-70b-versatile": { reasoning: 8, speed: 10, cost: 2, search: false },
       [env.perplexityModel]: {
         reasoning: 8,
         speed: 8,
@@ -58,9 +62,11 @@ export class MultiModelRouter {
 
   getProvider(model) {
     if (model?.includes("sonar") || model?.includes("perplexity")) return "perplexity";
-    if (model?.startsWith("gpt-")) return "openai";
+    if (model?.startsWith("gpt-") || model?.startsWith("o1") || model?.startsWith("o3")) return "openai";
     if (model?.startsWith("claude-")) return "anthropic";
     if (model?.includes("gemini")) return "google";
+    if (model?.includes("llama") || model?.includes("mixtral") || model?.includes("groq")) return "groq";
+    if (model?.includes("mistral")) return "mistral";
     return "openai";
   }
 
@@ -82,11 +88,20 @@ export class MultiModelRouter {
       logger.info({ model, task, requiresSearch }, "Executing with model router");
 
       const provider = this.getProvider(model);
+
       if (provider === "perplexity") {
         return await this.callPerplexity(model, prompt, searchQuery, { temperature, maxTokens });
       }
 
-      if (provider !== "openai") {
+      if (provider === "anthropic" && models.anthropic?.default) {
+        return await this.callAnthropic(model, prompt, { temperature, maxTokens });
+      }
+
+      if (provider === "groq" && models.groq?.default) {
+        return await this.callGroq(model, prompt, { temperature, maxTokens });
+      }
+
+      if (provider !== "openai" && provider !== "anthropic" && provider !== "groq") {
         logger.warn({ provider, model }, "Provider SDK not configured; falling back to OpenAI-compatible model");
       }
 
@@ -101,7 +116,7 @@ export class MultiModelRouter {
   }
 
   async callOpenAI(model, prompt, options) {
-    const apiKey = process.env.OPENAI_BSM_KEY || process.env.OPENAI_BSU_KEY;
+    const apiKey = models.openai?.bsm || models.openai?.default;
     if (!apiKey) {
       throw new AppError("Missing OpenAI API key", 500, "MISSING_API_KEY");
     }
@@ -124,7 +139,7 @@ export class MultiModelRouter {
   }
 
   async callPerplexity(model, prompt, searchQuery, options) {
-    const apiKey = process.env.PERPLEXITY_KEY;
+    const apiKey = models.perplexity?.default;
     if (!apiKey) {
       throw new AppError("Missing Perplexity API key", 500, "MISSING_API_KEY");
     }
@@ -160,12 +175,88 @@ export class MultiModelRouter {
     };
   }
 
+  async callAnthropic(model, prompt, options) {
+    const apiKey = models.anthropic?.default;
+    if (!apiKey) {
+      throw new AppError("Missing Anthropic API key", 500, "MISSING_API_KEY");
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      const res = await fetch(ANTHROPIC_URL, {
+        method: "POST",
+        headers: {
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: model || "claude-3-sonnet-20240229",
+          max_tokens: options.maxTokens || 1200,
+          messages: this.buildMessages(prompt).filter(m => m.role !== "system"),
+          system: this.buildMessages(prompt).find(m => m.role === "system")?.content || "You are a precise assistant."
+        }),
+        signal: controller.signal
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new AppError(`Anthropic request failed: ${errorText}`, 500, "MODEL_REQUEST_FAILED");
+      }
+
+      const data = await res.json();
+      return {
+        output: data.content?.[0]?.text || "",
+        citations: [],
+        usage: data.usage,
+        modelUsed: model,
+        searchPerformed: false,
+        timestamp: new Date().toISOString()
+      };
+    } catch (err) {
+      if (err.name === "AbortError") {
+        throw new AppError("Anthropic request timeout", 500, "MODEL_TIMEOUT");
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  async callGroq(model, prompt, options) {
+    const apiKey = models.groq?.default;
+    if (!apiKey) {
+      throw new AppError("Missing Groq API key", 500, "MISSING_API_KEY");
+    }
+
+    const response = await this.postChat(GROQ_URL, apiKey, {
+      model: model || "llama-3.1-70b-versatile",
+      messages: this.buildMessages(prompt),
+      temperature: options.temperature,
+      max_tokens: options.maxTokens
+    });
+
+    return {
+      output: response.choices?.[0]?.message?.content || "",
+      citations: [],
+      usage: response.usage,
+      modelUsed: model,
+      searchPerformed: false,
+      timestamp: new Date().toISOString()
+    };
+  }
+
   async executeWithFallback(prompt, options, failedModel) {
     const fallbacks = {
       [env.perplexityModel]: ["gpt-4o", env.defaultModel],
       "claude-3-opus": ["gpt-4", env.perplexityModel],
+      "claude-3-sonnet": ["gpt-4o", env.defaultModel],
       "gpt-4": ["gpt-4o", env.defaultModel],
-      "gpt-4o": [env.defaultModel]
+      "gpt-4o": [env.defaultModel, "llama-3.1-70b-versatile"],
+      "gpt-4o-mini": ["llama-3.1-70b-versatile"],
+      "llama-3.1-70b-versatile": ["gpt-4o-mini", env.defaultModel]
     };
 
     const alternatives = fallbacks[failedModel] || [env.defaultModel];

@@ -8,24 +8,36 @@ import logger from "../utils/logger.js";
 
 const router = Router();
 
+// Unified key-status endpoint — single source of truth
 router.get("/key-status", (_req, res, next) => {
   try {
     const status = {
       openai: Boolean(models.openai?.default || models.openai?.bsm || models.openai?.bsu),
-      anthropic: false,
+      anthropic: Boolean(models.anthropic?.default),
       perplexity: Boolean(models.perplexity?.default),
-      google: false
+      google: Boolean(models.google?.default),
+      azure: Boolean(models.azure?.default),
+      groq: Boolean(models.groq?.default),
+      cohere: Boolean(models.cohere?.default),
+      mistral: Boolean(models.mistral?.default)
     };
+
+    const activeCount = Object.values(status).filter(Boolean).length;
 
     const ui = {
       openai: status.openai ? "✅ GPT-4 Ready" : "🔴 GPT-4 Offline",
-      anthropic: "🔴 Claude Offline",
+      anthropic: status.anthropic ? "✅ Claude Ready" : "🔴 Claude Offline",
       perplexity: status.perplexity ? "✅ Perplexity Ready" : "🔴 Perplexity Offline",
-      google: "🔴 Gemini Offline"
+      google: status.google ? "✅ Gemini Ready" : "🔴 Gemini Offline",
+      azure: status.azure ? "✅ Azure OpenAI Ready" : "⚫ Azure Offline",
+      groq: status.groq ? "✅ Groq Ready" : "⚫ Groq Offline",
+      cohere: status.cohere ? "✅ Cohere Ready" : "⚫ Cohere Offline",
+      mistral: status.mistral ? "✅ Mistral Ready" : "⚫ Mistral Offline"
     };
 
     res.json({
       configured: status.openai,
+      activeProviders: activeCount,
       timestamp: new Date().toISOString(),
       status,
       ui
@@ -45,7 +57,6 @@ router.post("/", async (req, res, next) => {
     next(err);
   }
 });
-
 
 // Direct GPT chat (no agent required)
 router.post("/direct", async (req, res, next) => {
