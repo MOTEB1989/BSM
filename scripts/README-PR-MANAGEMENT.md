@@ -115,15 +115,19 @@ Keeps your PR branch synchronized with the base branch before review/merge.
 
 **Usage:**
 ```bash
-# Default: fetch origin and rebase onto origin/main (or remote default branch)
+# Default: git fetch origin + git rebase origin/main (or remote default branch)
 scripts/sync-pr-branch.sh
 
-# Explicit branch + merge mode
+# Optional merge mode (without forced strategy options)
 scripts/sync-pr-branch.sh --base main --mode merge
+
+# After manual conflict resolution: run checks then continue
+scripts/sync-pr-branch.sh --continue
 ```
 
 **Recommended flow:**
-1. `scripts/sync-pr-branch.sh --base main --mode rebase`
-2. Run tests locally.
-3. `git push --force-with-lease` (only if you used rebase).
-4. Open/update the PR.
+1. `git fetch origin`
+2. `scripts/sync-pr-branch.sh --base main --mode rebase` (or `--mode merge`)
+3. If conflicts happen, resolve file-by-file manually, then run `scripts/sync-pr-branch.sh --continue` after each resolved step.
+4. Push updates (`git push --force-with-lease` only if you used rebase).
+5. Open/update the PR.

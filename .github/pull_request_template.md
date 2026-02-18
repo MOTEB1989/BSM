@@ -168,6 +168,13 @@ Closes #
 
 ---
 
+### Manual Conflict Resolution Checklist
+
+<!-- اذكر كل ملف تم حل تعارضه يدويًا -->
+- [ ] No manual conflicts were resolved in this PR
+- [ ] `path/to/file-1` (manual conflict resolved)
+- [ ] `path/to/file-2` (manual conflict resolved)
+
 ## 📸 Screenshots / Demo
 
 <!-- If UI changes, include before/after screenshots or a demo video -->
