@@ -6,6 +6,10 @@ node_modules
 logs/
 *.log
 
+# Test files
+test-dev-assistant.js
+analysis-results.json
+
 # Reports - ignore most but keep security, runner, and agent reports
 reports/*
 !reports/SECURITY-*.md
