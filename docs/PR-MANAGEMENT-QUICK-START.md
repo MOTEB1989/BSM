@@ -33,11 +33,15 @@ gh run list --workflow=pr-management.yml -L 1
 ```bash
 # لكل PR متعارض:
 gh pr checkout <PR_NUMBER>
-git merge main
-# حل التعارضات...
-git add .
-git commit -m "Resolve conflicts"
-git push
+git fetch origin
+git rebase origin/main
+# حل التعارضات يدويًا ملفًا ملفًا...
+# بعد كل حل تعارض: شغّل lint/tests محليًا ثم أكمل
+npm run lint
+npm test
+git add <resolved-file>
+git rebase --continue
+git push --force-with-lease
 ```
 
 ### ثانياً: دمج PRs الجاهزة ✅
