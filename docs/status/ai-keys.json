@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-02-18T21:26:01Z",
+  "status": {
+    "openai": "false",
+    "anthropic": "false",
+    "perplexity": "false",
+    "google": "false"
+  },
+  "ui": {
+    "openai": "🔴 GPT-4 Offline",
+    "anthropic": "🔴 Claude Offline",
+    "perplexity": "🔴 Perplexity Offline",
+    "google": "🔴 Gemini Offline"
+  }
+}
