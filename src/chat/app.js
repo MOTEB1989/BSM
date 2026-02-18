@@ -14,6 +14,7 @@ createApp({
     const showModeMenu = ref(false);
     const messagesContainer = ref(null);
     const inputField = ref(null);
+    const sidebarOpen = ref(false);
 
     const quickActions = computed(() => {
       if (lang.value === 'ar') {
@@ -223,6 +224,7 @@ createApp({
       lang,
       mode,
       showModeMenu,
+      sidebarOpen,
       messagesContainer,
       inputField,
       quickActions,

@@ -1,191 +1,116 @@
-/* LexBANK Chat - Custom Styles */
+/* LexBANK Chat - Professional Dark Theme */
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
+/* ─── Scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+/* ─── Typography ─────────────────────────────────── */
+body { font-feature-settings: "kern" 1; -webkit-font-smoothing: antialiased; }
 
-::-webkit-scrollbar-thumb {
-  background: #374151;
-  border-radius: 3px;
-}
+/* ─── Tailwind extras ────────────────────────────── */
+.bg-white\/3  { background-color: rgba(255,255,255,0.03); }
+.bg-white\/6  { background-color: rgba(255,255,255,0.06); }
+.border-white\/6  { border-color: rgba(255,255,255,0.06); }
+.border-white\/8  { border-color: rgba(255,255,255,0.08); }
+.border-white\/12 { border-color: rgba(255,255,255,0.12); }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #4b5563;
+/* ─── Message animations ─────────────────────────── */
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+.message-row { animation: msgIn 0.25s ease-out; }
 
-/* Smooth transitions */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #374151 transparent;
-}
+/* ─── Typing dots ────────────────────────────────── */
+.typing-dots span { animation-iteration-count: infinite; }
 
-/* Typing animation */
-.typing-dots span {
-  animation-duration: 1s;
-  animation-iteration-count: infinite;
-}
-
-/* Prose overrides for RTL markdown */
-.prose {
-  direction: inherit;
-  text-align: inherit;
-}
-
-.prose p {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
-}
-
-.prose p:first-child {
-  margin-top: 0;
-}
-
-.prose p:last-child {
-  margin-bottom: 0;
-}
+/* ─── Prose (Markdown output) ────────────────────── */
+.prose { direction: inherit; text-align: inherit; color: #d1d5db; }
+.prose p        { margin: 0.45em 0; }
+.prose p:first-child { margin-top: 0; }
+.prose p:last-child  { margin-bottom: 0; }
 
 .prose ul,
-.prose ol {
-  padding-inline-start: 1.5em;
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
-}
-
-.prose li {
-  margin-top: 0.25em;
-  margin-bottom: 0.25em;
-}
+.prose ol { padding-inline-start: 1.4em; margin: 0.4em 0; }
+.prose li  { margin: 0.2em 0; }
 
 .prose code {
-  background: rgba(0, 0, 0, 0.3);
-  padding: 0.15em 0.4em;
-  border-radius: 4px;
-  font-size: 0.85em;
-  font-family: 'Courier New', monospace;
+  background: rgba(0,0,0,0.35);
+  padding: 0.12em 0.38em;
+  border-radius: 5px;
+  font-size: 0.82em;
+  font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+  color: #a5b4fc;
 }
-
 .prose pre {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid #374151;
-  border-radius: 8px;
-  padding: 1em;
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 1em 1.1em;
   overflow-x: auto;
-  margin: 0.75em 0;
+  margin: 0.6em 0;
   direction: ltr;
   text-align: left;
 }
-
 .prose pre code {
   background: none;
   padding: 0;
-  font-size: 0.85em;
+  color: #e2e8f0;
+  font-size: 0.82em;
 }
 
 .prose blockquote {
-  border-inline-start: 3px solid #4c6ef5;
-  padding-inline-start: 1em;
+  border-inline-start: 2px solid #4c6ef5;
+  padding-inline-start: 0.9em;
   margin-inline-start: 0;
   color: #9ca3af;
-  font-style: italic;
 }
 
-.prose a {
-  color: #748ffc;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.prose a:hover {
-  color: #91a7ff;
-}
+.prose a { color: #818cf8; text-underline-offset: 2px; }
+.prose a:hover { color: #a5b4fc; }
 
 .prose h1, .prose h2, .prose h3, .prose h4 {
-  font-weight: 700;
-  margin-top: 1em;
-  margin-bottom: 0.5em;
-  color: #f3f4f6;
+  font-weight: 700; color: #f3f4f6;
+  margin-top: 1em; margin-bottom: 0.4em;
+}
+.prose h1 { font-size: 1.2em; }
+.prose h2 { font-size: 1.1em; }
+.prose h3 { font-size: 1.0em; }
+
+.prose table { width: 100%; border-collapse: collapse; margin: 0.7em 0; font-size: 0.88em; }
+.prose th, .prose td { border: 1px solid rgba(255,255,255,0.08); padding: 0.45em 0.7em; text-align: inherit; }
+.prose th { background: rgba(0,0,0,0.25); font-weight: 600; color: #e5e7eb; }
+
+.prose hr { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 0.9em 0; }
+
+.prose strong { color: #f9fafb; }
+.prose em     { color: #d1d5db; }
+
+/* ─── Textarea ───────────────────────────────────── */
+textarea { transition: height 0.12s ease; }
+textarea:focus { outline: none; }
+
+/* ─── Buttons ────────────────────────────────────── */
+button { transition: all 0.15s ease; }
+button:active:not(:disabled) { transform: scale(0.96); }
+button:focus-visible { outline: 2px solid rgba(76,110,245,0.5); outline-offset: 2px; }
+
+/* ─── Input box glow ─────────────────────────────── */
+.focus-within\:border-lex-500\/50:focus-within {
+  border-color: rgba(99,102,241,0.5);
+  box-shadow: 0 0 0 3px rgba(76,110,245,0.08);
 }
 
-.prose h1 { font-size: 1.25em; }
-.prose h2 { font-size: 1.15em; }
-.prose h3 { font-size: 1.05em; }
+/* ─── Sidebar transition ─────────────────────────── */
+aside { will-change: transform; }
 
-.prose table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 0.75em 0;
-  font-size: 0.9em;
+/* ─── Mobile ─────────────────────────────────────── */
+@media (max-width: 1023px) {
+  aside { box-shadow: -20px 0 60px rgba(0,0,0,0.6); }
 }
 
-.prose th,
-.prose td {
-  border: 1px solid #374151;
-  padding: 0.5em 0.75em;
-  text-align: inherit;
-}
-
-.prose th {
-  background: rgba(0, 0, 0, 0.3);
-  font-weight: 600;
-}
-
-.prose hr {
-  border: none;
-  border-top: 1px solid #374151;
-  margin: 1em 0;
-}
-
-/* Textarea auto-grow */
-textarea {
-  transition: height 0.15s ease;
-}
-
-/* Message enter animation */
-@keyframes messageIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.flex.justify-start,
-.flex.justify-end {
-  animation: messageIn 0.3s ease-out;
-}
-
-/* Responsive adjustments */
-@media (max-width: 640px) {
-  header .flex.items-center.gap-2 {
-    gap: 0.25rem;
-  }
-
-  header button {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-  }
-}
-
-/* Focus ring */
-textarea:focus,
-button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(76, 110, 245, 0.4);
-}
-
-/* Button hover effect */
-button {
-  transition: all 0.15s ease;
-}
-
-button:active:not(:disabled) {
-  transform: scale(0.97);
-}
+/* ─── Hover lift ─────────────────────────────────── */
+.hover\:-translate-y-0\.5:hover { transform: translateY(-2px); }

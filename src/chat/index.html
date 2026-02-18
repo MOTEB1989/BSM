@@ -12,170 +12,324 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="dark bg-gray-950 text-white font-arabic min-h-screen flex flex-col" dir="rtl">
+<body class="dark bg-[#0a0f1e] text-white font-arabic min-h-screen flex flex-col" dir="rtl">
 
-  <div id="app" class="flex flex-col min-h-screen">
+<div id="app" class="flex h-screen overflow-hidden">
 
-    <!-- Header -->
-    <header class="bg-gray-900/80 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50">
-      <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-lex-600 rounded-xl flex items-center justify-center text-lg font-bold shadow-lg shadow-lex-600/20">
-            L
-          </div>
-          <div>
-            <h1 class="text-lg font-bold text-white">LexBANK</h1>
-            <p class="text-xs text-gray-400">{{ lang === 'ar' ? 'المساعد الذكي' : 'Smart Assistant' }}</p>
-          </div>
+  <!-- Sidebar Overlay (mobile) -->
+  <div v-if="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 lg:hidden"></div>
+
+  <!-- ========== SIDEBAR ========== -->
+  <aside :class="sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'"
+    class="fixed lg:relative inset-y-0 right-0 z-30 w-72 flex flex-col bg-[#0d1426] border-l border-white/5 transition-transform duration-300 ease-in-out">
+
+    <!-- Logo -->
+    <div class="px-5 pt-6 pb-4 border-b border-white/5">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-lex-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-lex-600/30 flex-shrink-0">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
+          </svg>
         </div>
-
-        <div class="flex items-center gap-2">
-          <!-- Language Toggle -->
-          <button @click="toggleLang" class="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors border border-gray-700">
-            {{ lang === 'ar' ? 'EN' : 'عربي' }}
-          </button>
-
-          <!-- Mode Toggle -->
-          <div class="relative">
-            <button @click="showModeMenu = !showModeMenu" class="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors border border-gray-700 flex items-center gap-1">
-              <span>{{ currentModeLabel }}</span>
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div v-if="showModeMenu" class="absolute left-0 mt-1 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden">
-              <button @click="setMode('direct')" class="w-full text-right px-4 py-2 text-sm hover:bg-gray-700 transition-colors" :class="{ 'bg-lex-600/20 text-lex-400': mode === 'direct' }">
-                {{ lang === 'ar' ? 'دردشة مباشرة' : 'Direct Chat' }}
-              </button>
-              <button @click="setMode('legal-agent')" class="w-full text-right px-4 py-2 text-sm hover:bg-gray-700 transition-colors" :class="{ 'bg-lex-600/20 text-lex-400': mode === 'legal-agent' }">
-                {{ lang === 'ar' ? 'الوكيل القانوني' : 'Legal Agent' }}
-              </button>
-              <button @click="setMode('governance-agent')" class="w-full text-right px-4 py-2 text-sm hover:bg-gray-700 transition-colors" :class="{ 'bg-lex-600/20 text-lex-400': mode === 'governance-agent' }">
-                {{ lang === 'ar' ? 'وكيل الحوكمة' : 'Governance Agent' }}
-              </button>
-            </div>
-          </div>
-
-          <!-- New Chat -->
-          <button @click="clearChat" class="px-3 py-1.5 text-xs bg-lex-600 hover:bg-lex-700 rounded-lg transition-colors shadow-sm">
-            {{ lang === 'ar' ? 'محادثة جديدة' : 'New Chat' }}
-          </button>
+        <div>
+          <h1 class="text-base font-bold text-white tracking-wide">LexBANK</h1>
+          <p class="text-[11px] text-gray-500">{{ lang === 'ar' ? 'المنصة القانونية الذكية' : 'AI Legal Platform' }}</p>
         </div>
       </div>
+    </div>
+
+    <!-- New Chat Button -->
+    <div class="px-4 pt-4 pb-2">
+      <button @click="clearChat" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-lex-600/10 hover:bg-lex-600/20 border border-lex-600/20 hover:border-lex-600/40 text-lex-400 rounded-xl text-sm font-medium transition-all duration-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        {{ lang === 'ar' ? 'محادثة جديدة' : 'New Chat' }}
+      </button>
+    </div>
+
+    <!-- Agent Selector -->
+    <div class="px-4 py-3">
+      <p class="text-[11px] text-gray-600 font-medium uppercase tracking-widest mb-2 px-1">
+        {{ lang === 'ar' ? 'الوكيل النشط' : 'Active Agent' }}
+      </p>
+      <div class="space-y-1">
+        <button @click="setMode('direct')"
+          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200"
+          :class="mode === 'direct' ? 'bg-lex-600/15 text-lex-300 border border-lex-600/25' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'">
+          <span class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            :class="mode === 'direct' ? 'bg-lex-600/30' : 'bg-white/5'">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+            </svg>
+          </span>
+          <div class="text-right flex-1">
+            <p class="font-medium leading-tight">{{ lang === 'ar' ? 'دردشة مباشرة' : 'Direct Chat' }}</p>
+            <p class="text-[11px] opacity-60 mt-0.5">GPT-4o-mini</p>
+          </div>
+          <div v-if="mode === 'direct'" class="w-1.5 h-1.5 rounded-full bg-lex-400 flex-shrink-0"></div>
+        </button>
+
+        <button @click="setMode('legal-agent')"
+          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200"
+          :class="mode === 'legal-agent' ? 'bg-amber-600/15 text-amber-300 border border-amber-600/25' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'">
+          <span class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            :class="mode === 'legal-agent' ? 'bg-amber-600/30' : 'bg-white/5'">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
+            </svg>
+          </span>
+          <div class="text-right flex-1">
+            <p class="font-medium leading-tight">{{ lang === 'ar' ? 'الوكيل القانوني' : 'Legal Agent' }}</p>
+            <p class="text-[11px] opacity-60 mt-0.5">{{ lang === 'ar' ? 'تحليل قانوني' : 'Legal Analysis' }}</p>
+          </div>
+          <div v-if="mode === 'legal-agent'" class="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0"></div>
+        </button>
+
+        <button @click="setMode('governance-agent')"
+          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200"
+          :class="mode === 'governance-agent' ? 'bg-emerald-600/15 text-emerald-300 border border-emerald-600/25' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'">
+          <span class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            :class="mode === 'governance-agent' ? 'bg-emerald-600/30' : 'bg-white/5'">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </span>
+          <div class="text-right flex-1">
+            <p class="font-medium leading-tight">{{ lang === 'ar' ? 'وكيل الحوكمة' : 'Governance Agent' }}</p>
+            <p class="text-[11px] opacity-60 mt-0.5">{{ lang === 'ar' ? 'امتثال وحوكمة' : 'Compliance' }}</p>
+          </div>
+          <div v-if="mode === 'governance-agent'" class="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0"></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="mx-4 border-t border-white/5"></div>
+
+    <!-- Quick Actions -->
+    <div class="px-4 py-3 flex-1 overflow-y-auto">
+      <p class="text-[11px] text-gray-600 font-medium uppercase tracking-widest mb-2 px-1">
+        {{ lang === 'ar' ? 'أسئلة شائعة' : 'Quick Questions' }}
+      </p>
+      <div class="space-y-1">
+        <button v-for="q in quickActions" :key="q.text" @click="sendQuickAction(q.text)"
+          class="w-full text-right px-3 py-2 rounded-lg text-xs text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-all duration-200 flex items-center gap-2">
+          <span class="flex-shrink-0 text-base">{{ q.icon }}</span>
+          <span class="leading-snug">{{ q.text }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom: Model Info + Language -->
+    <div class="px-4 py-4 border-t border-white/5">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-1.5">
+          <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
+          <span class="text-[11px] text-gray-500">{{ lang === 'ar' ? 'متصل' : 'Connected' }}</span>
+        </div>
+        <button @click="toggleLang"
+          class="px-3 py-1 text-xs bg-white/5 hover:bg-white/10 rounded-lg border border-white/5 text-gray-400 hover:text-gray-200 transition-all">
+          {{ lang === 'ar' ? 'EN' : 'عربي' }}
+        </button>
+      </div>
+      <p class="text-[10px] text-gray-700 text-center leading-relaxed">
+        {{ lang === 'ar' ? 'جميع المحادثات سرية ومحمية' : 'All conversations are private & secure' }}
+      </p>
+    </div>
+  </aside>
+
+  <!-- ========== MAIN CHAT ========== -->
+  <main class="flex-1 flex flex-col min-w-0 relative">
+
+    <!-- Top Bar -->
+    <header class="flex-shrink-0 h-14 flex items-center justify-between px-4 border-b border-white/5 bg-[#0a0f1e]/80 backdrop-blur-md">
+      <!-- Mobile: sidebar toggle -->
+      <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-gray-200 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+
+      <!-- Active Mode Badge (center) -->
+      <div class="flex items-center gap-2 mx-auto">
+        <span class="px-3 py-1 rounded-full text-xs font-medium border"
+          :class="{
+            'bg-lex-600/10 text-lex-300 border-lex-600/20': mode === 'direct',
+            'bg-amber-600/10 text-amber-300 border-amber-600/20': mode === 'legal-agent',
+            'bg-emerald-600/10 text-emerald-300 border-emerald-600/20': mode === 'governance-agent'
+          }">
+          {{ currentModeLabel }}
+        </span>
+        <span v-if="messages.length > 0" class="text-xs text-gray-600">
+          {{ messages.length }} {{ lang === 'ar' ? 'رسائل' : 'messages' }}
+        </span>
+      </div>
+
+      <!-- Clear (desktop) -->
+      <button @click="clearChat" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded-lg transition-all">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        {{ lang === 'ar' ? 'مسح' : 'Clear' }}
+      </button>
     </header>
 
-    <!-- Chat Area -->
-    <main class="flex-1 overflow-hidden flex flex-col max-w-4xl w-full mx-auto">
-
-      <!-- Messages -->
-      <div ref="messagesContainer" class="flex-1 overflow-y-auto px-4 py-6 space-y-4 scroll-smooth" @scroll="handleScroll">
+    <!-- Messages Area -->
+    <div ref="messagesContainer" class="flex-1 overflow-y-auto" @scroll="handleScroll">
+      <div class="max-w-3xl mx-auto px-4 py-6">
 
         <!-- Welcome Screen -->
-        <div v-if="messages.length === 0" class="flex flex-col items-center justify-center h-full text-center py-16">
-          <div class="w-20 h-20 bg-lex-600/20 rounded-2xl flex items-center justify-center mb-6">
-            <svg class="w-10 h-10 text-lex-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+        <div v-if="messages.length === 0" class="flex flex-col items-center justify-center min-h-[60vh] text-center">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-lex-600/20 to-indigo-600/20 border border-lex-600/20 flex items-center justify-center mb-5 shadow-xl shadow-lex-600/10">
+            <svg class="w-8 h-8 text-lex-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
             </svg>
           </div>
-          <h2 class="text-2xl font-bold mb-2">{{ lang === 'ar' ? 'مرحبًا بك في LexBANK' : 'Welcome to LexBANK' }}</h2>
-          <p class="text-gray-400 mb-8 max-w-md">{{ lang === 'ar' ? 'المساعد الذكي جاهز لمساعدتك في الأسئلة القانونية والتقنية والإدارية' : 'Smart assistant ready to help with legal, technical, and administrative questions' }}</p>
+          <h2 class="text-2xl font-bold text-white mb-2">
+            {{ lang === 'ar' ? 'كيف يمكنني مساعدتك؟' : 'How can I help you?' }}
+          </h2>
+          <p class="text-sm text-gray-500 mb-2 max-w-sm leading-relaxed">
+            {{ lang === 'ar'
+              ? 'اطرح سؤالاً قانونياً أو تقنياً أو إدارياً وسأساعدك على الفور'
+              : 'Ask a legal, technical, or administrative question and I\'ll assist you right away' }}
+          </p>
+          <div class="flex items-center gap-2 mb-8">
+            <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
+            <span class="text-xs text-gray-600">{{ lang === 'ar' ? 'المساعد جاهز' : 'Assistant ready' }}</span>
+          </div>
 
-          <!-- Quick Actions -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
-            <button v-for="q in quickActions" :key="q.text" @click="sendQuickAction(q.text)" class="text-right p-4 bg-gray-900/50 hover:bg-gray-800/80 border border-gray-800 hover:border-lex-600/50 rounded-xl transition-all group">
-              <span class="text-lg mb-1 block">{{ q.icon }}</span>
-              <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ q.text }}</span>
+          <!-- Quick Action Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full max-w-md">
+            <button v-for="q in quickActions" :key="q.text" @click="sendQuickAction(q.text)"
+              class="group text-right p-4 bg-white/3 hover:bg-white/6 border border-white/5 hover:border-lex-600/30 rounded-2xl transition-all duration-200 hover:-translate-y-0.5">
+              <span class="text-xl mb-2 block">{{ q.icon }}</span>
+              <span class="text-sm text-gray-400 group-hover:text-gray-200 transition-colors leading-snug">{{ q.text }}</span>
             </button>
           </div>
         </div>
 
-        <!-- Message Bubbles -->
-        <div v-for="(msg, i) in messages" :key="i" class="flex" :class="msg.role === 'user' ? 'justify-start' : 'justify-end'">
-          <div class="max-w-[85%] sm:max-w-[75%]" :class="msg.role === 'user' ? '' : ''">
-            <!-- Avatar + Name -->
-            <div class="flex items-center gap-2 mb-1" :class="msg.role === 'user' ? '' : 'flex-row-reverse'">
-              <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs"
-                :class="msg.role === 'user' ? 'bg-lex-600' : 'bg-emerald-600'">
-                {{ msg.role === 'user' ? (lang === 'ar' ? 'أ' : 'U') : 'L' }}
+        <!-- Message List -->
+        <div v-else class="space-y-6">
+          <div v-for="(msg, i) in messages" :key="i" class="message-row" :class="msg.role === 'user' ? 'user-row' : 'assistant-row'">
+
+            <!-- User Message -->
+            <template v-if="msg.role === 'user'">
+              <div class="flex items-start gap-3 justify-start">
+                <div class="flex-1 flex justify-start">
+                  <div class="max-w-[80%]">
+                    <div class="bg-lex-600/15 border border-lex-600/20 rounded-2xl rounded-tr-md px-4 py-3 text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">
+                      {{ msg.content }}
+                    </div>
+                    <p class="text-[11px] text-gray-700 mt-1.5 px-1">{{ formatTime(msg.time) }}</p>
+                  </div>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-lex-600/20 border border-lex-600/30 flex items-center justify-center text-xs text-lex-400 flex-shrink-0 mt-0.5">
+                  {{ lang === 'ar' ? 'أ' : 'U' }}
+                </div>
               </div>
-              <span class="text-xs text-gray-500">{{ msg.role === 'user' ? (lang === 'ar' ? 'أنت' : 'You') : 'LexBANK' }}</span>
-              <span class="text-xs text-gray-600">{{ formatTime(msg.time) }}</span>
+            </template>
+
+            <!-- Assistant Message -->
+            <template v-else>
+              <div class="flex items-start gap-3 justify-end">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-lex-600 to-indigo-600 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-lg shadow-lex-600/20">
+                  <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
+                  </svg>
+                </div>
+                <div class="flex-1 flex justify-end">
+                  <div class="max-w-[80%]">
+                    <div class="bg-[#111827] border border-white/6 rounded-2xl rounded-tl-md px-4 py-3 text-sm leading-relaxed">
+                      <div class="prose prose-invert prose-sm max-w-none" v-html="renderMarkdown(msg.content)"></div>
+                    </div>
+                    <p class="text-[11px] text-gray-700 mt-1.5 px-1 text-left">{{ formatTime(msg.time) }}</p>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Typing Indicator -->
+          <div v-if="loading" class="flex items-start gap-3 justify-end">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-lex-600 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-lex-600/20">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
+              </svg>
             </div>
-            <!-- Bubble -->
-            <div class="rounded-2xl px-4 py-3 leading-relaxed"
-              :class="msg.role === 'user'
-                ? 'bg-lex-600/20 border border-lex-600/30 text-gray-100'
-                : 'bg-gray-800/80 border border-gray-700/50 text-gray-200'">
-              <div v-if="msg.role === 'assistant'" class="prose prose-invert prose-sm max-w-none" v-html="renderMarkdown(msg.content)"></div>
-              <div v-else class="whitespace-pre-wrap">{{ msg.content }}</div>
+            <div class="bg-[#111827] border border-white/6 rounded-2xl rounded-tl-md px-5 py-4">
+              <div class="typing-dots flex gap-1.5 items-center">
+                <span class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0ms; animation-duration: 1.2s"></span>
+                <span class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 200ms; animation-duration: 1.2s"></span>
+                <span class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 400ms; animation-duration: 1.2s"></span>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Typing Indicator -->
-        <div v-if="loading" class="flex justify-end">
-          <div class="max-w-[75%]">
-            <div class="flex items-center gap-2 mb-1 flex-row-reverse">
-              <div class="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center text-xs">L</div>
-              <span class="text-xs text-gray-500">LexBANK</span>
-            </div>
-            <div class="bg-gray-800/80 border border-gray-700/50 rounded-2xl px-4 py-3">
-              <div class="typing-dots flex gap-1 items-center">
-                <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
-                <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
-                <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
-              </div>
-            </div>
-          </div>
+        <!-- Error Banner -->
+        <div v-if="error" class="mt-4 flex items-start gap-3 bg-red-950/50 border border-red-800/30 rounded-xl px-4 py-3 text-red-300 text-sm">
+          <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="flex-1 leading-relaxed">{{ error }}</span>
+          <button @click="error = ''" class="text-red-500 hover:text-red-300 flex-shrink-0 transition-colors">&times;</button>
         </div>
 
-        <!-- Error Message -->
-        <div v-if="error" class="flex justify-center">
-          <div class="bg-red-900/30 border border-red-800/50 rounded-xl px-4 py-3 text-red-300 text-sm flex items-center gap-2">
-            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span>{{ error }}</span>
-            <button @click="error = ''" class="text-red-400 hover:text-red-200 mr-2">&times;</button>
-          </div>
-        </div>
       </div>
+    </div>
 
-      <!-- Input Area -->
-      <div class="border-t border-gray-800 bg-gray-900/50 backdrop-blur-md p-4">
-        <div class="max-w-4xl mx-auto">
-          <div class="flex gap-3 items-end">
-            <div class="flex-1 relative">
-              <textarea
-                ref="inputField"
-                v-model="input"
-                @keydown.enter.exact="handleEnter"
-                :placeholder="lang === 'ar' ? 'اكتب رسالتك هنا...' : 'Type your message...'"
-                :disabled="loading"
-                rows="1"
-                class="w-full bg-gray-800 border border-gray-700 focus:border-lex-500 focus:ring-1 focus:ring-lex-500/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 resize-none transition-all outline-none text-sm leading-relaxed max-h-32 overflow-y-auto"
-                :dir="lang === 'ar' ? 'rtl' : 'ltr'"
-              ></textarea>
-            </div>
+    <!-- ========== INPUT AREA ========== -->
+    <div class="flex-shrink-0 border-t border-white/5 bg-[#0a0f1e]/90 backdrop-blur-md px-4 py-4">
+      <div class="max-w-3xl mx-auto">
+        <div class="relative bg-[#111827] border border-white/8 hover:border-white/12 focus-within:border-lex-500/50 rounded-2xl transition-all duration-200 shadow-xl shadow-black/30">
+          <textarea
+            ref="inputField"
+            v-model="input"
+            @keydown.enter.exact="handleEnter"
+            @input="autoResize"
+            :placeholder="lang === 'ar' ? 'اكتب رسالتك...' : 'Type your message...'"
+            :disabled="loading"
+            rows="1"
+            class="w-full bg-transparent px-5 py-4 text-white placeholder-gray-600 resize-none outline-none text-sm leading-relaxed max-h-36 overflow-y-auto"
+            :dir="lang === 'ar' ? 'rtl' : 'ltr'"
+          ></textarea>
+
+          <!-- Footer inside input box -->
+          <div class="flex items-center justify-between px-4 pb-3">
+            <span class="text-[11px] text-gray-700">
+              {{ lang === 'ar' ? 'Enter للإرسال · Shift+Enter لسطر جديد' : 'Enter to send · Shift+Enter for new line' }}
+            </span>
             <button
               @click="sendMessage"
               :disabled="loading || !input.trim()"
-              class="h-11 w-11 flex-shrink-0 bg-lex-600 hover:bg-lex-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-xl flex items-center justify-center transition-all shadow-lg shadow-lex-600/20 disabled:shadow-none"
-            >
-              <svg v-if="!loading" class="w-5 h-5 text-white rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              class="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200"
+              :class="input.trim() && !loading
+                ? 'bg-lex-600 hover:bg-lex-700 shadow-md shadow-lex-600/30 text-white'
+                : 'bg-white/5 text-gray-600 cursor-not-allowed'">
+              <svg v-if="!loading" class="w-4 h-4" :class="lang === 'ar' ? '' : 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
               </svg>
-              <svg v-else class="w-5 h-5 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24">
+              <svg v-else class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
               </svg>
             </button>
           </div>
-          <p class="text-xs text-gray-600 mt-2 text-center">
-            {{ lang === 'ar' ? 'LexBANK مدعوم بتقنية GPT | جميع المحادثات سرية' : 'LexBANK powered by GPT | All conversations are confidential' }}
-          </p>
         </div>
       </div>
-    </main>
-  </div>
+    </div>
 
-  <script src="app.js"></script>
-  <script src="key-status-display.js"></script>
+  </main>
+</div>
+
+<script src="app.js"></script>
+<script src="key-status-display.js"></script>
+
+<!-- Patch: add sidebarOpen reactive state -->
+<script>
+  // Wait for Vue to mount then add sidebarOpen if missing
+  document.addEventListener('DOMContentLoaded', () => {});
+</script>
 </body>
 </html>
