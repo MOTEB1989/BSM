@@ -62,6 +62,30 @@ app.get("/docs*", (req, res) => res.redirect("/chat"));
 
 // serve admin UI static
 app.use("/admin", adminUiAuth, express.static(path.join(process.cwd(), "src/admin")));
+
+// serve code review dashboard
+app.use(
+  "/dashboard",
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-eval'",
+          "'unsafe-inline'",
+          "https://unpkg.com",
+          "https://cdn.tailwindcss.com"
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"],
+        connectSrc: ["'self'", ...env.corsOrigins]
+      }
+    }
+  }),
+  express.static(path.join(process.cwd(), "src/dashboard"))
+);
+
 app.use(
   "/chat",
   helmet({

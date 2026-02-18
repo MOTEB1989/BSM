@@ -1,7 +1,11 @@
 import crypto from "crypto";
 import { orchestrator } from "../runners/orchestrator.js";
 import { executeDecision } from "../actions/githubActions.js";
+import { intelligentCodeReviewAgent } from "../agents/IntelligentCodeReviewAgent.js";
+import { reviewCacheService } from "../services/reviewCacheService.js";
+import { reviewHistoryService } from "../services/reviewHistoryService.js";
 import logger from "../utils/logger.js";
+import fetch from "node-fetch";
 
 export const handleGitHubWebhook = async (req, res, next) => {
   try {
@@ -21,6 +25,11 @@ export const handleGitHubWebhook = async (req, res, next) => {
     if (data?.pull_request?.draft) {
       logger.info({ prNumber: data.number }, "Skipping draft PR");
       return res.status(200).json({ status: "skipped", reason: "Draft PR" });
+    }
+
+    // Trigger intelligent code review for PRs
+    if (event === "pull_request" && ["opened", "synchronize", "reopened"].includes(data.action)) {
+      triggerIntelligentCodeReview(data);
     }
 
     const orchestrationPayload = transformGitHubEvent(event, data);
@@ -93,4 +102,118 @@ function verifySignature(payload, signature, secret) {
 
   const digest = `sha256=${crypto.createHmac("sha256", secret).update(payload).digest("hex")}`;
   return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
+}
+
+/**
+ * Trigger intelligent code review asynchronously
+ */
+async function triggerIntelligentCodeReview(data) {
+  try {
+    const prNumber = data.number;
+    const repo = data.repository?.full_name;
+    const commitSha = data.pull_request?.head?.sha;
+
+    if (!repo || !prNumber) {
+      logger.warn("Missing repo or PR number for code review");
+      return;
+    }
+
+    logger.info({ repo, prNumber, commitSha }, "Triggering intelligent code review");
+
+    // Check cache first
+    const cached = reviewCacheService.get(repo, prNumber, commitSha);
+    if (cached) {
+      logger.info({ repo, prNumber }, "Using cached review result");
+      await postReviewCommentToGitHub(repo, prNumber, cached.report);
+      return;
+    }
+
+    // Fetch PR diff
+    const diffUrl = data.pull_request?.diff_url;
+    const diff = diffUrl ? await fetchDiff(diffUrl) : "";
+
+    // Perform review
+    const reviewResult = await intelligentCodeReviewAgent.review({
+      prNumber,
+      repo,
+      title: data.pull_request?.title,
+      body: data.pull_request?.body,
+      author: data.pull_request?.user?.login,
+      files: [], // Will be fetched by agent if needed
+      diff
+    });
+
+    // Cache the result
+    reviewCacheService.set(repo, prNumber, reviewResult, commitSha);
+
+    // Save to history
+    await reviewHistoryService.saveReview(reviewResult);
+
+    // Post comment to GitHub
+    await postReviewCommentToGitHub(repo, prNumber, reviewResult.report);
+
+    logger.info({ repo, prNumber, score: reviewResult.score }, "Code review completed and posted");
+  } catch (error) {
+    logger.error({ error: error.message }, "Intelligent code review failed");
+  }
+}
+
+/**
+ * Fetch diff from GitHub
+ */
+async function fetchDiff(diffUrl) {
+  try {
+    const response = await fetch(diffUrl, {
+      headers: {
+        Accept: "application/vnd.github.v3.diff"
+      }
+    });
+
+    if (!response.ok) {
+      logger.error({ diffUrl, status: response.status }, "Failed to fetch diff");
+      return "";
+    }
+
+    return await response.text();
+  } catch (error) {
+    logger.error({ error: error.message }, "Error fetching diff");
+    return "";
+  }
+}
+
+/**
+ * Post review comment to GitHub
+ */
+async function postReviewCommentToGitHub(repo, prNumber, body) {
+  try {
+    const token = process.env.GITHUB_BSU_TOKEN;
+    if (!token) {
+      logger.warn("GitHub token not configured, skipping comment post");
+      return;
+    }
+
+    const response = await fetch(
+      `https://api.github.com/repos/${repo}/issues/${prNumber}/comments`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/vnd.github.v3+json"
+        },
+        body: JSON.stringify({ body })
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      logger.error({ repo, prNumber, error: errorText }, "Failed to post review comment");
+      return;
+    }
+
+    const comment = await response.json();
+    logger.info({ repo, prNumber, commentId: comment.id }, "Review comment posted successfully");
+  } catch (error) {
+    logger.error({ error: error.message }, "Error posting review comment");
+  }
 }

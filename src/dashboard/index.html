@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Review Dashboard - BSM</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .stat-card {
+      text-align: center;
+      padding: 1rem;
+    }
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #2563eb;
+    }
+    .stat-label {
+      color: #64748b;
+      margin-top: 0.5rem;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    .badge-high { background: #fee2e2; color: #991b1b; }
+    .badge-medium { background: #fef3c7; color: #92400e; }
+    .badge-low { background: #dcfce7; color: #166534; }
+    .badge-improving { background: #dcfce7; color: #166534; }
+    .badge-declining { background: #fee2e2; color: #991b1b; }
+    .badge-stable { background: #e0e7ff; color: #3730a3; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const API_BASE = window.location.origin + '/api/code-review';
+
+    function Dashboard() {
+      const [repositories, setRepositories] = useState([]);
+      const [selectedRepo, setSelectedRepo] = useState(null);
+      const [statistics, setStatistics] = useState(null);
+      const [history, setHistory] = useState([]);
+      const [cacheStats, setCacheStats] = useState(null);
+      const [loading, setLoading] = useState(true);
+
+      useEffect(() => {
+        fetchRepositories();
+        fetchCacheStats();
+      }, []);
+
+      useEffect(() => {
+        if (selectedRepo) {
+          fetchStatistics(selectedRepo);
+          fetchHistory(selectedRepo);
+        }
+      }, [selectedRepo]);
+
+      const fetchRepositories = async () => {
+        try {
+          const response = await fetch(`${API_BASE}/repositories`);
+          const data = await response.json();
+          setRepositories(data.repositories || []);
+          if (data.repositories && data.repositories.length > 0) {
+            setSelectedRepo(data.repositories[0]);
+          }
+        } catch (error) {
+          console.error('Failed to fetch repositories:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const fetchStatistics = async (repo) => {
+        try {
+          const response = await fetch(`${API_BASE}/statistics/${encodeURIComponent(repo)}`);
+          const data = await response.json();
+          setStatistics(data.statistics);
+        } catch (error) {
+          console.error('Failed to fetch statistics:', error);
+        }
+      };
+
+      const fetchHistory = async (repo) => {
+        try {
+          const response = await fetch(`${API_BASE}/history/${encodeURIComponent(repo)}?limit=20`);
+          const data = await response.json();
+          setHistory(data.history || []);
+        } catch (error) {
+          console.error('Failed to fetch history:', error);
+        }
+      };
+
+      const fetchCacheStats = async () => {
+        try {
+          const response = await fetch(`${API_BASE}/cache/stats`, {
+            headers: {
+              'x-admin-token': localStorage.getItem('adminToken') || ''
+            }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setCacheStats(data.cache);
+          }
+        } catch (error) {
+          console.error('Failed to fetch cache stats:', error);
+        }
+      };
+
+      const getTrendBadge = (trend) => {
+        const badges = {
+          'improving': <span className="badge badge-improving">📈 Improving</span>,
+          'declining': <span className="badge badge-declining">📉 Declining</span>,
+          'stable': <span className="badge badge-stable">➡️ Stable</span>,
+          'insufficient-data': <span className="badge">⚪ Insufficient Data</span>
+        };
+        return badges[trend] || <span className="badge">⚪ Unknown</span>;
+      };
+
+      const getRiskBadge = (risk) => {
+        const badges = {
+          'critical': <span className="badge badge-high">🔴 Critical</span>,
+          'high': <span className="badge badge-high">🟠 High</span>,
+          'medium': <span className="badge badge-medium">🟡 Medium</span>,
+          'low': <span className="badge badge-low">🟢 Low</span>
+        };
+        return badges[risk] || <span className="badge">⚪ Unknown</span>;
+      };
+
+      const getScoreColor = (score) => {
+        if (score >= 8) return 'text-green-600';
+        if (score >= 6) return 'text-yellow-600';
+        return 'text-red-600';
+      };
+
+      if (loading) {
+        return (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-xl text-gray-600">Loading...</div>
+          </div>
+        );
+      }
+
+      if (repositories.length === 0) {
+        return (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <div className="text-6xl mb-4">📊</div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">No Reviews Yet</h2>
+              <p className="text-gray-600">Start reviewing pull requests to see statistics here.</p>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen p-6">
+          <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">🤖 Code Review Dashboard</h1>
+              <p className="text-gray-600">Intelligent AI-powered code review analytics</p>
+            </div>
+
+            {/* Repository Selector */}
+            <div className="card mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Repository
+              </label>
+              <select
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                value={selectedRepo || ''}
+                onChange={(e) => setSelectedRepo(e.target.value)}
+              >
+                {repositories.map(repo => (
+                  <option key={repo} value={repo}>{repo}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Statistics Cards */}
+            {statistics && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  <div className="card stat-card">
+                    <div className="stat-value">{statistics.totalReviews}</div>
+                    <div className="stat-label">Total Reviews</div>
+                  </div>
+
+                  <div className="card stat-card">
+                    <div className={`stat-value ${getScoreColor(statistics.averageScore)}`}>
+                      {statistics.averageScore}
+                    </div>
+                    <div className="stat-label">Average Score</div>
+                  </div>
+
+                  <div className="card stat-card">
+                    <div className={`stat-value ${getScoreColor(statistics.averageSecurityScore)}`}>
+                      {statistics.averageSecurityScore}
+                    </div>
+                    <div className="stat-label">Security Score</div>
+                  </div>
+
+                  <div className="card stat-card">
+                    <div className={`stat-value ${getScoreColor(statistics.averageQualityScore)}`}>
+                      {statistics.averageQualityScore}
+                    </div>
+                    <div className="stat-label">Quality Score</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                  {/* Security Risk Distribution */}
+                  <div className="card">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Security Risk Distribution</h3>
+                    <div className="space-y-2">
+                      {Object.entries(statistics.securityRiskDistribution).map(([risk, count]) => (
+                        <div key={risk} className="flex justify-between items-center">
+                          <span>{getRiskBadge(risk)}</span>
+                          <span className="font-semibold">{count} reviews</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Score Distribution */}
+                  <div className="card">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Score Distribution</h3>
+                    <div className="space-y-2">
+                      {Object.entries(statistics.scoreDistribution).map(([range, count]) => (
+                        <div key={range} className="flex justify-between items-center">
+                          <span className="text-gray-700">Score {range}</span>
+                          <span className="font-semibold">{count} reviews</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Trend */}
+                <div className="card mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Recent Trend</h3>
+                  <div className="text-center py-4">
+                    {getTrendBadge(statistics.recentTrend)}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Recent Reviews */}
+            <div className="card mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Reviews</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left">PR #</th>
+                      <th className="px-4 py-2 text-left">Score</th>
+                      <th className="px-4 py-2 text-left">Security</th>
+                      <th className="px-4 py-2 text-left">Quality</th>
+                      <th className="px-4 py-2 text-left">Risk Level</th>
+                      <th className="px-4 py-2 text-left">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.map((review, index) => (
+                      <tr key={index} className="border-t">
+                        <td className="px-4 py-2 font-mono">#{review.prNumber}</td>
+                        <td className="px-4 py-2">
+                          <span className={`font-semibold ${getScoreColor(review.score)}`}>
+                            {review.score}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2">{review.securityScore || 'N/A'}</td>
+                        <td className="px-4 py-2">{review.qualityScore || 'N/A'}</td>
+                        <td className="px-4 py-2">{getRiskBadge(review.securityRiskLevel)}</td>
+                        <td className="px-4 py-2 text-gray-600">
+                          {new Date(review.timestamp).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Cache Stats (if available) */}
+            {cacheStats && (
+              <div className="card">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Cache Performance</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-blue-600">{cacheStats.hits}</div>
+                    <div className="text-sm text-gray-600">Cache Hits</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-gray-600">{cacheStats.misses}</div>
+                    <div className="text-sm text-gray-600">Cache Misses</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-600">{cacheStats.hitRate}</div>
+                    <div className="text-sm text-gray-600">Hit Rate</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-purple-600">{cacheStats.size}</div>
+                    <div className="text-sm text-gray-600">Cached Items</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<Dashboard />, document.getElementById('root'));
+  </script>
+</body>
+</html>
