@@ -125,10 +125,16 @@ router.post("/gemini", async (req, res, next) => {
       throw new AppError("Agents not initialized", 503, "AGENTS_NOT_INITIALIZED");
     }
 
-    const agent = agents.get("gemini-agent");
-    const result = await agent.process(message, { history });
-    
-    res.json(result);
+    try {
+      const agent = agents.get("gemini-agent");
+      const result = await agent.process(message, { history });
+      res.json(result);
+    } catch (error) {
+      if (error.message.includes("not found")) {
+        throw new AppError("Gemini agent is not available. GEMINI_API_KEY is not configured.", 503, "AGENT_NOT_AVAILABLE");
+      }
+      throw error;
+    }
   } catch (error) {
     next(error);
   }
@@ -150,10 +156,16 @@ router.post("/perplexity", async (req, res, next) => {
       throw new AppError("Agents not initialized", 503, "AGENTS_NOT_INITIALIZED");
     }
 
-    const agent = agents.get("perplexity-agent");
-    const result = await agent.process(message, { model });
-    
-    res.json(result);
+    try {
+      const agent = agents.get("perplexity-agent");
+      const result = await agent.process(message, { model });
+      res.json(result);
+    } catch (error) {
+      if (error.message.includes("not found")) {
+        throw new AppError("Perplexity agent is not available. PERPLEXITY_API_KEY is not configured.", 503, "AGENT_NOT_AVAILABLE");
+      }
+      throw error;
+    }
   } catch (error) {
     next(error);
   }
@@ -175,10 +187,16 @@ router.post("/claude", async (req, res, next) => {
       throw new AppError("Agents not initialized", 503, "AGENTS_NOT_INITIALIZED");
     }
 
-    const agent = agents.get("claude-agent");
-    const result = await agent.process(message, { history, temperature });
-    
-    res.json(result);
+    try {
+      const agent = agents.get("claude-agent");
+      const result = await agent.process(message, { history, temperature });
+      res.json(result);
+    } catch (error) {
+      if (error.message.includes("not found")) {
+        throw new AppError("Claude agent is not available. ANTHROPIC_API_KEY is not configured.", 503, "AGENT_NOT_AVAILABLE");
+      }
+      throw error;
+    }
   } catch (error) {
     next(error);
   }

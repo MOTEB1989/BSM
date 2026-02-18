@@ -227,11 +227,6 @@ class AuditLogger {
       return { totalEntries: 0, events: {}, error: error.message };
     }
   }
-      totalEntries: lines.length,
-      events,
-      logPath: this.auditLogPath
-    };
-  }
 }
 
 // Export singleton instance
