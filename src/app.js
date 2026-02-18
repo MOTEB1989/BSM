@@ -13,6 +13,7 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import { adminUiAuth } from "./middleware/auth.js";
 import { env } from "./config/env.js";
 import { getHealth } from "./controllers/healthController.js";
+import { swaggerUiServe, swaggerUiSetup } from "./config/swagger.js";
 
 import routes from "./routes/index.js";
 
@@ -39,6 +40,9 @@ app.use(requestLogger);
 // Apply security middleware
 app.use(lanOnlyMiddleware);
 app.use(mobileModeMiddleware);
+
+// Swagger API documentation
+app.use("/api-docs", swaggerUiServe, swaggerUiSetup);
 
 app.use(
   "/api",
