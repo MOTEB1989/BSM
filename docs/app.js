@@ -11,6 +11,7 @@ createApp({
     const error = ref('');
     const lang = ref('ar');
     const mode = ref('direct');
+    const selectedModel = ref('gpt-4o-mini');
     const showModeMenu = ref(false);
     const showConfig = ref(false);
     const apiUrl = ref(localStorage.getItem(STORAGE_KEY) || '');
@@ -35,12 +36,15 @@ createApp({
     });
 
     const currentModeLabel = computed(() => {
+      if (mode.value === 'direct') {
+        const modelLabel = selectedModel.value === 'perplexity' ? 'Perplexity' : selectedModel.value;
+        return lang.value === 'ar' ? `دردشة · ${modelLabel}` : `Chat · ${modelLabel}`;
+      }
       const labels = {
-        direct: lang.value === 'ar' ? '\u062F\u0631\u062F\u0634\u0629 \u0645\u0628\u0627\u0634\u0631\u0629' : 'Direct Chat',
         'legal-agent': lang.value === 'ar' ? '\u0627\u0644\u0648\u0643\u064A\u0644 \u0627\u0644\u0642\u0627\u0646\u0648\u0646\u064A' : 'Legal Agent',
         'governance-agent': lang.value === 'ar' ? '\u0648\u0643\u064A\u0644 \u0627\u0644\u062D\u0648\u0643\u0645\u0629' : 'Governance Agent'
       };
-      return labels[mode.value] || labels.direct;
+      return labels[mode.value] || (lang.value === 'ar' ? 'دردشة مباشرة' : 'Direct Chat');
     });
 
     function toggleLang() {
@@ -147,7 +151,8 @@ createApp({
           body = {
             message: text,
             language: lang.value,
-            history: historyBeforeNewMessage
+            history: historyBeforeNewMessage,
+            model: selectedModel.value
           };
         } else {
           url = `${base}/api/chat`;
@@ -209,6 +214,7 @@ createApp({
       error,
       lang,
       mode,
+      selectedModel,
       showModeMenu,
       showConfig,
       apiUrl,

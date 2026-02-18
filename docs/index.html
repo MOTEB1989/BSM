@@ -71,16 +71,23 @@
           </div>
 
           <div class="glass-card flex-1 rounded-[2rem] overflow-hidden flex flex-col">
-              <div class="bg-black/50 p-4 border-b border-white/5 flex justify-between items-center">
+              <div class="bg-black/50 p-4 border-b border-white/5 flex justify-between items-center gap-2">
                   <div class="flex items-center gap-2">
                       <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                       <h3 class="text-[10px] font-nexus tracking-widest text-gray-500 uppercase">Neural Chat Stream</h3>
                   </div>
-                  <select id="agent-select" class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[10px] text-gray-300 outline-none">
-                      <option value="default">Default Agent</option>
-                      <option value="legal">Legal Expert</option>
-                      <option value="research">Research Assistant</option>
-                  </select>
+                  <div class="flex items-center gap-2">
+                      <select id="model-select" class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[10px] text-gray-300 outline-none">
+                          <option value="gpt-4o-mini">⚡ GPT-4o-mini</option>
+                          <option value="gpt-4o">🧠 GPT-4o</option>
+                          <option value="perplexity">🔍 Perplexity</option>
+                      </select>
+                      <select id="agent-select" class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[10px] text-gray-300 outline-none">
+                          <option value="default">Default Agent</option>
+                          <option value="legal">Legal Expert</option>
+                          <option value="research">Research Assistant</option>
+                      </select>
+                  </div>
               </div>
               <div id="chat" class="flex-1 overflow-y-auto p-4 space-y-4 bg-[#010409]/40 font-code scroll-custom">
                   <div class="text-center py-10">
@@ -139,6 +146,8 @@
         const text = input.value.trim();
         if (!text) return;
 
+        const selectedModel = document.getElementById('model-select')?.value || 'gpt-4o-mini';
+
         addMessage(text, 'user');
         input.value = '';
 
@@ -148,13 +157,13 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               message: text,
-              model: 'gpt-4o-mini',
-              conversationId: 'default'
+              model: selectedModel,
+              language: 'ar'
             })
           });
 
           const data = await response.json();
-          addMessage(data.response || data.message || 'لم أفهم طلبك', 'ai');
+          addMessage(data.output || 'لم أفهم طلبك', 'ai');
         } catch (error) {
           addMessage('عذراً، حدث خطأ في الاتصال بالخادم. تأكد من أن الخدمة تعمل.', 'error');
         }
