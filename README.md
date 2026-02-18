@@ -320,6 +320,11 @@ With GitHub Copilot Pro integration, our development workflow includes:
 
 The project includes GitHub Actions workflows:
 
+- **BSU Supreme Orchestrator**: Three-stage automated PR review and merge workflow
+  - Stage 1: Governance Check (compliance validation)
+  - Stage 2: Code Polisher (quality gates)
+  - Stage 3: Strategic Merge (immediate execution)
+  - See [BSU Supreme Orchestrator](docs/BSU-SUPREME-ORCHESTRATOR.md) for details
 - **Validate**: Runs on every PR and push to main, validates data structure
 - **CodeQL**: Security analysis for JavaScript code
 - **Pages**: Deploys `docs/` to GitHub Pages on push to main
@@ -352,6 +357,8 @@ The project includes GitHub Actions workflows:
 ### Architecture and Design
 - [System Architecture](docs/ARCHITECTURE.md) - Comprehensive architectural overview
 - [Agent Orchestration Patterns](docs/AGENT-ORCHESTRATION.md) - Multi-agent design patterns and workflows
+- [BSU Supreme Orchestrator](docs/BSU-SUPREME-ORCHESTRATOR.md) - Three-stage automated PR review and merge workflow
+- [BSU Orchestrator Quick Reference](docs/BSU-SUPREME-ORCHESTRATOR-QUICK-REF.md) - Quick start guide for the orchestrator
 - [CI/CD Recommendations](docs/CICD-RECOMMENDATIONS.md) - Pipeline enhancements and automation strategies
 - [Security & Deployment Guide](docs/SECURITY-DEPLOYMENT.md) - Security best practices and deployment procedures
 
