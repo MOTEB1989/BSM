@@ -1,0 +1,471 @@
+{
+  "report": {
+    "generated": "2026-02-18T19:04:34.291Z",
+    "agent": "BSU Integrity Agent",
+    "version": "1.0",
+    "repository": "MOTEB1989/BSM"
+  },
+  "summary": {
+    "totalAgents": 29,
+    "categories": {
+      "llm": 4,
+      "registry": 5,
+      "data": 9,
+      "githubCopilot": 10,
+      "implementations": 8
+    },
+    "healthScore": 95,
+    "status": "healthy"
+  },
+  "agents": {
+    "llm": [
+      {
+        "id": "strategic_analyzer",
+        "name": "المحلل الاستراتيجي",
+        "model": "gpt-4-turbo",
+        "provider": "openai",
+        "status": "active",
+        "location": "api/agents.chat.json"
+      },
+      {
+        "id": "deep_reasoner",
+        "name": "الباحث العميق (o1)",
+        "model": "o1-preview",
+        "provider": "openai",
+        "status": "active",
+        "location": "api/agents.chat.json"
+      },
+      {
+        "id": "google_gemini",
+        "name": "Google Gemini 1.5 Pro",
+        "model": "gemini-1.5-pro",
+        "provider": "google",
+        "status": "active",
+        "location": "api/agents.chat.json"
+      },
+      {
+        "id": "moonshot_kimi",
+        "name": "Kimi (Moonshot)",
+        "model": "moonshot-v1-128k",
+        "provider": "moonshot",
+        "status": "active",
+        "location": "api/agents.chat.json"
+      }
+    ],
+    "registry": [
+      {
+        "id": "quality-governance",
+        "name": "Quality & Governance Agent",
+        "category": "audit",
+        "risk": "low",
+        "requiresApproval": false,
+        "autoStart": false,
+        "status": "defined",
+        "location": "agents/registry.yaml"
+      },
+      {
+        "id": "compliance-auditor",
+        "name": "Compliance Auditor",
+        "category": "audit",
+        "risk": "low",
+        "requiresApproval": false,
+        "autoStart": false,
+        "status": "defined",
+        "location": "agents/registry.yaml"
+      },
+      {
+        "id": "legal-advisor",
+        "name": "Legal Advisor",
+        "category": "audit",
+        "risk": "low",
+        "requiresApproval": false,
+        "autoStart": false,
+        "status": "defined",
+        "location": "agents/registry.yaml"
+      },
+      {
+        "id": "autonomous-architect",
+        "name": "Autonomous Architect",
+        "category": "system",
+        "risk": "high",
+        "requiresApproval": true,
+        "autoStart": false,
+        "status": "defined",
+        "location": "agents/registry.yaml"
+      },
+      {
+        "id": "pr-merge",
+        "name": "PR Merge Agent",
+        "category": "system",
+        "risk": "medium",
+        "requiresApproval": true,
+        "autoStart": false,
+        "status": "defined",
+        "location": "agents/registry.yaml"
+      }
+    ],
+    "data": [
+      {
+        "id": "integrity-agent",
+        "name": "Repository Integrity Guardian",
+        "role": "Repository maintenance expert",
+        "version": "2",
+        "model": "gpt-4o",
+        "provider": "openai",
+        "actions": [
+          "validate_structure",
+          "cleanup_stale_prs",
+          "archive_old_issues",
+          "optimize_database",
+          "generate_health_report"
+        ],
+        "status": "defined",
+        "location": "data/agents/integrity-agent.yaml"
+      },
+      {
+        "id": "legal-agent",
+        "name": "Legal analysis agent",
+        "role": "Analyze regulations and circulars",
+        "version": "1",
+        "model": "gpt-4o-mini",
+        "provider": "openai",
+        "actions": ["create_file"],
+        "status": "defined",
+        "location": "data/agents/legal-agent.yaml"
+      },
+      {
+        "id": "governance-agent",
+        "name": "Governance Agent",
+        "role": "Analyze governance policies",
+        "version": "1",
+        "model": "gpt-4o-mini",
+        "provider": "openai",
+        "actions": ["create_file"],
+        "status": "defined",
+        "location": "data/agents/governance-agent.yaml"
+      },
+      {
+        "id": "governance-review-agent",
+        "name": "Governance Compliance Officer",
+        "role": "Enforces governance policies",
+        "version": "1.0",
+        "model": "gpt-4o-mini",
+        "provider": "openai",
+        "actions": [
+          "review_pr",
+          "request_changes",
+          "approve_pr",
+          "create_review_comment",
+          "generate_fix_suggestion"
+        ],
+        "status": "defined",
+        "location": "data/agents/governance-review-agent.yaml"
+      },
+      {
+        "id": "code-review-agent",
+        "name": "Code Review Agent",
+        "role": "Senior Software Engineer",
+        "version": "2",
+        "model": "gpt-4o",
+        "provider": "openai",
+        "actions": [
+          "review_pr",
+          "request_changes",
+          "approve_pr",
+          "create_review_comment",
+          "generate_fix_suggestion",
+          "create_file"
+        ],
+        "status": "defined",
+        "location": "data/agents/code-review-agent.yaml"
+      },
+      {
+        "id": "security-agent",
+        "name": "Security Vulnerability Scanner",
+        "role": "Cybersecurity expert",
+        "version": "2",
+        "model": "gpt-4o",
+        "provider": "openai",
+        "actions": [
+          "scan_vulnerabilities",
+          "block_pr",
+          "alert_security_team",
+          "generate_security_report",
+          "suggest_fixes"
+        ],
+        "status": "defined",
+        "location": "data/agents/security-agent.yaml"
+      },
+      {
+        "id": "pr-merge-agent",
+        "name": "Auto-Merge Orchestrator",
+        "role": "DevOps Automation Engineer",
+        "version": "2",
+        "model": "gpt-4o",
+        "provider": "openai",
+        "actions": [
+          "auto_merge",
+          "manual_review_request",
+          "run_tests",
+          "deploy_staging",
+          "rollback_merge"
+        ],
+        "status": "defined",
+        "location": "data/agents/pr-merge-agent.yaml"
+      },
+      {
+        "id": "bsu-audit-agent",
+        "name": "BSU Audit Agent",
+        "role": "Safe audit-and-fix specialist",
+        "version": "1.0.0",
+        "model": "gpt-4o-mini",
+        "provider": "openai",
+        "actions": [
+          "audit_configuration",
+          "validate_guards",
+          "check_api_routes",
+          "verify_ui_config",
+          "generate_audit_report"
+        ],
+        "status": "defined",
+        "location": "data/agents/bsu-audit-agent.yaml"
+      },
+      {
+        "id": "my-agent",
+        "name": "BSU Smart Agent",
+        "role": "Platform management and system oversight",
+        "version": "2.0.0",
+        "status": "defined",
+        "location": "data/agents/my-agent.yaml"
+      }
+    ],
+    "githubCopilot": [
+      {
+        "id": "bsu-audit",
+        "name": "BSU Audit Agent",
+        "description": "Safe audit-and-fix agent",
+        "status": "defined",
+        "location": ".github/agents/bsu-audit.agent.md"
+      },
+      {
+        "id": "bsu-autonomous-architect",
+        "name": "BSU Autonomous Architect",
+        "description": "معماري وتشغيلي لمنصة BSU",
+        "status": "defined",
+        "location": ".github/agents/bsu-autonomous-architect.agent.md"
+      },
+      {
+        "id": "code-review",
+        "name": "Code Review Agent",
+        "description": "يراجع الأكواد ويحلل الجودة",
+        "status": "defined",
+        "location": ".github/agents/code-review.agent.md"
+      },
+      {
+        "id": "governance",
+        "name": "Governance Agent",
+        "description": "متخصص في الحوكمة",
+        "status": "defined",
+        "location": ".github/agents/governance.agent.md"
+      },
+      {
+        "id": "integrity",
+        "name": "BSU Integrity Agent",
+        "description": "حارس سلامة المستودع",
+        "status": "defined",
+        "location": ".github/agents/integrity.agent.md"
+      },
+      {
+        "id": "legal",
+        "name": "Legal Agent",
+        "description": "محلل قانوني",
+        "status": "defined",
+        "location": ".github/agents/legal.agent.md"
+      },
+      {
+        "id": "orchestrator",
+        "name": "BSU Orchestrator",
+        "description": "ينسق تنفيذ Agents الأخرى",
+        "status": "defined",
+        "location": ".github/agents/orchestrator.agent.md"
+      },
+      {
+        "id": "pr-merge",
+        "name": "PR Merge Agent",
+        "description": "أتمتة الدمج",
+        "status": "defined",
+        "location": ".github/agents/pr-merge.agent.md"
+      },
+      {
+        "id": "runner",
+        "name": "Runner Agent",
+        "description": "تنفيذ اختبارات البناء",
+        "status": "defined",
+        "location": ".github/agents/runner.agent.md"
+      },
+      {
+        "id": "security",
+        "name": "Security Agent",
+        "description": "فحص التهيئات",
+        "status": "defined",
+        "location": ".github/agents/security.agent.md"
+      }
+    ],
+    "implementations": [
+      {
+        "file": "IntegrityAgent.js",
+        "class": "IntegrityAgent",
+        "purpose": "Repository health checking",
+        "location": "src/agents/IntegrityAgent.js"
+      },
+      {
+        "file": "CodeReviewAgent.js",
+        "purpose": "Code review implementation",
+        "location": "src/agents/CodeReviewAgent.js"
+      },
+      {
+        "file": "GovernanceAgent.js",
+        "purpose": "Governance analysis",
+        "location": "src/agents/GovernanceAgent.js"
+      },
+      {
+        "file": "PRMergeAgent.js",
+        "purpose": "PR merge automation",
+        "location": "src/agents/PRMergeAgent.js"
+      },
+      {
+        "file": "legalResearch.js",
+        "purpose": "Legal research",
+        "location": "src/agents/legalResearch.js"
+      },
+      {
+        "file": "governanceResearch.js",
+        "purpose": "Governance research",
+        "location": "src/agents/governanceResearch.js"
+      },
+      {
+        "file": "securityScanner.js",
+        "purpose": "Security scanning",
+        "location": "src/agents/securityScanner.js"
+      },
+      {
+        "file": "TelegramAgent.js",
+        "class": "TelegramAgent",
+        "purpose": "Telegram messaging (Orbit)",
+        "location": "src/orbit/agents/TelegramAgent.js"
+      }
+    ],
+    "special": [
+      {
+        "id": "bsu-nexus",
+        "name": "BSU Nexus Agent",
+        "language": "python",
+        "purpose": "DNS verification via Cloudflare",
+        "status": "active",
+        "location": "agents/autonomous_sync_agent.py"
+      },
+      {
+        "id": "bsm-ai-analyst",
+        "name": "BSM AI Analyst",
+        "purpose": "Data analysis and reporting",
+        "status": "documented",
+        "location": "agents/bsm-ai-analyst.agent.md"
+      }
+    ]
+  },
+  "api": {
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/api/agents",
+        "description": "List all agents"
+      },
+      {
+        "method": "POST",
+        "path": "/api/agents/run",
+        "description": "Execute an agent"
+      },
+      {
+        "method": "POST",
+        "path": "/api/agents/start/:agentId",
+        "description": "Start an agent"
+      },
+      {
+        "method": "POST",
+        "path": "/api/agents/stop/:agentId",
+        "description": "Stop an agent"
+      },
+      {
+        "method": "GET",
+        "path": "/api/agents/status",
+        "description": "Get status of all agents"
+      },
+      {
+        "method": "GET",
+        "path": "/api/agents/:agentId/status",
+        "description": "Get status of specific agent"
+      },
+      {
+        "method": "POST",
+        "path": "/api/chat",
+        "description": "Chat with LLM agent"
+      },
+      {
+        "method": "POST",
+        "path": "/api/chat/direct",
+        "description": "Direct GPT chat with history"
+      }
+    ]
+  },
+  "workflows": [
+    {
+      "name": "Run BSM Agents",
+      "file": ".github/workflows/run-bsu-agents.yml",
+      "trigger": "workflow_dispatch",
+      "purpose": "Run agents pipeline"
+    },
+    {
+      "name": "Agent Guardian",
+      "file": ".github/workflows/agent-guardian.yml",
+      "trigger": "auto",
+      "purpose": "Agent monitoring"
+    },
+    {
+      "name": "AI Agent Guardian",
+      "file": ".github/workflows/ai-agent-guardian.yml",
+      "trigger": "auto",
+      "purpose": "AI agent monitoring"
+    },
+    {
+      "name": "Weekly Agents",
+      "file": ".github/workflows/weekly-agents.yml",
+      "trigger": "scheduled",
+      "purpose": "Weekly agent runs"
+    }
+  ],
+  "validation": {
+    "status": "passing",
+    "registryValidated": true,
+    "governanceFieldsPresent": true,
+    "allowedActionsEnforced": true,
+    "totalActions": 36
+  },
+  "issues": {
+    "fixed": [
+      "Registry missing governance fields (risk, approval, startup, healthcheck, contexts)"
+    ],
+    "warnings": [
+      "Some agents have duplicate definitions across multiple files (expected behavior)",
+      "Missing integration tests for agents",
+      "No monitoring dashboard for agent status"
+    ],
+    "recommendations": [
+      "Add health check endpoints for all registry agents",
+      "Unify agent naming conventions across files",
+      "Add integration tests",
+      "Create monitoring dashboard",
+      "Add performance metrics",
+      "Document data flow between agents"
+    ]
+  }
+}

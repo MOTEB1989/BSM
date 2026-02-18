@@ -1,0 +1,40 @@
+name: 🧹 The Cleaner Agent
+
+on: [pull_request]
+
+jobs:
+  autofix:
+    name: 🛡️ Clean & Fix Code
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: 🐍 Setup Python (for Python files)
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 🔧 Auto-Format Python (Black)
+        run: |
+          pip install black
+          black . --check || black .
+
+      - name: 📜 Setup Node (for JS/JSON files)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 💅 Auto-Format JS/JSON (Prettier)
+        run: |
+          npx prettier --write "**/*.{js,json,md,yaml,yml}"
+
+      - name: 💾 Commit Fixes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "🤖 Auto-Fix: Cleaner Agent polished the code ✨"
+          branch: ${{ github.head_ref }}

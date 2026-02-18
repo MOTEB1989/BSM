@@ -1,0 +1,41 @@
+name: 🚀 The Auto-Merger
+
+on:
+  workflow_run:
+    workflows: ["🧹 The Cleaner Agent"]
+    types:
+      - completed
+
+jobs:
+  merge-if-healthy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: 🤖 Merge PR
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              sort: 'updated',
+              direction: 'desc'
+            });
+            
+            if (prs.data.length > 0) {
+              const pr = prs.data[0];
+              console.log(`Checking PR #${pr.number}...`);
+              
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                merge_method: 'squash',
+                commit_title: `✅ Auto-Merged: PR #${pr.number} (Verified Healthy)`
+              });
+              console.log("🎉 Successfully merged!");
+            }

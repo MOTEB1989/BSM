@@ -6,11 +6,14 @@ node_modules
 logs/
 *.log
 
-# Reports - ignore most but keep security and runner reports
+# Reports - ignore most but keep security, runner, and agent reports
 reports/*
 !reports/SECURITY-*.md
 !reports/runner-*.json
 !reports/runner-*.md
+!reports/AGENTS-*.md
+!reports/agents-*.json
+!reports/INTEGRITY-*.md
 
 # Sensitive files - Security
 *.key
