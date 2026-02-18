@@ -1,10 +1,9 @@
 #!/bin/bash
 
 # BSM - Master Closure Script
-# This script orchestrates closing all PRs and issues
-# Generated: 2026-02-08
+# Orchestrates dynamic preview + one confirmation + execution for PRs and issues
 
-set -e
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -13,87 +12,128 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}BSM Repository Cleanup${NC}"
-echo -e "${GREEN}========================================${NC}"
-echo ""
-
-# Check if gh CLI is installed
-if ! command -v gh &> /dev/null; then
+require_gh() {
+  if ! command -v gh &> /dev/null; then
     echo -e "${RED}Error: GitHub CLI (gh) is not installed.${NC}"
     echo "Install it from: https://cli.github.com/"
     exit 1
-fi
+  fi
 
-# Check if authenticated
-if ! gh auth status &> /dev/null; then
+  if ! gh auth status &> /dev/null; then
     echo -e "${RED}Error: Not authenticated with GitHub CLI.${NC}"
     echo "Run: gh auth login"
     exit 1
-fi
+  fi
+}
 
-echo -e "${BLUE}Current Repository Status:${NC}"
-echo "  - Total Open PRs: 60"
-echo "  - Draft PRs to Close: 34"
-echo "  - Open Issues to Close: 1"
-echo "  - PRs to Keep for Review: 26"
-echo ""
+build_pr_search_query() {
+  local q=()
+  [[ -n "${PR_AUTHOR:-}" ]] && q+=("author:${PR_AUTHOR}")
+  [[ "${PR_DRAFT_ONLY:-true}" == "true" ]] && q+=("draft:true")
+  if [[ -n "${PR_STALE_DAYS:-}" ]] && [[ "${PR_STALE_DAYS}" =~ ^[0-9]+$ ]]; then
+    local cutoff
+    cutoff="$(date -u -d "${PR_STALE_DAYS} days ago" +%Y-%m-%d 2>/dev/null || true)"
+    [[ -n "$cutoff" ]] && q+=("updated:<${cutoff}")
+  fi
+  [[ -n "${PR_LABEL:-}" ]] && q+=("label:${PR_LABEL}")
+  [[ -n "${PR_SEARCH_EXTRA:-}" ]] && q+=("${PR_SEARCH_EXTRA}")
+  echo "${q[*]}"
+}
 
-echo -e "${YELLOW}This master script will:${NC}"
-echo "  1. Close 34 draft/experimental PRs by Copilot"
-echo "  2. Close 1 informational issue (#87)"
-echo "  3. Generate final cleanup report"
-echo ""
+build_issue_search_query() {
+  local q=()
+  [[ -n "${ISSUE_AUTHOR:-}" ]] && q+=("author:${ISSUE_AUTHOR}")
+  if [[ -n "${ISSUE_STALE_DAYS:-}" ]] && [[ "${ISSUE_STALE_DAYS}" =~ ^[0-9]+$ ]]; then
+    local cutoff
+    cutoff="$(date -u -d "${ISSUE_STALE_DAYS} days ago" +%Y-%m-%d 2>/dev/null || true)"
+    [[ -n "$cutoff" ]] && q+=("updated:<${cutoff}")
+  fi
+  [[ -n "${ISSUE_LABEL:-}" ]] && q+=("label:${ISSUE_LABEL}")
+  [[ -n "${ISSUE_SEARCH_EXTRA:-}" ]] && q+=("${ISSUE_SEARCH_EXTRA}")
+  echo "${q[*]}"
+}
 
-echo -e "${YELLOW}WARNING: This will make significant changes to the repository.${NC}"
-echo -e "${YELLOW}Please review reports/PR-CLOSURE-PLAN.md before proceeding.${NC}"
-read -p "Do you want to continue? (yes/no): " CONFIRM
+count_json_items() {
+  local json="$1"
+  python3 - <<'PY' "$json"
+import json, sys
+print(len(json.loads(sys.argv[1])))
+PY
+}
 
-if [ "$CONFIRM" != "yes" ]; then
-    echo -e "${RED}Operation cancelled.${NC}"
-    exit 0
-fi
+main() {
+  echo -e "${GREEN}========================================${NC}"
+  echo -e "${GREEN}BSM Repository Cleanup${NC}"
+  echo -e "${GREEN}========================================${NC}"
+  echo ""
 
-echo ""
-echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}Phase 1: Closing Draft PRs${NC}"
-echo -e "${GREEN}========================================${NC}"
-echo ""
+  require_gh
 
-# Run the draft PR closure script
-if [ -f "./scripts/close-draft-prs.sh" ]; then
-    # Pass "yes" to the confirmation prompt
-    echo "yes" | ./scripts/close-draft-prs.sh
-else
-    echo -e "${RED}Error: close-draft-prs.sh not found${NC}"
-    exit 1
-fi
+  local pr_query issue_query
+  pr_query="$(build_pr_search_query)"
+  issue_query="$(build_issue_search_query)"
 
-echo ""
-echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}Phase 2: Closing Issues${NC}"
-echo -e "${GREEN}========================================${NC}"
-echo ""
+  local pr_preview_json issue_preview_json pr_preview_count issue_preview_count
+  pr_preview_json="$(gh pr list --state open --limit "${PR_LIMIT:-200}" --search "$pr_query" --json number)"
+  issue_preview_json="$(gh issue list --state open --limit "${ISSUE_LIMIT:-200}" --search "$issue_query" --json number)"
+  pr_preview_count="$(count_json_items "$pr_preview_json")"
+  issue_preview_count="$(count_json_items "$issue_preview_json")"
 
-# Run the issue closure script
-if [ -f "./scripts/close-issues.sh" ]; then
-    # Pass "yes" to the confirmation prompt
-    echo "yes" | ./scripts/close-issues.sh
-else
-    echo -e "${RED}Error: close-issues.sh not found${NC}"
-    exit 1
-fi
+  echo -e "${BLUE}Current Dynamic Preview (dry-run):${NC}"
+  echo "  - PR query: ${pr_query:-<none>}"
+  echo "  - Issue query: ${issue_query:-<none>}"
+  echo "  - Draft/filtered PRs to close: ${pr_preview_count}"
+  echo "  - Filtered issues to close: ${issue_preview_count}"
+  echo ""
 
-echo ""
-echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}Phase 3: Generating Final Report${NC}"
-echo -e "${GREEN}========================================${NC}"
-echo ""
+  echo -e "${YELLOW}This script will now run:${NC}"
+  echo "  1. scripts/close-draft-prs.sh (with same PR filters)"
+  echo "  2. scripts/close-issues.sh (with same issue filters)"
+  echo ""
 
-# Generate final status report
-REPORT_FILE="reports/CLOSURE-COMPLETE-$(date +%Y-%m-%d_%H-%M-%S).md"
+  if [[ "${AUTO_CONFIRM:-no}" != "yes" ]]; then
+    read -r -p "Dry-run complete. Proceed with execution? (yes/no): " CONFIRM
+    [[ "$CONFIRM" == "yes" ]] || { echo -e "${RED}Operation cancelled.${NC}"; exit 0; }
+  fi
 
-cat > "$REPORT_FILE" << EOF
+  [[ -f "./scripts/close-draft-prs.sh" ]] || { echo -e "${RED}Error: close-draft-prs.sh not found${NC}"; exit 1; }
+  [[ -f "./scripts/close-issues.sh" ]] || { echo -e "${RED}Error: close-issues.sh not found${NC}"; exit 1; }
+
+  echo ""
+  echo -e "${GREEN}========================================${NC}"
+  echo -e "${GREEN}Phase 1: Closing Draft PRs${NC}"
+  echo -e "${GREEN}========================================${NC}"
+
+  local pr_output
+  pr_output="$(AUTO_CONFIRM=yes OUTPUT_COUNTS_ONLY=yes ./scripts/close-draft-prs.sh)"
+  echo "$pr_output"
+
+  local pr_closed pr_failed pr_matched
+  pr_closed="$(echo "$pr_output" | awk -F= '/^CLOSED_COUNT=/{print $2}' | tail -1)"
+  pr_failed="$(echo "$pr_output" | awk -F= '/^FAILED_COUNT=/{print $2}' | tail -1)"
+  pr_matched="$(echo "$pr_output" | awk -F= '/^MATCHED_COUNT=/{print $2}' | tail -1)"
+
+  echo ""
+  echo -e "${GREEN}========================================${NC}"
+  echo -e "${GREEN}Phase 2: Closing Issues${NC}"
+  echo -e "${GREEN}========================================${NC}"
+
+  local issue_output
+  issue_output="$(AUTO_CONFIRM=yes OUTPUT_COUNTS_ONLY=yes ./scripts/close-issues.sh)"
+  echo "$issue_output"
+
+  local issue_closed issue_failed issue_matched
+  issue_closed="$(echo "$issue_output" | awk -F= '/^CLOSED_COUNT=/{print $2}' | tail -1)"
+  issue_failed="$(echo "$issue_output" | awk -F= '/^FAILED_COUNT=/{print $2}' | tail -1)"
+  issue_matched="$(echo "$issue_output" | awk -F= '/^MATCHED_COUNT=/{print $2}' | tail -1)"
+
+  pr_closed="${pr_closed:-0}"; pr_failed="${pr_failed:-0}"; pr_matched="${pr_matched:-0}"
+  issue_closed="${issue_closed:-0}"; issue_failed="${issue_failed:-0}"; issue_matched="${issue_matched:-0}"
+
+  local report_file
+  report_file="reports/CLOSURE-COMPLETE-$(date +%Y-%m-%d_%H-%M-%S).md"
+
+  cat > "$report_file" <<REPORT
 # BSM Repository Closure - Complete
 
 **Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")  
@@ -101,86 +141,37 @@ cat > "$REPORT_FILE" << EOF
 
 ---
 
-## Summary
+## Applied Filters
 
-Successfully completed repository cleanup:
+- PRs: state=open, search=\`${pr_query:-<none>}\`
+- Issues: state=open, search=\`${issue_query:-<none>}\`
 
-### PRs Closed
-- **34 draft PRs** by Copilot (experimental/analysis work)
-- All PRs documented in [PR Closure Plan](PR-CLOSURE-PLAN.md)
+## Execution Results
 
-### Issues Closed
-- **Issue #87** - Automated report notification (informational)
+### Pull Requests
+- Matched in preview: **${pr_matched}**
+- Successfully closed: **${pr_closed}**
+- Failed or skipped: **${pr_failed}**
 
-### Remaining Open PRs
-- **~26 PRs** remain open for individual review
-- These are primarily feature PRs by MOTEB1989
-- See [PR Closure Plan](PR-CLOSURE-PLAN.md) for review strategy
-
----
-
-## Actions Taken
-
-1. ✅ Closed 34 draft/experimental PRs
-2. ✅ Closed 1 informational issue
-3. ✅ Generated closure documentation
-4. ✅ Preserved all reports and analysis work
-
----
-
-## Repository Status
-
-**Before Cleanup:**
-- Open PRs: 60
-- Open Issues: 1
-
-**After Cleanup:**
-- Open PRs: ~26
-- Open Issues: 0
-
-**Reduction:** 57% fewer open PRs
-
----
-
-## Next Steps
-
-1. Review remaining 26 PRs individually
-2. Merge PRs that are ready (#67, #60, #61 previously identified)
-3. Request updates for PRs that need work
-4. Continue regular PR triage and review process
-
----
-
-## References
-
-- [PR Closure Plan](PR-CLOSURE-PLAN.md) - Complete closure strategy
-- [Execution Complete](../EXECUTION-COMPLETE.md) - Original project status
-- [Orchestrator Summary](../ORCHESTRATOR-SUMMARY.md) - Platform analysis
+### Issues
+- Matched in preview: **${issue_matched}**
+- Successfully closed: **${issue_closed}**
+- Failed or skipped: **${issue_failed}**
 
 ---
 
 **Generated by:** BSM Master Closure Script  
-**Status:** Complete  
-**Repository Health:** Excellent 🚀
-EOF
+**Mode:** Dynamic filter-based cleanup
+REPORT
 
-echo "Final report generated: $REPORT_FILE"
-echo ""
+  echo ""
+  echo -e "${GREEN}========================================${NC}"
+  echo -e "${GREEN}Cleanup Complete! 🎉${NC}"
+  echo -e "${GREEN}========================================${NC}"
+  echo -e "${BLUE}Summary:${NC}"
+  echo "  ✅ PRs matched/closed/failed: ${pr_matched}/${pr_closed}/${pr_failed}"
+  echo "  ✅ Issues matched/closed/failed: ${issue_matched}/${issue_closed}/${issue_failed}"
+  echo "  ✅ Final report: ${report_file}"
+}
 
-# Display summary
-echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}Cleanup Complete! 🎉${NC}"
-echo -e "${GREEN}========================================${NC}"
-echo ""
-echo -e "${BLUE}Summary:${NC}"
-echo "  ✅ Draft PRs closed: 34"
-echo "  ✅ Issues closed: 1"
-echo "  ✅ Final report: $REPORT_FILE"
-echo ""
-echo -e "${GREEN}Repository cleanup successful!${NC}"
-echo ""
-echo -e "${YELLOW}Next steps:${NC}"
-echo "  1. Review remaining PRs"
-echo "  2. Merge ready PRs: #67, #60, #61"
-echo "  3. Continue regular PR triage"
-echo ""
+main "$@"
