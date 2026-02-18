@@ -20,7 +20,7 @@ Successfully implemented a Model Context Protocol (MCP) Server for LexBANK/BSM t
 
 ### 2. Configuration
 - **`mcp-servers/package.json`** (523 bytes)
-  - Dependencies: @modelcontextprotocol/sdk v0.4.0, node-fetch v2.7.0
+  - Dependencies: @modelcontextprotocol/sdk ^1.25.2, node-fetch v2.7.0
   - CommonJS module type for compatibility
   - Scripts for start and dev modes
   - Bin entry for CLI usage

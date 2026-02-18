@@ -22,22 +22,8 @@ class LexBANKMCPServer {
       },
       {
         capabilities: {
-          tools: {
-            // تفعيل جميع الوكلاء
-            'gemini-chat': true,
-            'claude-chat': true,
-            'perplexity-search': true,
-            'gpt-chat': true,
-            'kimi-chat': true,
-            'agent-status': true,
-            'banking-query': true
-          },
-          resources: {
-            // الوصول للبيانات
-            'agent-registry': true,
-            'chat-history': true,
-            'banking-docs': true
-          }
+          tools: true,
+          resources: true
         },
       }
     );
@@ -213,48 +199,112 @@ class LexBANKMCPServer {
           ]
         };
       }
+
+      if (uri === 'lexbank://docs/banking-laws') {
+        const markdown = [
+          '# Saudi Banking Laws (SAMA)',
+          '',
+          'هذه وثيقة مرجعية مختصرة حول القوانين والأنظمة البنكية السعودية (ساما).',
+          '',
+          '- الإلتزام بتعليمات مؤسسة النقد العربي السعودي (ساما).',
+          '- تطبيق سياسات اعرف عميلك (KYC).',
+          '- إجراءات مكافحة غسل الأموال وتمويل الإرهاب (AML/CFT).',
+          '- حماية بيانات العملاء وفق لوائح حماية البيانات ذات الصلة.',
+          '',
+          'هذه نسخة ملخصة لأغراض توضيحية فقط، وليست مرجعاً قانونياً نهائياً.'
+        ].join('\n');
+
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: 'text/markdown',
+              text: markdown
+            }
+          ]
+        };
+      }
+
+      if (uri === 'lexbank://config/security') {
+        const securityConfig = {
+          description: 'إعدادات الأمان الحالية لنظام LexBANK MCP.',
+          authentication: {
+            type: 'api-key',
+            transport: 'https'
+          },
+          encryption: {
+            inTransit: 'TLS 1.2+',
+            atRest: true
+          },
+          audit: {
+            enabled: true,
+            retentionDays: 90
+          }
+        };
+
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: 'application/json',
+              text: JSON.stringify(securityConfig, null, 2)
+            }
+          ]
+        };
+      }
       
       throw new Error(`Resource ${uri} not found`);
     });
   }
 
   // Helper Methods
-  async callAgent(agentName, args) {
-    const response = await fetch(`${LEXBANK_BASE}/chat/${agentName.replace('-agent', '')}`, {
+  async callAgent(agentId, args) {
+    // Use the correct backend chat endpoint: POST /api/chat with {agentId, input, payload}
+    const response = await fetch(`${LEXBANK_BASE}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(args)
+      body: JSON.stringify({
+        agentId: agentId,
+        input: args.message,
+        payload: args.context ? { context: args.context } : {}
+      })
     });
     
-    if (!response.ok) throw new Error(`Agent ${agentName} failed: ${response.status}`);
+    if (!response.ok) throw new Error(`Agent ${agentId} failed: ${response.status}`);
     
     const data = await response.json();
+    // Backend returns {output: ...}
     return {
       content: [
         {
           type: 'text',
-          text: data.response || data.content || JSON.stringify(data)
+          text: data.output || JSON.stringify(data)
         }
       ]
     };
   }
 
   async callPerplexity(args) {
-    const response = await fetch(`${LEXBANK_BASE}/chat/perplexity`, {
+    // Use direct chat endpoint for Perplexity-style queries
+    const response = await fetch(`${LEXBANK_BASE}/chat/direct`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message: args.query,
-        model: args.model
+        history: [],
+        language: 'ar'
       })
     });
     
+    if (!response.ok) throw new Error(`Perplexity search failed: ${response.status}`);
+    
     const data = await response.json();
+    // Backend returns {output: ...}
     return {
       content: [
         {
           type: 'text',
-          text: `${data.response}\n\nمصادر: ${(data.citations || []).join(', ')}`
+          text: data.output || JSON.stringify(data)
         }
       ]
     };
@@ -297,12 +347,28 @@ class LexBANKMCPServer {
   }
 
   async fetchAgentRegistry() {
-    // جلب قائمة الوكلاء من BSU
-    return {
-      agents: ['gemini-agent', 'claude-agent', 'perplexity-agent', 'gpt-agent', 'kimi-agent'],
-      version: '1.0.0',
-      lastUpdated: new Date().toISOString()
-    };
+    // جلب قائمة الوكلاء من Backend API
+    try {
+      const response = await fetch(`${LEXBANK_BASE}/agents`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch agents: ${response.status}`);
+      }
+      const data = await response.json();
+      return {
+        agents: data.agents || [],
+        version: '1.0.0',
+        lastUpdated: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('[MCP] Failed to fetch agent registry:', error);
+      // Fallback to empty list on error
+      return {
+        agents: [],
+        version: '1.0.0',
+        lastUpdated: new Date().toISOString(),
+        error: error.message
+      };
+    }
   }
 
   async run() {

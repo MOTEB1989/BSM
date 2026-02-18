@@ -149,13 +149,21 @@ Expected output:
 ## Testing
 
 ### Pre-Patch Testing
-```bash
-npm test  # All tests passed with v0.4.0
-```
+
+The MCP server package does not define an `npm test` script. Pre-patch verification was performed manually by:
+- Checking JavaScript syntax: `node -c mcp-servers/bsu-agent-server.js`
+- Verifying server initialization and MCP protocol compliance
+- Confirming tool and resource handler registration
 
 ### Post-Patch Testing
+
+After upgrading to `@modelcontextprotocol/sdk@1.25.2`, the same manual verification steps were repeated:
 ```bash
-npm test  # All tests pass with v1.25.2
+# Syntax validation
+node -c mcp-servers/bsu-agent-server.js  # ✅ Passed
+
+# Main project tests (validates registry and agents)
+npm test  # ✅ Passed
 ```
 
 ### Compatibility Testing
