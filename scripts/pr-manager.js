@@ -34,6 +34,28 @@ async function getAllOpenPRs() {
   return prs;
 }
 
+
+
+async function getPRWithMergeable(prNumber) {
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const response = await octokit.rest.pulls.get({
+      owner: OWNER,
+      repo: REPO,
+      pull_number: prNumber
+    });
+
+    const detailedPR = response.data;
+    if (detailedPR.mergeable !== null || attempt === maxAttempts) {
+      return detailedPR;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+  }
+
+  return null;
+}
+
 async function getPRReviews(prNumber) {
   const reviews = await octokit.paginate(octokit.rest.pulls.listReviews, {
     owner: OWNER,
@@ -77,6 +99,7 @@ function daysSinceUpdate(dateString) {
 }
 
 async function classifyPR(pr) {
+  const detailedPR = await getPRWithMergeable(pr.number);
   const reviews = await getPRReviews(pr.number);
   const combinedStatus = await getCombinedStatus(pr.head.sha);
   const checkRuns = await getCheckRuns(pr.head.sha);
@@ -84,7 +107,8 @@ async function classifyPR(pr) {
   const daysSince = daysSinceUpdate(pr.updated_at);
   const hasApproval = reviews.some(r => r.state === "APPROVED");
   const hasChangesRequested = reviews.some(r => r.state === "CHANGES_REQUESTED");
-  const isConflicting = pr.mergeable === false;
+  const mergeable = detailedPR?.mergeable;
+  const isConflicting = mergeable === false;
   const isDraft = pr.draft;
   
   // Check CI status
@@ -99,6 +123,10 @@ async function classifyPR(pr) {
 
   if (isConflicting) {
     return { status: STATUS.CONFLICTING, reason: "PR has merge conflicts" };
+  }
+
+  if (mergeable === null) {
+    return { status: STATUS.BLOCKED, reason: "Mergeability still being calculated by GitHub" };
   }
 
   if (daysSince >= 14) {

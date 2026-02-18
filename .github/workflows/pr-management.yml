@@ -57,11 +57,12 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 
-            const STATUS_LABELS = ['ready', 'needs-changes', 'blocked', 'stale'];
+            const STATUS_LABELS = ['ready', 'needs-review', 'needs-changes', 'blocked', 'stale', 'conflicts'];
             
             // Ensure labels exist
             const LABELS = [
               { name: 'ready', color: '0E8A16', description: 'PR is ready to merge' },
+              { name: 'needs-review', color: 'FBCA04', description: 'PR is waiting for review and approval' },
               { name: 'needs-changes', color: 'D93F0B', description: 'PR needs fixes' },
               { name: 'blocked', color: 'B60205', description: 'PR is blocked' },
               { name: 'stale', color: '7F8C8D', description: 'PR has been inactive' },
@@ -92,6 +93,7 @@ jobs:
 
             const summary = {
               ready: [],
+              needsReview: [],
               needsChanges: [],
               blocked: [],
               stale: [],
@@ -102,6 +104,23 @@ jobs:
               if (pr.draft) continue; // Skip drafts
 
               const daysSince = Math.floor((Date.now() - new Date(pr.updated_at)) / (1000 * 60 * 60 * 24));
+
+              // Fetch detailed PR metadata, retry to reduce mergeable=null uncertainty
+              let detailedPR = null;
+              for (let attempt = 1; attempt <= 3; attempt++) {
+                const detailResponse = await github.rest.pulls.get({
+                  owner,
+                  repo,
+                  pull_number: pr.number
+                });
+
+                detailedPR = detailResponse.data;
+                if (detailedPR.mergeable !== null || attempt === 3) {
+                  break;
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+              }
               
               // Check reviews
               const reviews = await github.rest.pulls.listReviews({
@@ -127,7 +146,7 @@ jobs:
               let reason = '';
 
               // Classification logic
-              if (pr.mergeable === false) {
+              if (detailedPR?.mergeable === false) {
                 newLabel = 'conflicts';
                 reason = 'Has merge conflicts';
                 summary.conflicts.push({ number: pr.number, title: pr.title });
@@ -139,13 +158,17 @@ jobs:
                 newLabel = 'needs-changes';
                 reason = hasChangesRequested ? 'Changes requested' : 'CI failing';
                 summary.needsChanges.push({ number: pr.number, title: pr.title });
+              } else if (!hasApproval && ciPassing) {
+                newLabel = 'needs-review';
+                reason = 'Waiting for approvals';
+                summary.needsReview.push({ number: pr.number, title: pr.title });
               } else if (hasApproval && ciPassing) {
                 newLabel = 'ready';
                 reason = 'Ready to merge';
                 summary.ready.push({ number: pr.number, title: pr.title });
               } else {
-                newLabel = 'needs-changes';
-                reason = 'Needs review and approval';
+                newLabel = 'blocked';
+                reason = detailedPR?.mergeable === null ? 'Mergeability still being calculated' : 'Blocked by policy';
                 summary.needsChanges.push({ number: pr.number, title: pr.title });
               }
 
@@ -184,6 +207,9 @@ jobs:
 
 ### ✅ Ready to Merge (${summary.ready.length})
 ${summary.ready.length > 0 ? summary.ready.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*'}
+
+### 👀 Needs Review (${summary.needsReview.length})
+${summary.needsReview.length > 0 ? summary.needsReview.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*'}
 
 ### ⚠️ Needs Changes (${summary.needsChanges.length})
 ${summary.needsChanges.length > 0 ? summary.needsChanges.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*'}

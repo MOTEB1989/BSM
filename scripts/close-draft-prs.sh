@@ -85,10 +85,10 @@ for pr in "${DRAFT_PRS[@]}"; do
     
     if gh pr close $pr --comment "$CLOSURE_MESSAGE" 2>/dev/null; then
         echo -e "${GREEN}✓ Closed${NC}"
-        ((CLOSED_COUNT++))
+        CLOSED_COUNT=$((CLOSED_COUNT + 1))
     else
         echo -e "${RED}✗ Failed (may already be closed or not found)${NC}"
-        ((FAILED_COUNT++))
+        FAILED_COUNT=$((FAILED_COUNT + 1))
     fi
     
     # Rate limiting: pause briefly between API calls

@@ -19,12 +19,12 @@ if (!TOKEN) {
   process.exit(1);
 }
 
-function githubRequest(path) {
+function githubRequest(path, method = 'GET') {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'api.github.com',
       path: path,
-      method: 'GET',
+      method,
       headers: {
         'Authorization': `Bearer ${TOKEN}`,
         'User-Agent': 'BSM-PR-Manager',
@@ -47,6 +47,23 @@ function githubRequest(path) {
     req.on('error', reject);
     req.end();
   });
+}
+
+
+
+async function getPRWithMergeable(prNumber) {
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const pr = await githubRequest(`/repos/${OWNER}/${REPO}/pulls/${prNumber}`);
+    if (pr.mergeable !== null || attempt === maxAttempts) {
+      return pr;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+  }
+
+  return null;
 }
 
 async function main() {
@@ -78,9 +95,11 @@ async function main() {
     console.log('─'.repeat(80));
 
     for (const pr of prs) {
+      const detailedPR = await getPRWithMergeable(pr.number);
       const daysSince = Math.floor((now - new Date(pr.updated_at).getTime()) / (1000 * 60 * 60 * 24));
       const isDraft = pr.draft;
-      const hasConflicts = pr.mergeable === false;
+      const hasConflicts = detailedPR?.mergeable === false;
+      const mergeabilityUnknown = detailedPR?.mergeable === null;
       const isStale = daysSince >= staleDays;
 
       let status = '🟢 Ready';
@@ -94,6 +113,10 @@ async function main() {
         status = '⚔️ Conflicts';
         stats.conflicts++;
         details.push('has conflicts');
+      } else if (mergeabilityUnknown) {
+        status = '⏳ Mergeability Pending';
+        stats.needsReview++;
+        details.push('mergeability pending from GitHub');
       } else if (isStale) {
         status = '🕰️ Stale';
         stats.stale++;
