@@ -101,7 +101,13 @@ export class MultiModelRouter {
   }
 
   async callOpenAI(model, prompt, options) {
-    const apiKey = process.env.OPENAI_BSM_KEY || process.env.OPENAI_BSU_KEY;
+    const apiKey =
+      process.env.OPENAI_BSM_KEY ||
+      process.env.OPENAI_BSU_KEY ||
+      process.env.OPENAI_LEXNEXUS_KEY ||
+      process.env.OPENAI_BRINDER_KEY ||
+      process.env.OPENAI_API_KEY ||
+      process.env.OPENAI_FALLBACK_KEY;
     if (!apiKey) {
       throw new AppError("Missing OpenAI API key", 500, "MISSING_API_KEY");
     }
