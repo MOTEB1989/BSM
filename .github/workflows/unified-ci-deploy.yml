@@ -7,6 +7,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   NODE_VERSION: '22'
   BUILD_DIR: 'dist'
@@ -20,6 +24,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
@@ -27,8 +33,21 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        id: cache-deps
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
+            ${{ runner.os }}-node-
+
       - name: Install dependencies
-        run: npm ci
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline
 
       - name: Verify project structure
         run: |
@@ -49,6 +68,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -56,8 +77,21 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        id: cache-deps
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
+            ${{ runner.os }}-node-
+
       - name: Install dependencies
-        run: npm ci
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline
 
       # Test CodeReviewAgent (requires OpenAI API key)
       - name: Test CodeReviewAgent
@@ -139,6 +173,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -146,10 +182,31 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        id: cache-deps
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
+            ${{ runner.os }}-node-
+
       - name: Install dependencies
-        run: npm ci
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline
+
+      - name: Cache frontend build
+        uses: actions/cache@v4
+        id: cache-frontend
+        with:
+          path: src/chat/dist
+          key: frontend-${{ hashFiles('src/chat/**/*.js', 'src/chat/**/*.vue', 'src/chat/package-lock.json') }}
 
       - name: Build frontend (if exists)
+        if: steps.cache-frontend.outputs.cache-hit != 'true'
         run: |
           if [ -f "src/chat/package.json" ]; then
             cd src/chat && npm ci && npm run build && cd ../..
@@ -174,11 +231,13 @@ jobs:
   deploy-render:
     runs-on: ubuntu-latest
     name: "\U0001F680 Deploy to Render"
-    needs: [preflight, test-agents, build]
+    needs: build
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Install Render CLI v2.7.1
         run: |
@@ -281,7 +340,7 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     name: "\U0001F4E2 Notify Slack"
-    needs: [preflight, test-agents, build, deploy-render, smoke-test]
+    needs: smoke-test
     if: always()
     steps:
       - name: Notify Slack - Success
