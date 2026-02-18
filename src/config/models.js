@@ -17,6 +17,9 @@ export const models = {
     default: process.env.ANTHROPIC_API_KEY
   },
   perplexity: {
-    default: process.env.PERPLEXITY_KEY
+    default: process.env.PERPLEXITY_KEY || process.env.PERPLEXITY_API_KEY
+  },
+  google: {
+    default: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY
   }
 };

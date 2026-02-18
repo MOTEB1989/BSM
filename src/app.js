@@ -13,10 +13,32 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import { adminUiAuth } from "./middleware/auth.js";
 import { env } from "./config/env.js";
 import { getHealth } from "./controllers/healthController.js";
+import { initializeAgents } from "./agents/index.js";
+import logger from "./utils/logger.js";
 
 import routes from "./routes/index.js";
 
 const app = express();
+
+// Initialize AI agents
+try {
+  const agents = initializeAgents({
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY,
+    PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY || process.env.PERPLEXITY_KEY,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY
+  });
+  
+  // Store agents in app.locals for access in routes
+  app.locals.agents = agents;
+  
+  logger.info("AI Agents initialized", { 
+    count: agents.list().length,
+    names: agents.list()
+  });
+} catch (error) {
+  logger.warn("AI Agents initialization failed (non-critical)", { error: error.message });
+  // Non-critical - app can run without AI agents
+}
 
 const corsOptions = env.corsOrigins.length
   ? {

@@ -25,7 +25,7 @@ router.get("/key-status", async (_req, res, next) => {
       openai: Boolean(models.openai?.default),
       anthropic: Boolean(models.anthropic?.default),
       perplexity: Boolean(models.perplexity?.default),
-      google: false
+      google: Boolean(models.google?.default)
     };
 
     const ui = {
@@ -106,6 +106,110 @@ router.post("/direct", async (req, res, next) => {
     res.json({ output });
   } catch (err) {
     next(err);
+  }
+});
+
+/**
+ * @route   POST /api/chat/gemini
+ * @desc    الدردشة مع وكيل Gemini
+ */
+router.post("/gemini", async (req, res, next) => {
+  try {
+    const { message, history = [] } = req.body;
+    if (!message) {
+      throw new AppError("Message is required", 400, "INVALID_INPUT");
+    }
+
+    const agents = req.app.locals.agents;
+    if (!agents) {
+      throw new AppError("Agents not initialized", 503, "AGENTS_NOT_INITIALIZED");
+    }
+
+    const agent = agents.get("gemini-agent");
+    const result = await agent.process(message, { history });
+    
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @route   POST /api/chat/perplexity
+ * @desc    البحث باستخدام Perplexity
+ */
+router.post("/perplexity", async (req, res, next) => {
+  try {
+    const { message, model = "balanced" } = req.body;
+    if (!message) {
+      throw new AppError("Message is required", 400, "INVALID_INPUT");
+    }
+
+    const agents = req.app.locals.agents;
+    if (!agents) {
+      throw new AppError("Agents not initialized", 503, "AGENTS_NOT_INITIALIZED");
+    }
+
+    const agent = agents.get("perplexity-agent");
+    const result = await agent.process(message, { model });
+    
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @route   POST /api/chat/claude
+ * @desc    الدردشة مع وكيل Claude
+ */
+router.post("/claude", async (req, res, next) => {
+  try {
+    const { message, history = [], temperature = 0.7 } = req.body;
+    if (!message) {
+      throw new AppError("Message is required", 400, "INVALID_INPUT");
+    }
+
+    const agents = req.app.locals.agents;
+    if (!agents) {
+      throw new AppError("Agents not initialized", 503, "AGENTS_NOT_INITIALIZED");
+    }
+
+    const agent = agents.get("claude-agent");
+    const result = await agent.process(message, { history, temperature });
+    
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @route   GET /api/chat/agents-status
+ * @desc    حالة جميع وكلاء الدردشة AI
+ */
+router.get("/agents-status", (req, res) => {
+  try {
+    const agents = req.app.locals.agents;
+    if (!agents) {
+      return res.json({
+        available: false,
+        message: "AI agents not initialized",
+        agents: {}
+      });
+    }
+    
+    res.json({
+      available: true,
+      agents: agents.health(),
+      list: agents.list(),
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      available: false,
+      error: error.message
+    });
   }
 });
 
