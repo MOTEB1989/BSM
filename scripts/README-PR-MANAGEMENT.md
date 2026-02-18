@@ -125,5 +125,7 @@ scripts/sync-pr-branch.sh --base main --mode merge
 **Recommended flow:**
 1. `scripts/sync-pr-branch.sh --base main --mode rebase`
 2. Run tests locally.
-3. `git push --force-with-lease` (only if you used rebase).
+3. `scripts/git-safe-push.sh --remote origin --branch <your-branch> --force-with-lease --reason "Rebased on main to resolve divergence"` (exception only).
 4. Open/update the PR.
+
+> ⚠️ **Policy**: `git push --force` is prohibited in daily operations. If rewriting history is truly unavoidable, use `--force-with-lease` only and always document the reason.

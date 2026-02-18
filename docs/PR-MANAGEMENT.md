@@ -9,6 +9,18 @@ The BSU PR Merge Agent provides automated PR management capabilities through:
 - **REST API** (`/api/pr/*`) - Programmatic PR evaluation
 - **GitHub Actions** (`.github/workflows/pr-operations.yml`) - Manual workflow triggers
 
+## Force Push Policy (Critical)
+
+> ⚠️ **Exceptional-only policy**: `git push --force` is prohibited in daily operations.
+>
+> If history rewrite is genuinely unavoidable, use `--force-with-lease` only, and document the reason explicitly for auditability.
+
+Recommended safe command:
+
+```bash
+scripts/git-safe-push.sh --remote origin --branch <your-branch> --force-with-lease --reason "Rebased branch after conflict resolution"
+```
+
 ## Agent Capabilities
 
 The PR Merge Agent evaluates PRs based on quality gates:

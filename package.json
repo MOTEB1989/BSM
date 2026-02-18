@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "validate": "node scripts/validate.js",
+    "validate": "node scripts/validate.js && npm run policy:force-push",
     "validate:registry": "node scripts/validate-registry.js",
     "validate:agent-sync": "node scripts/validate-agent-sync.js",
     "test": "node scripts/validate.js",
@@ -19,7 +19,8 @@
     "test:unit": "node --test tests/*.test.js",
     "mcp:install": "cd mcp-servers && npm install",
     "mcp:start": "node mcp-servers/bsu-agent-server.js",
-    "postinstall": "npm run mcp:install"
+    "postinstall": "npm run mcp:install",
+    "policy:force-push": "bash scripts/validate-force-push-policy.sh"
   },
   "dependencies": {
     "cors": "^2.8.5",

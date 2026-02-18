@@ -96,4 +96,5 @@ echo "✅ Sync complete."
 echo "   Ahead of base : $ahead_count commit(s)"
 echo "   Behind base   : $behind_count commit(s)"
 
-echo "💡 Next: run tests, then push with: git push --force-with-lease (if rebased)"
+echo "💡 Next: run tests, then push safely with:"
+echo "   scripts/git-safe-push.sh --remote ${REMOTE} --branch ${current_branch} --reason \"Rebase after syncing with ${base_ref}\" --force-with-lease"
