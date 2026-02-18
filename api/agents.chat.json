@@ -1,14 +1,28 @@
 {
-  "context": "chat",
-  "rule": "only agents with contexts.chat=true and expose.selectable=true are returned",
-  "response_example": [
+  "active_mode": "llm_direct",
+  "default_model": "gpt-4-turbo",
+  "agents": [
     {
-      "id": "agent-auto",
-      "name": "Auto (Smart Routing)"
+      "id": "strategic_analyzer",
+      "name": "المحلل الاستراتيجي والقانوني",
+      "model": "gpt-4-turbo",
+      "provider": "openai",
+      "description": "نموذج قوي للسياقات القانونية، التحليل الدقيق، وفهم الفروقات الدقيقة.",
+      "temperature": 0.7,
+      "system_prompt": "أنت مساعد ذكي خبير في القانون والتحليل الاستراتيجي. اجاباتك يجب أن تكون دقيقة، مهنية، وتعتمد على المنطق."
     },
     {
-      "id": "agent-legal",
-      "name": "Legal Expert"
+      "id": "deep_reasoner",
+      "name": "الباحث العميق (o1)",
+      "model": "o1-preview",
+      "provider": "openai",
+      "description": "نموذج o1 المتطور والمخصص للتفكير العميق، حل المشكلات المعقدة، والسياقات الطويلة.",
+      "temperature": 1.0,
+      "max_completion_tokens": 10000,
+      "system_prompt": "أنت نموذج تفكير عميق. قم بتحليل المشكلة ببطء وتفصيل قبل تقديم الإجابة النهائية."
     }
-  ]
+  ],
+  "env_mapping": {
+    "openai_api_key": "OPENAI_API_KEY"
+  }
 }
