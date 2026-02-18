@@ -38,7 +38,7 @@ export const env = {
   egressPolicy: process.env.EGRESS_POLICY || "deny_by_default",
   egressAllowedHosts: process.env.EGRESS_ALLOWED_HOSTS
     ? process.env.EGRESS_ALLOWED_HOSTS.split(",").map((host) => host.trim()).filter(Boolean)
-    : ["api.openai.com", "github.com"]
+    : ["api.openai.com", "api.perplexity.ai", "github.com"]
 };
 
 // Validate admin token in production

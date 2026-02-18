@@ -65,7 +65,7 @@
           </span>
           <div class="text-right flex-1">
             <p class="font-medium leading-tight">{{ lang === 'ar' ? 'دردشة مباشرة' : 'Direct Chat' }}</p>
-            <p class="text-[11px] opacity-60 mt-0.5">GPT-4o-mini</p>
+            <p class="text-[11px] opacity-60 mt-0.5">{{ selectedModel === 'perplexity' ? 'Perplexity Search' : selectedModel }}</p>
           </div>
           <div v-if="mode === 'direct'" class="w-1.5 h-1.5 rounded-full bg-lex-400 flex-shrink-0"></div>
         </button>
@@ -100,6 +100,45 @@
             <p class="text-[11px] opacity-60 mt-0.5">{{ lang === 'ar' ? 'امتثال وحوكمة' : 'Compliance' }}</p>
           </div>
           <div v-if="mode === 'governance-agent'" class="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0"></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Model Selector (direct mode only) -->
+    <div v-if="mode === 'direct'" class="px-4 py-3">
+      <p class="text-[11px] text-gray-600 font-medium uppercase tracking-widest mb-2 px-1">
+        {{ lang === 'ar' ? 'النموذج' : 'AI Model' }}
+      </p>
+      <div class="space-y-1">
+        <button @click="selectedModel = 'gpt-4o-mini'"
+          class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200"
+          :class="selectedModel === 'gpt-4o-mini' ? 'bg-lex-600/15 text-lex-300 border border-lex-600/25' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'">
+          <span class="text-base flex-shrink-0">⚡</span>
+          <div class="text-right flex-1">
+            <p class="font-medium leading-tight text-xs">GPT-4o-mini</p>
+            <p class="text-[10px] opacity-60">{{ lang === 'ar' ? 'سريع واقتصادي' : 'Fast & efficient' }}</p>
+          </div>
+          <div v-if="selectedModel === 'gpt-4o-mini'" class="w-1.5 h-1.5 rounded-full bg-lex-400 flex-shrink-0"></div>
+        </button>
+        <button @click="selectedModel = 'gpt-4o'"
+          class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200"
+          :class="selectedModel === 'gpt-4o' ? 'bg-lex-600/15 text-lex-300 border border-lex-600/25' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'">
+          <span class="text-base flex-shrink-0">🧠</span>
+          <div class="text-right flex-1">
+            <p class="font-medium leading-tight text-xs">GPT-4o</p>
+            <p class="text-[10px] opacity-60">{{ lang === 'ar' ? 'أقوى وأدق' : 'Smarter & precise' }}</p>
+          </div>
+          <div v-if="selectedModel === 'gpt-4o'" class="w-1.5 h-1.5 rounded-full bg-lex-400 flex-shrink-0"></div>
+        </button>
+        <button @click="selectedModel = 'perplexity'"
+          class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200"
+          :class="selectedModel === 'perplexity' ? 'bg-purple-600/15 text-purple-300 border border-purple-600/25' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'">
+          <span class="text-base flex-shrink-0">🔍</span>
+          <div class="text-right flex-1">
+            <p class="font-medium leading-tight text-xs">Perplexity Search</p>
+            <p class="text-[10px] opacity-60">{{ lang === 'ar' ? 'بحث في الإنترنت' : 'Live web search' }}</p>
+          </div>
+          <div v-if="selectedModel === 'perplexity'" class="w-1.5 h-1.5 rounded-full bg-purple-400 flex-shrink-0"></div>
         </button>
       </div>
     </div>

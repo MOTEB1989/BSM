@@ -63,7 +63,7 @@ router.get("/key-status", async (_req, res, next) => {
 // Direct GPT chat (no agent required)
 router.post("/direct", async (req, res, next) => {
   try {
-    const { message, history = [], language = "ar" } = req.body;
+    const { message, history = [], language = "ar", model: requestedModel = "gpt-4o-mini" } = req.body;
 
     if (!message || typeof message !== "string" || !message.trim()) {
       throw new AppError("Message is required", 400, "INVALID_INPUT");
@@ -81,46 +81,54 @@ router.post("/direct", async (req, res, next) => {
       throw new AppError("Unsupported language", 400, "INVALID_LANGUAGE");
     }
 
-    const apiKey = models.openai?.bsm || models.openai?.default;
-    if (!apiKey) {
-      throw new AppError("AI service is not configured", 503, "MISSING_API_KEY");
-    }
+    const ALLOWED_MODELS = ["gpt-4o-mini", "gpt-4o", "perplexity"];
+    const selectedModel = ALLOWED_MODELS.includes(requestedModel) ? requestedModel : "gpt-4o-mini";
 
     const systemPrompt = language === "ar"
       ? "أنت مساعد ذكي من منصة LexBANK. أجب باللغة العربية بشكل مهني ومفيد. ساعد المستخدمين في الأسئلة القانونية والتقنية والإدارية."
       : "You are a smart assistant from the LexBANK platform. Answer professionally and helpfully. Assist users with legal, technical, and administrative questions.";
 
-    const messages = [
-      { role: "system", content: systemPrompt }
-    ];
+    let result;
 
-    // Add conversation history (limit to last 20 messages)
-    const recentHistory = history.slice(-20);
-    for (const msg of recentHistory) {
-      if (
-        msg &&
-        typeof msg === "object" &&
-        (msg.role === "user" || msg.role === "assistant")
-      ) {
-        messages.push({ role: msg.role, content: String(msg.content).slice(0, env.maxAgentInputLength) });
+    if (selectedModel === "perplexity") {
+      if (!models.perplexity?.default) {
+        throw new AppError("Perplexity service is not configured", 503, "MISSING_API_KEY");
       }
+      const { modelRouter } = await import("../config/modelRouter.js");
+      const routed = await modelRouter.execute(
+        { system: systemPrompt, user: message, messages: null },
+        { requiresSearch: true, searchQuery: message, task: "chat_response", complexity: "medium" }
+      );
+      result = routed?.output || "";
+    } else {
+      const apiKey = models.openai?.bsm || models.openai?.default;
+      if (!apiKey) {
+        throw new AppError("AI service is not configured", 503, "MISSING_API_KEY");
+      }
+
+      const messages = [{ role: "system", content: systemPrompt }];
+      const recentHistory = history.slice(-20);
+      for (const msg of recentHistory) {
+        if (msg && typeof msg === "object" && (msg.role === "user" || msg.role === "assistant")) {
+          messages.push({ role: msg.role, content: String(msg.content).slice(0, env.maxAgentInputLength) });
+        }
+      }
+      messages.push({ role: "user", content: message });
+
+      result = await runGPT({
+        model: selectedModel,
+        apiKey,
+        system: systemPrompt,
+        user: message,
+        messages
+      });
     }
-
-    messages.push({ role: "user", content: message });
-
-    const result = await runGPT({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      apiKey,
-      system: systemPrompt,
-      user: message,
-      messages
-    });
 
     const output = (result !== null && result !== undefined && result !== "")
       ? result
       : (language === "ar" ? "لم يتم استلام رد." : "No response received.");
 
-    res.json({ output });
+    res.json({ output, modelUsed: selectedModel });
   } catch (err) {
     next(err);
   }
