@@ -1,0 +1,24 @@
+{
+  "name": "@bsu/mcp-server",
+  "version": "2.0.0",
+  "description": "BSU/LexBANK MCP Server for GitHub Copilot Integration",
+  "type": "commonjs",
+  "main": "bsu-agent-server.js",
+  "scripts": {
+    "start": "node bsu-agent-server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.2",
+    "node-fetch": "^2.7.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "github-copilot",
+    "ai-agents",
+    "lexbank",
+    "bsu"
+  ],
+  "author": "LexBANK/BSU Team",
+  "license": "UNLICENSED"
+}

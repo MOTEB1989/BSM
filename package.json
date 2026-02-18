@@ -16,7 +16,10 @@
     "health:detailed": "node scripts/health-check.js --detailed",
     "pr-check": "node scripts/pr-review-checklist.js --local",
     "pr-check:verbose": "node scripts/pr-review-checklist.js --local --verbose",
-    "test:unit": "node --test tests/*.test.js"
+    "test:unit": "node --test tests/*.test.js",
+    "mcp:install": "cd mcp-servers && npm install",
+    "mcp:start": "node mcp-servers/bsu-agent-server.js",
+    "postinstall": "npm run mcp:install"
   },
   "dependencies": {
     "cors": "^2.8.5",
