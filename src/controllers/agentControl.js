@@ -1,23 +1,8 @@
 import { agentStateService } from "../services/agentStateService.js";
-import { loadAgents } from "../services/agentsService.js";
+import { agentCache } from "../utils/agentCache.js";
 import { auditLogger } from "../utils/auditLogger.js";
 import logger from "../utils/logger.js";
 import { AppError } from "../utils/errors.js";
-import YAML from "yaml";
-import fs from "fs";
-import path from "path";
-
-/**
- * Load registry configuration
- */
-const loadRegistry = () => {
-  const registryPath = path.join(process.cwd(), "agents", "registry.yaml");
-  if (!fs.existsSync(registryPath)) {
-    throw new AppError("Registry not found", 500, "REGISTRY_NOT_FOUND");
-  }
-  const content = fs.readFileSync(registryPath, "utf8");
-  return YAML.parse(content);
-};
 
 /**
  * POST /api/agents/start/:agentId
@@ -27,8 +12,8 @@ export const startAgent = async (req, res, next) => {
   try {
     const { agentId } = req.params;
     
-    // Load registry to get agent config
-    const registry = loadRegistry();
+    // Load registry to get agent config (uses cache)
+    const registry = await agentCache.getRegistry();
     const agentConfig = registry.agents.find(a => a.id === agentId);
     
     if (!agentConfig) {
@@ -138,13 +123,15 @@ export const getAgentsStatus = async (req, res, next) => {
   try {
     const allStates = agentStateService.getAllAgentsStatus();
     
-    // Load registry to include config info
-    const registry = loadRegistry();
-    const agents = await loadAgents();
+    // Load registry and agents from cache (single operation, no redundant I/O)
+    const { registry, agents } = await agentCache.get();
+    
+    // Build lookup map for O(1) access instead of O(n) find operations
+    const agentsMap = new Map(agents.map(a => [a.id, a]));
     
     const result = registry.agents.map(agentConfig => {
       const state = allStates[agentConfig.id];
-      const agentData = agents.find(a => a.id === agentConfig.id);
+      const agentData = agentsMap.get(agentConfig.id);
       
       return {
         id: agentConfig.id,
@@ -180,7 +167,7 @@ export const getAgentStatus = async (req, res, next) => {
   try {
     const { agentId } = req.params;
     
-    const registry = loadRegistry();
+    const registry = await agentCache.getRegistry();
     const agentConfig = registry.agents.find(a => a.id === agentId);
     
     if (!agentConfig) {
