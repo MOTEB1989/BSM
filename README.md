@@ -56,6 +56,18 @@ BSU/
 
 ## API Endpoints
 
+### 🚀 Unified AI Gateway (NEW)
+- `POST /api/gateway/chat` - Unified endpoint for all AI providers with automatic fallback
+- `GET /api/gateway/providers` - List available AI providers
+- `GET /api/gateway/models` - List available models across all providers
+- `GET /api/gateway/usage` - Get usage statistics for API key
+- `GET /api/gateway/test` - Test connectivity to all providers
+- `GET /api/gateway/stats` - Get public gateway statistics
+- `GET /api/gateway/docs` - Interactive Swagger API documentation
+- **Admin**: `/api/gateway/admin/*` - Provider management, API key generation, detailed analytics
+
+📖 **[Gateway API Documentation](docs/GATEWAY-API.md)**
+
 ### Public Endpoints
 - `GET /api/health` - Health check endpoint
 - `GET /api/agents` - List all available agents

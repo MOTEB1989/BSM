@@ -24,6 +24,8 @@
     "pg": "^8.18.0",
     "pino": "^9.0.0",
     "redis": "^5.11.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^13.0.0",
     "yaml": "^2.4.5"
   },
