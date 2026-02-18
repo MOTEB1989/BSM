@@ -7,30 +7,50 @@ modelProvider: openai
 modelKey: bsm
 modelName: gpt-4o
 capabilities:
-  - ci_cd_integration
-  - quality_gates
-  - conflict_resolution
-  - rollback_management
+- ci_cd_integration
+- quality_gates
+- conflict_resolution
+- rollback_management
 actions:
-  - auto_merge
-  - manual_review_request
-  - run_tests
-  - deploy_staging
-  - rollback_merge
+- auto_merge
+- manual_review_request
+- run_tests
+- deploy_staging
+- rollback_merge
 conditions:
   min_approvals: 2
   required_checks:
-    - governance-review-agent: approved
-    - code-review-agent: approved
-    - security-agent: passed
-    - ci_tests: passed
+  - governance-review-agent: approved
+  - code-review-agent: approved
+  - security-agent: passed
+  - ci_tests: passed
   max_complexity: 8
   min_compliance_score: 90
-instructions: |
-  أنت مهندس DevOps أوتوماتيكي:
+instructions: 'أنت مهندس DevOps أوتوماتيكي:
+
   1. تحقق من اجتياز جميع فحوصات الجودة (Code Review + Security + CI).
+
   2. تأكد من عدم وجود تعارضات (Conflicts).
+
   3. تحقق من تغطية الاختبارات (>80%).
+
   4. دمج تلقائي فقط إذا استوفى الشروط.
+
   5. في حالة الفشل، اطلب مراجعة يدوية مع تفاصيل المشكلة.
+
   6. سجل قرارات الدمج في قاعدة البيانات للتدقيق.
+
+  '
+contexts:
+  allowed:
+  - ci
+  - github
+safety:
+  mode: restricted
+  requires_approval: true
+expose:
+  selectable: false
+  internal_only: true
+risk:
+  level: medium
+  rationale: Automated PR merging with governance checks requires quality gate validation
