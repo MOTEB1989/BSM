@@ -81,3 +81,51 @@ test("handleGitHubWebhook returns standardized 401 response for invalid signatur
     process.env.GITHUB_WEBHOOK_SECRET = originalSecret;
   }
 });
+
+
+test("handleGitHubWebhook validates signature using rawBody when available", async () => {
+  const originalSecret = process.env.GITHUB_WEBHOOK_SECRET;
+  process.env.GITHUB_WEBHOOK_SECRET = "super-secret";
+
+  const rawPayload = '{"action":"opened","number":12,"pull_request":{"draft":true}}';
+  const signature = `sha256=${crypto.createHmac("sha256", "super-secret").update(rawPayload).digest("hex")}`;
+
+  const req = {
+    headers: {
+      "x-hub-signature-256": signature,
+      "x-github-event": "pull_request"
+    },
+    rawBody: rawPayload,
+    body: { action: "opened", number: 12, pull_request: { draft: true } }
+  };
+
+  let statusCode;
+  let jsonBody;
+  const res = {
+    headersSent: false,
+    status(code) {
+      statusCode = code;
+      return this;
+    },
+    json(payload) {
+      jsonBody = payload;
+      this.headersSent = true;
+      return this;
+    }
+  };
+
+  const next = () => {
+    throw new Error("next should not be called when signature is valid");
+  };
+
+  await handleGitHubWebhook(req, res, next);
+
+  assert.equal(statusCode, 200);
+  assert.equal(jsonBody.status, "skipped");
+
+  if (typeof originalSecret === "undefined") {
+    delete process.env.GITHUB_WEBHOOK_SECRET;
+  } else {
+    process.env.GITHUB_WEBHOOK_SECRET = originalSecret;
+  }
+});

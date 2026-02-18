@@ -14,6 +14,7 @@ import { adminUiAuth } from "./middleware/auth.js";
 import { env } from "./config/env.js";
 import { getHealth } from "./controllers/healthController.js";
 import { handleGitHubWebhook } from "./controllers/webhookController.js";
+import { githubWebhookRateLimit } from "./middleware/webhookRateLimit.js";
 
 import routes from "./routes/index.js";
 
@@ -35,7 +36,15 @@ const corsOptions = env.corsOrigins.length
 
 app.use(cors(corsOptions));
 app.use(helmet());
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({
+  limit: "1mb",
+  verify: (req, _res, buf) => {
+    // Preserve raw payload for signature verification on webhook endpoints.
+    if (req.path === "/webhook/github" || req.path === "/api/webhooks/github") {
+      req.rawBody = buf.toString("utf8");
+    }
+  }
+}));
 
 app.use(correlationMiddleware);
 app.use(requestLogger);
@@ -45,13 +54,14 @@ app.use(requestLogger);
 // Rate limited separately to prevent abuse while allowing legitimate webhook traffic
 app.post(
   "/webhook/github",
-  rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 30, // Allow 30 webhook requests per minute (reasonable for active repos)
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: "Too many webhook requests, please try again later"
-  }),
+  githubWebhookRateLimit,
+  handleGitHubWebhook
+);
+
+// Keep `/api/webhooks/github` reachable externally as documented, without LAN restrictions.
+app.post(
+  "/api/webhooks/github",
+  githubWebhookRateLimit,
   handleGitHubWebhook
 );
 
