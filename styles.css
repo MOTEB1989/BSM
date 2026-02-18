@@ -1,0 +1,191 @@
+/* LexBANK Chat - Custom Styles */
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
+/* Smooth transitions */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #374151 transparent;
+}
+
+/* Typing animation */
+.typing-dots span {
+  animation-duration: 1s;
+  animation-iteration-count: infinite;
+}
+
+/* Prose overrides for RTL markdown */
+.prose {
+  direction: inherit;
+  text-align: inherit;
+}
+
+.prose p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose p:first-child {
+  margin-top: 0;
+}
+
+.prose p:last-child {
+  margin-bottom: 0;
+}
+
+.prose ul,
+.prose ol {
+  padding-inline-start: 1.5em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose li {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+.prose code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-family: 'Courier New', monospace;
+}
+
+.prose pre {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 1em;
+  overflow-x: auto;
+  margin: 0.75em 0;
+  direction: ltr;
+  text-align: left;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.85em;
+}
+
+.prose blockquote {
+  border-inline-start: 3px solid #4c6ef5;
+  padding-inline-start: 1em;
+  margin-inline-start: 0;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.prose a {
+  color: #748ffc;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prose a:hover {
+  color: #91a7ff;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  font-weight: 700;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  color: #f3f4f6;
+}
+
+.prose h1 { font-size: 1.25em; }
+.prose h2 { font-size: 1.15em; }
+.prose h3 { font-size: 1.05em; }
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75em 0;
+  font-size: 0.9em;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid #374151;
+  padding: 0.5em 0.75em;
+  text-align: inherit;
+}
+
+.prose th {
+  background: rgba(0, 0, 0, 0.3);
+  font-weight: 600;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid #374151;
+  margin: 1em 0;
+}
+
+/* Textarea auto-grow */
+textarea {
+  transition: height 0.15s ease;
+}
+
+/* Message enter animation */
+@keyframes messageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.flex.justify-start,
+.flex.justify-end {
+  animation: messageIn 0.3s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  header .flex.items-center.gap-2 {
+    gap: 0.25rem;
+  }
+
+  header button {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
+
+/* Focus ring */
+textarea:focus,
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(76, 110, 245, 0.4);
+}
+
+/* Button hover effect */
+button {
+  transition: all 0.15s ease;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}

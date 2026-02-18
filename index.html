@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BSU Nexus Control</title>
+  <meta name="description" content="واجهة BSU Nexus لإدارة الوكلاء والمزامنة." />
+  <meta property="og:title" content="BSU Nexus Control" />
+  <meta property="og:description" content="نظام إدارة الوكلاء الذكي المتكامل مع Cloudflare وGitHub." />
+  <meta property="og:type" content="website" />
+  <meta name="api-base-url" content="https://sr-bsm.onrender.com" />
+  <meta name="description" content="LexBANK Chat Interface - Professional AI-powered chat for legal and business services. Deploy on lexprim.com or lexdo.uk" />
+  <meta property="og:url" content="https://corehub.nexus" />
+  <script src="config.js" onerror="console.warn('config.js failed to load, using fallback API URL')"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: radial-gradient(circle at top, #0b1220, #020617 50%, #010409); }
+    .glass-card { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(148, 163, 184, 0.15); }
+    .font-nexus { font-family: "Segoe UI", Tahoma, sans-serif; }
+    .font-code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .scroll-custom::-webkit-scrollbar { width: 6px; }
+    .scroll-custom::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.35); border-radius: 6px; }
+  </style>
+</head>
+<body class="text-white min-h-screen overflow-hidden">
+  <header class="h-14 px-4 border-b border-white/10 flex items-center justify-between bg-black/20">
+    <h1 class="font-nexus text-sm tracking-wider text-blue-300">BSU NEXUS</h1>
+    <div id="clock" class="text-xs text-gray-300 font-code" aria-live="polite"></div>
+  </header>
+
+  <main class="flex-1 p-4 grid lg:grid-cols-12 gap-4 overflow-hidden h-[calc(100vh-3.5rem)]">
+      <aside class="lg:col-span-3 space-y-4 flex flex-col">
+          <div class="glass-card flex-1 rounded-3xl p-5 overflow-y-auto">
+              <div class="flex justify-between items-center mb-6">
+                  <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">نظام الوكلاء</h3>
+                  <span class="text-[9px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">BSU Core</span>
+              </div>
+              <div class="space-y-3 text-sm">
+                  <div class="p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
+                      <div class="flex items-center gap-2 mb-2">
+                          <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                          <span class="font-bold text-emerald-400">Autonomous Agent</span>
+                      </div>
+                      <p class="text-[10px] text-gray-400">مزامنة تلقائية مع Cloudflare</p>
+                  </div>
+                  <div class="p-3 rounded-lg bg-white/5">
+                      <div class="flex items-center gap-2 mb-2">
+                          <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                          <span class="font-bold text-blue-400">Chat Interface</span>
+                      </div>
+                      <p class="text-[10px] text-gray-400">GPT-4 Integration</p>
+                  </div>
+              </div>
+          </div>
+          <div class="glass-card p-5 rounded-3xl">
+              <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">نشاط النظام</h3>
+              <div class="flex items-center gap-4">
+                  <div class="flex-1">
+                      <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                          <div id="ai-progress" class="w-[85%] h-full bg-emerald-500 transition-all duration-1000"></div>
+                      </div>
+                  </div>
+                  <span class="text-[10px] text-emerald-400 font-nexus uppercase">Active</span>
+              </div>
+          </div>
+      </aside>
+
+      <section class="lg:col-span-6 flex flex-col gap-4 h-full">
+          <div class="glass-card p-6 rounded-[2rem] flex flex-col justify-center relative overflow-hidden h-32">
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-emerald-500/10 opacity-30"></div>
+              <h2 class="text-2xl font-black mb-1 font-nexus tracking-tighter text-white">BSU NEXUS CONTROL</h2>
+              <p class="text-gray-400 text-xs">نظام إدارة الوكلاء الذكي | <span class="text-blue-400">Integrated with CoreHub OS</span></p>
+          </div>
+
+          <div class="glass-card flex-1 rounded-[2rem] overflow-hidden flex flex-col">
+              <div class="bg-black/50 p-4 border-b border-white/5 flex justify-between items-center">
+                  <div class="flex items-center gap-2">
+                      <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                      <h3 class="text-[10px] font-nexus tracking-widest text-gray-500 uppercase">Neural Chat Stream</h3>
+                  </div>
+                  <select id="agent-select" class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[10px] text-gray-300 outline-none">
+                      <option value="default">Default Agent</option>
+                      <option value="legal">Legal Expert</option>
+                      <option value="research">Research Assistant</option>
+                  </select>
+              </div>
+              <div id="chat" class="flex-1 overflow-y-auto p-4 space-y-4 bg-[#010409]/40 font-code scroll-custom">
+                  <div class="text-center py-10">
+                      <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-3xl">🤖</div>
+                      <h2 class="text-xl font-bold mb-2">مرحباً بك في CoreHub</h2>
+                      <p class="text-gray-400">كيف يمكنني مساعدتك اليوم؟</p>
+                  </div>
+              </div>
+              <div class="glass-card m-4 p-4 rounded-xl border-t border-white/10">
+                  <div class="flex gap-2">
+                      <input type="text" id="input" placeholder="اكتب رسالتك هنا..."
+                          class="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+                      <button id="send-button" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition-colors">
+                          إرسال
+                      </button>
+                  </div>
+              </div>
+          </div>
+      </section>
+
+      <aside class="lg:col-span-3 space-y-4 flex flex-col">
+          <div class="glass-card p-6 rounded-3xl flex-1 border-white/5 flex flex-col gap-4">
+              <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">أدوات التحكم</h3>
+              <button onclick="activateSync()" class="w-full py-3 bg-emerald-600/20 border border-emerald-500/30 rounded-xl text-[10px] text-emerald-400 hover:bg-emerald-600/30 transition text-right px-4">
+                  <div class="flex items-center gap-2">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                      <span>مزامنة Cloudflare</span>
+                  </div>
+              </button>
+              <a href="calculator.html" target="_blank" class="w-full py-3 bg-purple-600/20 border border-purple-500/30 rounded-xl text-[10px] text-purple-400 hover:bg-purple-600/30 transition text-right px-4 block">
+                  <div class="flex items-center gap-2">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                      <span>آلة حاسبة</span>
+                  </div>
+              </a>
+              <div class="mt-auto p-4 bg-blue-600/10 rounded-2xl border border-blue-500/20">
+                  <p class="text-[9px] text-blue-400 italic text-center">BSU Nexus يعمل بالتكامل مع GitHub Actions وCloudflare.</p>
+              </div>
+          </div>
+          <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-6 shadow-xl shadow-blue-900/20">
+              <div class="flex justify-between items-center mb-2">
+                  <span class="text-[9px] text-white/60 font-nexus uppercase">API Status</span>
+                  <span class="text-[9px] bg-white/20 px-2 py-0.5 rounded text-white">ONLINE</span>
+              </div>
+              <h4 class="text-xl font-bold text-white font-nexus italic">CONNECTED</h4>
+          </div>
+      </aside>
+  </main>
+
+  <script>
+      function updateClock() {
+        const clock = document.getElementById('clock');
+        if (clock) clock.innerText = new Date().toLocaleTimeString('en-GB');
+      }
+      setInterval(updateClock, 1000); updateClock();
+
+      // Use API base from config.js (window.__ENV__) or fallback to meta tag or default
+      const apiMeta = document.querySelector('meta[name="api-base-url"]');
+      const metaApiUrl = apiMeta && apiMeta.content ? apiMeta.content : 'https://sr-bsm.onrender.com';
+      const API_URL = (window.__ENV__ && window.__ENV__.API_BASE) ? window.__ENV__.API_BASE : metaApiUrl;
+
+      async function send() {
+        const input = document.getElementById('input');
+        const text = input.value.trim();
+        if (!text) return;
+
+        addMessage(text, 'user');
+        input.value = '';
+
+        try {
+          const response = await fetch(`${API_URL}/api/chat/direct`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: text,
+              model: 'gpt-4o-mini',
+              conversationId: 'default'
+            })
+          });
+
+          const data = await response.json();
+          addMessage(data.response || data.message || 'لم أفهم طلبك', 'ai');
+        } catch (error) {
+          addMessage('عذراً، حدث خطأ في الاتصال بالخادم. تأكد من أن الخدمة تعمل.', 'error');
+        }
+      }
+
+      function addMessage(text, sender) {
+        const chat = document.getElementById('chat');
+        const wrapper = document.createElement('div');
+        wrapper.className = 'msg flex ' + (sender === 'user' ? 'justify-end' : 'justify-start');
+
+        const bubble = document.createElement('div');
+        const bgClass = sender === 'user' ? 'bg-blue-600' : (sender === 'error' ? 'bg-red-600/70' : 'glass-card');
+        bubble.className = `${bgClass} rounded-lg p-3 max-w-[80%] text-sm`;
+        bubble.textContent = text;
+
+        wrapper.appendChild(bubble);
+        chat.appendChild(wrapper);
+        chat.scrollTop = chat.scrollHeight;
+      }
+
+      function activateSync() {
+          document.getElementById('ai-progress').style.width = '100%';
+          addMessage(`[${new Date().toLocaleTimeString('en-GB')}] > تمت المزامنة مع Cloudflare`, 'ai');
+      }
+
+      // Add event listeners
+      document.getElementById('send-button').addEventListener('click', send);
+      document.getElementById('input').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') send();
+      });
+  </script>
+</body>
+</html>
