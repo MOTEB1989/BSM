@@ -1,0 +1,23 @@
+{
+  "name": "lexbank-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP Server for LexBANK AI Agents",
+  "main": "bsu-agent-server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node bsu-agent-server.js",
+    "dev": "nodemon bsu-agent-server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "bin": {
+    "lexbank-mcp": "./bsu-agent-server.js"
+  },
+  "author": "LexBANK",
+  "license": "UNLICENSED"
+}
