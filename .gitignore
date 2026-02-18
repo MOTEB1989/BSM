@@ -13,6 +13,7 @@ reports/*
 !reports/runner-*.md
 !reports/AGENTS-*.md
 !reports/agents-*.json
+!reports/INTEGRITY-*.md
 
 # Sensitive files - Security
 *.key
