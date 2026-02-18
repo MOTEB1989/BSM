@@ -16,6 +16,23 @@ The platform now features a **hybrid microservices architecture** combining:
 
 📖 See [Go Integration Architecture](docs/GO-INTEGRATION-ARCHITECTURE.md) for details.
 
+### 🆕 AI Agent Observatory
+
+**Real-time monitoring and analytics platform for AI agents**
+
+- 📊 **Live Dashboard**: Real-time metrics with WebSocket updates
+- 💰 **Cost Tracking**: Multi-provider (OpenAI, Claude, Gemini) cost analysis
+- 📈 **Token Analytics**: Per-agent and per-user token consumption
+- 🧠 **Conversation Analytics**: Sentiment analysis and engagement metrics
+- 🔬 **A/B Testing**: Compare models and test prompt variations
+- 🚨 **Alert System**: Configurable thresholds with real-time notifications
+- 📑 **Report Export**: PDF and Excel generation for management
+- 🌙 **Dark Mode UI**: Grafana-style dashboard with Chart.js visualizations
+
+**Access**: Navigate to `/observatory` after starting the server
+
+📖 See [Observatory Documentation](docs/OBSERVATORY.md) for setup and usage.
+
 ## Project Structure
 
 ```
@@ -66,6 +83,15 @@ BSU/
 
 ### Chat Interface
 - `/chat` - Professional Arabic/English GPT chat interface (Vue 3 + Tailwind)
+
+### Observatory Dashboard
+- `/observatory` - AI Agent monitoring and analytics dashboard
+- `GET /api/observatory/metrics` - Get real-time agent metrics
+- `GET /api/observatory/tokens/agents` - Token usage by agent
+- `GET /api/observatory/tokens/users` - Token usage by user
+- `GET /api/observatory/analytics/conversations` - Conversation analytics
+- `GET /api/observatory/reports/pdf` - Download PDF report
+- `GET /api/observatory/reports/excel` - Download Excel report
 
 ### Admin Endpoints (requires x-admin-token header)
 - `GET /api/admin/agents` - Get agents configuration
