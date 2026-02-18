@@ -10,12 +10,14 @@ test.after(() => {
   Object.assign(models.openai, snapshot.openai || {});
   Object.assign(models.kimi, snapshot.kimi || {});
   Object.assign(models.perplexity, snapshot.perplexity || {});
+  Object.assign(models.anthropic, snapshot.anthropic || {});
 });
 
 test("buildAgentProviders includes preferred provider first and falls back to others", () => {
   models.openai.default = "sk-proj-valid-openai-key-123456789012345";
   models.kimi.default = "kimi-valid-key-12345678901234567890";
   models.perplexity.default = "pplx-valid-key-12345678901234567890";
+  models.anthropic.default = "sk-ant-api03-123456789012345678901234567890";
 
   const providers = buildAgentProviders({
     id: "agent-auto",
@@ -26,7 +28,7 @@ test("buildAgentProviders includes preferred provider first and falls back to ot
   assert.equal(providers[0].type, "openai");
   assert.deepEqual(
     providers.map((provider) => provider.type),
-    ["openai", "kimi", "perplexity"]
+    ["openai", "kimi", "perplexity", "anthropic"]
   );
 });
 
@@ -34,6 +36,7 @@ test("buildAgentProviders skips unusable preferred provider key and keeps availa
   models.openai.default = "your_api_key_here";
   models.kimi.default = "kimi-valid-key-12345678901234567890";
   models.perplexity.default = "";
+  models.anthropic.default = "sk-ant-api03-123456789012345678901234567890";
 
   const providers = buildAgentProviders({
     id: "agent-auto",
@@ -43,6 +46,6 @@ test("buildAgentProviders skips unusable preferred provider key and keeps availa
 
   assert.deepEqual(
     providers.map((provider) => provider.type),
-    ["kimi"]
+    ["kimi", "anthropic"]
   );
 });

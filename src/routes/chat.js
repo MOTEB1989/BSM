@@ -16,11 +16,11 @@ router.get("/key-status", async (_req, res, next) => {
       openai: hasUsableApiKey(models.openai?.bsm || models.openai?.default),
       kimi: hasUsableApiKey(models.kimi?.default),
       perplexity: hasUsableApiKey(models.perplexity?.default),
-      anthropic: false,
+      anthropic: hasUsableApiKey(models.anthropic?.default),
       google: false
     };
 
-    const anyAvailable = status.openai || status.kimi || status.perplexity;
+    const anyAvailable = status.openai || status.kimi || status.perplexity || status.anthropic;
 
     const ui = {
       openai: status.openai ? "✅ GPT-4 Ready" : "🔴 GPT-4 Offline",
@@ -77,10 +77,12 @@ router.post("/direct", async (req, res, next) => {
     const openaiKey = models.openai?.bsm || models.openai?.default;
     const kimiKey = models.kimi?.default;
     const perplexityKey = models.perplexity?.default;
+    const anthropicKey = models.anthropic?.default;
 
     if (hasUsableApiKey(openaiKey)) providers.push({ type: "openai", apiKey: openaiKey });
     if (hasUsableApiKey(kimiKey)) providers.push({ type: "kimi", apiKey: kimiKey });
     if (hasUsableApiKey(perplexityKey)) providers.push({ type: "perplexity", apiKey: perplexityKey });
+    if (hasUsableApiKey(anthropicKey)) providers.push({ type: "anthropic", apiKey: anthropicKey });
 
     if (providers.length === 0) {
       throw new AppError("No AI service is configured", 503, "MISSING_API_KEY");

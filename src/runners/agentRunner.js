@@ -24,7 +24,7 @@ const renderPromptTemplate = (template, context) => {
   });
 };
 
-const providerCandidates = ["openai", "kimi", "perplexity"];
+const providerCandidates = ["openai", "kimi", "perplexity", "anthropic"];
 
 const resolveProviderKey = (provider, keyName) => {
   const selectedKey = models[provider]?.[keyName];
