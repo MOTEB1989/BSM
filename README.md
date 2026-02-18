@@ -6,11 +6,24 @@
 
 The **LexBANK and BSU Platform** represent the next generation of intelligent infrastructure for knowledge management and legal services, powered by advanced AI technologies. Our platform combines cutting-edge artificial intelligence with robust legal and business service management capabilities to deliver unparalleled efficiency and accuracy.
 
-### 🆕 Hybrid Node.js/Go Architecture
+### 🆕 Banking Knowledge Base RAG System
 
-The platform now features a **hybrid microservices architecture** combining:
+The platform now includes a **comprehensive RAG (Retrieval-Augmented Generation) system** for banking regulations:
+- **📚 Document Processing**: Upload and process PDF documents (SAMA regulations, banking laws)
+- **🔍 Semantic Search**: AI-powered search across all banking documents
+- **💬 Smart Chat**: Context-aware chat with source citations and page numbers
+- **📊 Vector Databases**: Support for Pinecone and PostgreSQL pgvector
+- **🔐 Access Control**: Role-based permissions (Admin, User, Auditor)
+- **📖 Bilingual Support**: Full Arabic and English language support
+
+📖 See [RAG Knowledge Base Documentation](docs/RAG-KNOWLEDGE-BASE.md) for details.
+
+### 🆕 Hybrid Node.js/Go/Python Architecture
+
+The platform features a **multi-language microservices architecture**:
 - **Node.js** for API gateway, AI integration, and rapid development
-- **Go** for high-performance document processing, search, and analytics
+- **Go** for high-performance document processing and analytics
+- **Python** for RAG, embeddings, and ML operations
 
 **Benefits**: 10-100x performance improvement, 60% cost reduction, better scalability
 
@@ -64,6 +77,14 @@ BSU/
 - `POST /api/chat` - Agent-based chat (requires `agentId` and `input`)
 - `POST /api/chat/direct` - Direct GPT chat with conversation history
 
+### RAG Knowledge Base Endpoints
+- `POST /api/rag/chat` - RAG-powered chat with source citations
+- `POST /api/rag/search` - Semantic search across documents
+- `GET /api/rag/documents` - List all documents
+- `GET /api/rag/documents/:id` - Get document details
+- `DELETE /api/rag/documents/:id` - Delete document (admin only)
+- `GET /api/rag/health` - RAG service health check
+
 ### Chat Interface
 - `/chat` - Professional Arabic/English GPT chat interface (Vue 3 + Tailwind)
 
@@ -98,6 +119,48 @@ See [DNS Documentation](dns/GITHUB-PAGES-VERIFICATION.md) for detailed instructi
 ### Prerequisites
 - Node.js 22+
 - npm or equivalent package manager
+- Python 3.11+ (for RAG service)
+- Docker & Docker Compose (optional, for RAG service)
+
+### Quick Start
+
+#### Node.js Backend
+
+```bash
+# Install dependencies
+npm ci
+
+# Configure environment
+cp .env.example .env
+# Edit .env and add your OpenAI API key
+
+# Run development server
+npm run dev
+
+# Open browser
+open http://localhost:3000/chat
+```
+
+#### RAG Knowledge Base (Optional)
+
+```bash
+# Quick start with Docker
+./scripts/start-rag-system.sh
+
+# Or manual setup
+cd services/rag-service
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+# Edit .env with API keys
+docker-compose up -d
+
+# Test the system
+./scripts/test-rag-system.sh
+```
+
+For detailed RAG setup, see [RAG Documentation](docs/RAG-KNOWLEDGE-BASE.md).
 
 ## Governance & Quality Process
 
