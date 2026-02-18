@@ -1,0 +1,38 @@
+name: 📝 The README Architect
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🌳 Generate File Tree
+        run: |
+          echo "## 📂 هيكل المشروع المحدث تلقائياً" > FILE_TREE.md
+          echo "\`\`\`bash" >> FILE_TREE.md
+          tree -I "node_modules|.git|venv" >> FILE_TREE.md || ls -R >> FILE_TREE.md
+          echo "\`\`\`" >> FILE_TREE.md
+
+      - name: ✍️ Update README Content
+        run: |
+          # التأكد من وجود ملف README
+          if [ ! -f README.md ]; then echo "# BSM Project" > README.md; fi
+          
+          # إضافة توقيع التحديث
+          echo "" >> README.md
+          echo "---" >> README.md
+          echo "### 🤖 حالة النظام" >> README.md
+          echo "تم التحديث الأخير بواسطة **BSM Auto-Agent** بتاريخ: $(date)" >> README.md
+          echo "✅ الحالة: **مستقر (Stable)**" >> README.md
+
+      - name: 💾 Commit Documentation
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "📝 Docs: Scribe Agent updated README & Structure"

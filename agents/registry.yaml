@@ -154,3 +154,95 @@ agents:
     healthcheck:
       endpoint: /api/agents/pr-merge/health
       interval_seconds: 90
+
+  - id: cleaner-agent
+    name: The Cleaner Agent
+    category: system
+    role: formatter
+    execution:
+      runtime: github-actions
+    contexts:
+      allowed:
+        - github
+        - ci
+    expose:
+      selectable: false
+      internal_only: true
+    risk:
+      level: low
+      rationale: "Auto-formats code using Black and Prettier, no destructive operations"
+    approval:
+      required: false
+      type: automated
+      approvers:
+        - ci-system
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - development
+        - staging
+        - production
+    healthcheck:
+      endpoint: /api/agents/cleaner-agent/health
+      interval_seconds: 120
+
+  - id: auto-merger
+    name: The Auto-Merger
+    category: system
+    role: merger
+    execution:
+      runtime: github-actions
+    contexts:
+      allowed:
+        - github
+        - ci
+    expose:
+      selectable: false
+      internal_only: true
+    risk:
+      level: high
+      rationale: "Automatically merges PRs after validation, potential for merging problematic code"
+    approval:
+      required: true
+      type: automated
+      approvers:
+        - ci-system
+        - quality-gates
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - production
+    healthcheck:
+      endpoint: /api/agents/auto-merger/health
+      interval_seconds: 120
+
+  - id: readme-architect
+    name: The README Architect
+    category: system
+    role: documentor
+    execution:
+      runtime: github-actions
+    contexts:
+      allowed:
+        - github
+        - ci
+    expose:
+      selectable: false
+      internal_only: true
+    risk:
+      level: low
+      rationale: "Updates README and documentation after merges, minimal risk"
+    approval:
+      required: false
+      type: automated
+      approvers:
+        - ci-system
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - development
+        - staging
+        - production
+    healthcheck:
+      endpoint: /api/agents/readme-architect/health
+      interval_seconds: 120
