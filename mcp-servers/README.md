@@ -158,6 +158,14 @@ echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | node bsu-agent-server.js
 - لا يتم تخزين أي بيانات حساسة في الخادم
 - يستخدم HTTPS للاتصال بالخلفية
 
+### تحديثات الأمان
+
+**2026-02-18:** تم تحديث @modelcontextprotocol/sdk إلى الإصدار 1.25.2 لإصلاح ثغرتين أمنيتين:
+- ✅ ثغرة ReDoS (Regular Expression Denial of Service)
+- ✅ حماية DNS rebinding الآن مفعلة افتراضياً
+
+راجع [SECURITY-PATCH-MCP-2026-02-18.md](../SECURITY-PATCH-MCP-2026-02-18.md) للتفاصيل.
+
 ## الترخيص
 
 UNLICENSED - للاستخدام الداخلي في LexBANK فقط

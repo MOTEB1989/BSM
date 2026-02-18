@@ -195,10 +195,14 @@ Add to `settings.json`:
 ### MCP Server Dependencies
 ```json
 {
-  "@modelcontextprotocol/sdk": "^0.4.0",
+  "@modelcontextprotocol/sdk": "^1.25.2",
   "node-fetch": "^2.7.0"
 }
 ```
+
+**Security Note:** Version 1.25.2 includes critical security patches:
+- ✅ ReDoS vulnerability fix (CVE affecting versions < 1.25.2)
+- ✅ DNS rebinding protection enabled by default (CVE affecting versions < 1.24.0)
 
 ### System Requirements
 - Node.js 22+ (as per .nvmrc)
