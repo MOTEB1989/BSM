@@ -1,0 +1,129 @@
+{
+  "name": "bsm-dev-assistant",
+  "displayName": "BSM Development Assistant",
+  "description": "AI-powered development assistant for code analysis, test generation, documentation, and refactoring",
+  "version": "1.0.0",
+  "publisher": "bsm",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Testing",
+    "Formatters",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "assistant",
+    "testing",
+    "documentation",
+    "refactoring",
+    "code-quality"
+  ],
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:python"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "bsm-dev-assistant.analyzeCode",
+        "title": "BSM: Analyze Code",
+        "category": "Dev Assistant"
+      },
+      {
+        "command": "bsm-dev-assistant.generateTests",
+        "title": "BSM: Generate Unit Tests",
+        "category": "Dev Assistant"
+      },
+      {
+        "command": "bsm-dev-assistant.generateDocs",
+        "title": "BSM: Generate Documentation",
+        "category": "Dev Assistant"
+      },
+      {
+        "command": "bsm-dev-assistant.refactorCode",
+        "title": "BSM: Refactor Code",
+        "category": "Dev Assistant"
+      },
+      {
+        "command": "bsm-dev-assistant.detectSmells",
+        "title": "BSM: Detect Code Smells",
+        "category": "Dev Assistant"
+      },
+      {
+        "command": "bsm-dev-assistant.convertLanguage",
+        "title": "BSM: Convert to Another Language",
+        "category": "Dev Assistant"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "editorHasSelection",
+          "command": "bsm-dev-assistant.analyzeCode",
+          "group": "bsm@1"
+        },
+        {
+          "when": "editorHasSelection",
+          "command": "bsm-dev-assistant.generateTests",
+          "group": "bsm@2"
+        },
+        {
+          "when": "editorHasSelection",
+          "command": "bsm-dev-assistant.generateDocs",
+          "group": "bsm@3"
+        },
+        {
+          "when": "editorHasSelection",
+          "command": "bsm-dev-assistant.refactorCode",
+          "group": "bsm@4"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "BSM Development Assistant",
+      "properties": {
+        "bsmDevAssistant.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:3000/api/dev-assistant",
+          "description": "BSM API endpoint URL"
+        },
+        "bsmDevAssistant.autoAnalyze": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically analyze code on save"
+        },
+        "bsmDevAssistant.showInlineHints": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline code smell hints"
+        },
+        "bsmDevAssistant.testFramework": {
+          "type": "string",
+          "default": "jest",
+          "enum": ["jest", "mocha", "pytest", "unittest"],
+          "description": "Preferred test framework"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "node extension.js",
+    "watch": "node extension.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}

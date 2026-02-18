@@ -9,6 +9,7 @@ import orchestrator from "./orchestrator.js";
 import webhooks from "./webhooks.js";
 import emergency from "./emergency.js";
 import control from "./control.js";
+import devAssistant from "./devAssistant.js";
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use("/orchestrator", orchestrator);
 router.use("/control", control);
 router.use("/webhooks", webhooks);
 router.use("/emergency", emergency);
+router.use("/dev-assistant", devAssistant);
 
 export default router;
