@@ -1,7 +1,6 @@
 {
   "agents": [
     "my-agent.yaml",
-    "agent-auto.yaml",
     "legal-agent.yaml",
     "governance-agent.yaml",
     "ios-chat-integration-agent.yaml",
