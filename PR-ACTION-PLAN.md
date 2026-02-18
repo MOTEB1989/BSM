@@ -103,11 +103,15 @@ git checkout main
 git pull origin main
 git checkout -b fix-pr-XXX
 gh pr checkout XXX
-git merge main
-# حل التعارضات...
-git add .
-git commit -m "Resolve conflicts with main"
-git push
+git fetch origin
+git rebase origin/main
+# حل التعارضات يدويًا ملفًا ملفًا...
+# بعد كل حل تعارض: شغّل lint/tests محليًا ثم أكمل
+npm run lint
+npm test
+git add <resolved-file>
+git rebase --continue
+git push --force-with-lease
 ```
 
 #### ب. PRs الجاهزة (دمج فوراً)
