@@ -24,6 +24,7 @@ export const env = {
   maxAgentInputLength: parseNumber(process.env.MAX_AGENT_INPUT_LENGTH, 4000),
   defaultModel: process.env.DEFAULT_MODEL || "gpt-4o-mini",
   modelRouterStrategy: process.env.MODEL_ROUTER_STRATEGY || "balanced",
+  githubWebhookSecret: process.env.GITHUB_WEBHOOK_SECRET,
   fallbackEnabled: parseBoolean(process.env.FALLBACK_ENABLED, true),
   perplexityModel: process.env.PERPLEXITY_MODEL || "llama-3.1-sonar-large-128k-online",
   perplexityCitations: parseBoolean(process.env.PERPLEXITY_CITATIONS, true),
@@ -38,7 +39,7 @@ export const env = {
   egressPolicy: process.env.EGRESS_POLICY || "deny_by_default",
   egressAllowedHosts: process.env.EGRESS_ALLOWED_HOSTS
     ? process.env.EGRESS_ALLOWED_HOSTS.split(",").map((host) => host.trim()).filter(Boolean)
-    : ["api.openai.com", "github.com"]
+    : ["api.openai.com", "api.moonshot.cn", "api.perplexity.ai", "github.com"]
 };
 
 // Validate admin token in production
@@ -48,6 +49,12 @@ if (env.nodeEnv === "production" && !env.adminToken) {
 
 if (env.nodeEnv === "production" && env.adminToken && env.adminToken.length < 16) {
   throw new Error("ADMIN_TOKEN must be at least 16 characters in production");
+}
+
+// GitHub webhook secret is optional - warn if missing but don't fail
+if (env.nodeEnv === "production" && !env.githubWebhookSecret) {
+  console.warn("⚠️  WARNING: GITHUB_WEBHOOK_SECRET is not set. GitHub webhooks will be rejected.");
+  console.warn("   Set GITHUB_WEBHOOK_SECRET if you plan to use GitHub webhook integration.");
 }
 
 // Validate egress policy

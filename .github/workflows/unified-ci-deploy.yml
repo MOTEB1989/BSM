@@ -3,8 +3,22 @@ name: "\U0001F916 Unified CI / Test, Build & Deploy to Render"
 on:
   push:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'data/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'render.yaml'
+      - '.github/workflows/unified-ci-deploy.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'data/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'render.yaml'
+      - '.github/workflows/unified-ci-deploy.yml'
   workflow_dispatch:
 
 concurrency:

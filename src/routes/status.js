@@ -76,15 +76,4 @@ router.get("/status", (req, res) => {
   }
 });
 
-/**
- * GET /api/health (legacy compatibility)
- * Simple health check endpoint
- */
-router.get("/health", (req, res) => {
-  res.json({
-    status: "ok",
-    timestamp: new Date().toISOString()
-  });
-});
-
 export default router;

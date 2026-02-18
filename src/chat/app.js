@@ -10,7 +10,7 @@ createApp({
     const loading = ref(false);
     const error = ref('');
     const lang = ref('ar');
-    const mode = ref('direct');
+    const mode = ref('agent-auto');
     const showModeMenu = ref(false);
     const messagesContainer = ref(null);
     const inputField = ref(null);
@@ -35,11 +35,12 @@ createApp({
 
     const currentModeLabel = computed(() => {
       const labels = {
+        'agent-auto': lang.value === 'ar' ? '\u0630\u0643\u064A (\u062A\u0644\u0642\u0627\u0626\u064A)' : 'Smart (Auto)',
         direct: lang.value === 'ar' ? '\u062F\u0631\u062F\u0634\u0629 \u0645\u0628\u0627\u0634\u0631\u0629' : 'Direct Chat',
         'legal-agent': lang.value === 'ar' ? '\u0627\u0644\u0648\u0643\u064A\u0644 \u0627\u0644\u0642\u0627\u0646\u0648\u0646\u064A' : 'Legal Agent',
         'governance-agent': lang.value === 'ar' ? '\u0648\u0643\u064A\u0644 \u0627\u0644\u062D\u0648\u0643\u0645\u0629' : 'Governance Agent'
       };
-      return labels[mode.value] || labels.direct;
+      return labels[mode.value] || labels['agent-auto'];
     });
 
     function toggleLang() {
@@ -180,12 +181,30 @@ createApp({
       } catch (err) {
         console.error('Chat error:', err);
         
-        // Provide clearer error messages based on error code or status
+        // Provide clearer error messages based on error type, code, or status
         let errorMessage = err.message;
-        if (err.code === 'MISSING_API_KEY' || err.status === 503) {
+        
+        // Check for network/connectivity errors (TypeError from fetch failures)
+        if (err instanceof TypeError || err.message?.includes('fetch') || err.message?.includes('ENOTFOUND')) {
+          errorMessage = lang.value === 'ar'
+            ? 'فشل الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.'
+            : 'Failed to connect to server. Please check your internet connection and try again.';
+        } else if (err.code === 'NETWORK_ERROR') {
+          errorMessage = lang.value === 'ar'
+            ? 'لا يمكن الاتصال بخدمة الذكاء الاصطناعي. يرجى الاتصال بالمسؤول.'
+            : 'Cannot connect to AI service. Please contact the administrator.';
+        } else if (err.code === 'GPT_TIMEOUT') {
+          errorMessage = lang.value === 'ar'
+            ? 'انتهت مهلة طلب الذكاء الاصطناعي. يرجى المحاولة مرة أخرى.'
+            : 'AI service request timed out. Please try again.';
+        } else if (err.code === 'MISSING_API_KEY' || err.status === 503) {
           errorMessage = lang.value === 'ar'
             ? 'خدمة الذكاء الاصطناعي غير متاحة حالياً. يرجى الاتصال بالمسؤول.'
             : 'AI service is not currently available. Please contact the administrator.';
+        } else if (err.code === 'INVALID_API_KEY') {
+          errorMessage = lang.value === 'ar'
+            ? 'مفتاح خدمة الذكاء الاصطناعي غير صحيح. يرجى إبلاغ المسؤول.'
+            : 'AI service credentials are invalid. Please notify the administrator.';
         } else if (err.status === 500) {
           errorMessage = lang.value === 'ar'
             ? 'حدث خطأ في الخادم. يرجى المحاولة لاحقاً.'
@@ -213,6 +232,16 @@ createApp({
           showModeMenu.value = false;
         }
       });
+
+      // iOS keyboard handling: scroll input into view when focused
+      if (inputField.value) {
+        inputField.value.addEventListener('focus', () => {
+          setTimeout(() => {
+            inputField.value?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          }, 300);
+        });
+      }
+
       inputField.value?.focus();
     });
 

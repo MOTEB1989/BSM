@@ -2,6 +2,19 @@
 
 This file contains the official Telegram community links for BSM project.
 
+## 🤖 LexFix Support Bot
+
+**Status**: ✅ Active  
+**Link**: https://t.me/LexFixBot  
+**Purpose**: Instant support, troubleshooting help, and community assistance
+
+The LexFix Support Bot provides:
+- 24/7 availability for questions and support
+- Quick responses to common queries
+- Help with platform setup and configuration
+- Direct links to relevant documentation
+- Connection to the BSM community
+
 ## 📢 Official Channels
 
 ### Announcements Channel

@@ -19,7 +19,9 @@ The documentation is organized into the following categories:
 |----------|-------------|------|----------|
 | [System Architecture](ARCHITECTURE.md) | Complete architectural overview, component breakdown, data flows, and scalability roadmap | 23KB | Developers, Architects |
 | [Agent Orchestration Patterns](AGENT-ORCHESTRATION.md) | Multi-agent design patterns, communication strategies, and workflow orchestration | 18KB | Developers, Architects |
+| [KIMI Agent Integration](KIMI-AGENT.md) | KIMI (Moonshot AI) agent setup, configuration, and usage guide | 4KB | Developers, Users |
 | [Analysis Summary](ANALYSIS-SUMMARY.md) | Session summary with findings, metrics, and recommendations | 10KB | All Stakeholders |
+| [Kimi Claims Fact Check](KIMI-CLAIMS-FACT-CHECK.md) | Verification note clarifying cross-repo mismatch claims and reproducible checks | 4KB | QA, Maintainers |
 
 ### 🚀 Operations & Deployment
 
@@ -27,6 +29,13 @@ The documentation is organized into the following categories:
 |----------|-------------|------|----------|
 | [Security & Deployment Guide](SECURITY-DEPLOYMENT.md) | Security best practices, deployment procedures, and incident response | 17KB | DevOps, Security |
 | [CI/CD Recommendations](CICD-RECOMMENDATIONS.md) | Pipeline enhancements and automation strategies | 13KB | DevOps, Developers |
+| [Documentation Deployment Policy](DOCS-DEPLOYMENT.md) | Official policy for docs source, CI/CD publishing flow, and versioning | 6KB | DevOps, Tech Writers, Maintainers |
+
+### 🧹 Repository Maintenance
+
+| Document | Description | Audience |
+|----------|-------------|----------|
+| [Repo Cleanup Log](REPO-CLEANUP-LOG.md) | Auditable record of cleanup actions (delete/rename) with verifiable Git evidence | Maintainers, DevOps, Auditors |
 
 ### 🌐 Infrastructure
 
@@ -34,11 +43,19 @@ The documentation is organized into the following categories:
 |----------|----------|-------------|
 | [DNS Record Types](../dns/DNS-RECORD-TYPES.md) | dns/ | Cloudflare DNS configuration reference |
 | [GitHub Pages Verification](../dns/GITHUB-PAGES-VERIFICATION.md) | dns/ | Custom domain setup guide |
+| [Cloudflare API Names](CLOUDFLARE-API-NAMES.md) | docs/ | Complete reference for all Cloudflare API variables (Arabic) |
+| [Cloudflare Quick Reference (AR)](CLOUDFLARE-QUICK-REFERENCE-AR.md) | docs/ | Quick reference guide for Cloudflare API names (Arabic) |
 
 ### 📖 API Documentation
 
 - API endpoints: See [README.md](../README.md#api-endpoints)
 - OpenAPI specification: Coming soon
+
+### 🛠️ Tools & Utilities
+
+| Tool | Description | Access |
+|------|-------------|--------|
+| [Calculator](calculator.html) | Modern calculator with keyboard support and dark theme | [Open Calculator](calculator.html) |
 
 ---
 
@@ -75,8 +92,8 @@ The documentation is organized into the following categories:
 
 | Metric | Value |
 |--------|-------|
-| **Total Documents** | 5 major documents |
-| **Total Size** | 81KB |
+| **Total Documents** | 6 major documents |
+| **Total Size** | 87KB |
 | **Code Examples** | 50+ snippets |
 | **Diagrams** | 3 architecture diagrams |
 | **Recommendations** | 20+ actionable items |

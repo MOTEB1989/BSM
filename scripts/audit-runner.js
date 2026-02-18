@@ -362,95 +362,101 @@ class AuditRunner {
     const lowCount = this.findings.filter(f => f.severity === SEVERITY.LOW).length;
     const infoCount = this.findings.filter(f => f.severity === SEVERITY.INFO).length;
 
-    let report = `# BSU Audit Report\n\n`;
-    report += `**Generated:** ${timestamp}\n\n`;
-    report += `**Scope:** ${this.scope}\n\n`;
-    report += `**Execution Time:** ${executionTime}s\n\n`;
-    report += `## Executive Summary\n\n`;
-    report += `| Severity | Count |\n`;
-    report += `|----------|-------|\n`;
-    report += `| CRITICAL | ${criticalCount} |\n`;
-    report += `| HIGH     | ${highCount} |\n`;
-    report += `| MEDIUM   | ${mediumCount} |\n`;
-    report += `| LOW      | ${lowCount} |\n`;
-    report += `| INFO     | ${infoCount} |\n\n`;
+    // Use array join for efficient string building
+    const reportParts = [
+      `# BSU Audit Report\n\n`,
+      `**Generated:** ${timestamp}\n\n`,
+      `**Scope:** ${this.scope}\n\n`,
+      `**Execution Time:** ${executionTime}s\n\n`,
+      `## Executive Summary\n\n`,
+      `| Severity | Count |\n`,
+      `|----------|-------|\n`,
+      `| CRITICAL | ${criticalCount} |\n`,
+      `| HIGH     | ${highCount} |\n`,
+      `| MEDIUM   | ${mediumCount} |\n`,
+      `| LOW      | ${lowCount} |\n`,
+      `| INFO     | ${infoCount} |\n\n`
+    ];
 
     if (criticalCount > 0) {
-      report += `⚠️  **CRITICAL ISSUES DETECTED** - Immediate action required\n\n`;
+      reportParts.push(`⚠️  **CRITICAL ISSUES DETECTED** - Immediate action required\n\n`);
     } else if (highCount > 0) {
-      report += `⚠️  **HIGH PRIORITY ISSUES** - Should be addressed soon\n\n`;
+      reportParts.push(`⚠️  **HIGH PRIORITY ISSUES** - Should be addressed soon\n\n`);
     } else {
-      report += `✓ **No critical or high priority issues found**\n\n`;
+      reportParts.push(`✓ **No critical or high priority issues found**\n\n`);
     }
 
     // Findings by severity
-    report += `## Findings\n\n`;
+    reportParts.push(`## Findings\n\n`);
     
     for (const severity of [SEVERITY.CRITICAL, SEVERITY.HIGH, SEVERITY.MEDIUM, SEVERITY.LOW, SEVERITY.INFO]) {
       const findings = this.findings.filter(f => f.severity === severity);
       if (findings.length === 0) continue;
 
-      report += `### ${severity} (${findings.length})\n\n`;
+      reportParts.push(`### ${severity} (${findings.length})\n\n`);
       
       for (const finding of findings) {
-        report += `#### ${finding.issue}\n\n`;
-        report += `- **Category:** ${finding.category}\n`;
+        reportParts.push(`#### ${finding.issue}\n\n`);
+        reportParts.push(`- **Category:** ${finding.category}\n`);
         
         if (Object.keys(finding.details).length > 0) {
-          report += `- **Details:**\n`;
+          reportParts.push(`- **Details:**\n`);
           for (const [key, value] of Object.entries(finding.details)) {
-            report += `  - ${key}: ${JSON.stringify(value)}\n`;
+            reportParts.push(`  - ${key}: ${JSON.stringify(value)}\n`);
           }
         }
-        report += `\n`;
+        reportParts.push(`\n`);
       }
     }
 
     // Applied fixes
     if (this.appliedFixes.length > 0) {
-      report += `## Applied Fixes\n\n`;
-      report += `The following safe, additive fixes were automatically applied:\n\n`;
+      reportParts.push(`## Applied Fixes\n\n`);
+      reportParts.push(`The following safe, additive fixes were automatically applied:\n\n`);
       
       for (const fix of this.appliedFixes) {
-        report += `### ${fix.description}\n\n`;
-        report += `- **File:** ${fix.file}\n`;
-        report += `- **Reason:** ${fix.reason}\n\n`;
+        reportParts.push(`### ${fix.description}\n\n`);
+        reportParts.push(`- **File:** ${fix.file}\n`);
+        reportParts.push(`- **Reason:** ${fix.reason}\n\n`);
       }
     } else {
-      report += `## Applied Fixes\n\n`;
-      report += `No automatic fixes were applied. All changes require manual review.\n\n`;
+      reportParts.push(`## Applied Fixes\n\n`);
+      reportParts.push(`No automatic fixes were applied. All changes require manual review.\n\n`);
     }
 
     // Recommendations
     if (this.recommendations.length > 0) {
-      report += `## Recommendations\n\n`;
-      report += `The following issues require manual review and cannot be auto-fixed:\n\n`;
+      reportParts.push(`## Recommendations\n\n`);
+      reportParts.push(`The following issues require manual review and cannot be auto-fixed:\n\n`);
       
       for (const rec of this.recommendations) {
-        report += `### ${rec.description}\n\n`;
-        report += `- **Reason:** ${rec.reason}\n\n`;
+        reportParts.push(`### ${rec.description}\n\n`);
+        reportParts.push(`- **Reason:** ${rec.reason}\n\n`);
       }
     }
 
     // Audit methodology
-    report += `## Audit Methodology\n\n`;
-    report += `This audit was performed using the BSU Audit Agent with the following checks:\n\n`;
-    report += `- **Agent Registration:** Validated index.json, YAML schemas, and agentId consistency\n`;
-    report += `- **Agent Execution:** Checked for guards, validation, error handling\n`;
-    report += `- **API Configuration:** Verified route handlers, rate limiting, CORS\n`;
-    report += `- **UI Integration:** Checked API_BASE, static serving, hardcoded URLs\n`;
-    report += `- **CI/CD Safety:** Scanned for exposed secrets, unsafe executions\n\n`;
+    reportParts.push(`## Audit Methodology\n\n`);
+    reportParts.push(`This audit was performed using the BSU Audit Agent with the following checks:\n\n`);
+    reportParts.push(`- **Agent Registration:** Validated index.json, YAML schemas, and agentId consistency\n`);
+    reportParts.push(`- **Agent Execution:** Checked for guards, validation, error handling\n`);
+    reportParts.push(`- **API Configuration:** Verified route handlers, rate limiting, CORS\n`);
+    reportParts.push(`- **UI Integration:** Checked API_BASE, static serving, hardcoded URLs\n`);
+    reportParts.push(`- **CI/CD Safety:** Scanned for exposed secrets, unsafe executions\n\n`);
 
-    report += `## Compliance Status\n\n`;
+    reportParts.push(`## Compliance Status\n\n`);
     if (criticalCount === 0 && highCount === 0) {
-      report += `✓ **COMPLIANT** - No critical or high priority issues detected\n\n`;
+      reportParts.push(`✓ **COMPLIANT** - No critical or high priority issues detected\n\n`);
     } else {
-      report += `⚠️  **NON-COMPLIANT** - Critical or high priority issues must be resolved\n\n`;
+      reportParts.push(`⚠️  **NON-COMPLIANT** - Critical or high priority issues must be resolved\n\n`);
     }
 
-    report += `---\n\n`;
-    report += `*This audit was generated automatically by BSU Audit Agent*\n`;
-    report += `*For questions, contact the security team*\n`;
+    reportParts.push(`---\n\n`);
+    reportParts.push(`*This audit was generated automatically by BSU Audit Agent*\n`);
+    reportParts.push(`*For questions, contact the security team*\n`);
+
+    // Join all parts efficiently
+    const report = reportParts.join('');
 
     const reportPath = path.join(reportsDir, "bsu-audit-report.md");
     fs.writeFileSync(reportPath, report, "utf8");

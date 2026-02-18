@@ -1,13 +1,17 @@
 {
   "agents": [
     "my-agent.yaml",
+    "agent-auto.yaml",
     "legal-agent.yaml",
     "governance-agent.yaml",
+    "ios-chat-integration-agent.yaml",
     "governance-review-agent.yaml",
     "code-review-agent.yaml",
     "security-agent.yaml",
     "pr-merge-agent.yaml",
     "integrity-agent.yaml",
-    "bsu-audit-agent.yaml"
+    "bsu-audit-agent.yaml",
+    "repository-review.yaml",
+    "kimi-agent.yaml"
   ]
 }

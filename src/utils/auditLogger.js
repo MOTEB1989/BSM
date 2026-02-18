@@ -1,5 +1,6 @@
-import fs from "fs/promises";
-import fsSync from "fs";
+import { appendFile, mkdir, access } from "fs/promises";
+import { createReadStream } from "fs";
+import { createInterface } from "readline";
 import path from "path";
 import logger from "./logger.js";
 
@@ -7,8 +8,6 @@ import logger from "./logger.js";
  * Audit Logger
  * Implements append-only audit logging for security-critical operations
  * Logs are written to logs/audit.log in JSONL format (JSON Lines)
- * 
- * Now uses async operations to avoid blocking the event loop
  */
 
 class AuditLogger {
@@ -16,24 +15,25 @@ class AuditLogger {
     this.logDir = path.join(process.cwd(), "logs");
     this.auditLogPath = path.join(this.logDir, "audit.log");
     this.ensureLogDirectory();
-    this.writeQueue = Promise.resolve(); // Queue for sequential writes
   }
 
   /**
-   * Ensure log directory exists (sync - only at startup)
+   * Ensure log directory exists
    */
-  ensureLogDirectory() {
-    if (!fsSync.existsSync(this.logDir)) {
-      fsSync.mkdirSync(this.logDir, { recursive: true, mode: 0o755 });
+  async ensureLogDirectory() {
+    try {
+      await access(this.logDir);
+    } catch {
+      await mkdir(this.logDir, { recursive: true, mode: 0o755 });
       logger.info({ logDir: this.logDir }, "Created audit log directory");
     }
   }
 
   /**
-   * Write audit entry (append-only, async, queued)
+   * Write audit entry (append-only) - async version
    * @param {Object} entry - Audit entry to log
    */
-  write(entry) {
+  async write(entry) {
     const auditEntry = {
       timestamp: new Date().toISOString(),
       ...entry
@@ -42,23 +42,29 @@ class AuditLogger {
     // Append to audit log (JSONL format - one JSON object per line)
     const logLine = JSON.stringify(auditEntry) + "\n";
     
-    // Queue write operations to ensure sequential writes
-    this.writeQueue = this.writeQueue.then(async () => {
-      try {
-        await fs.appendFile(this.auditLogPath, logLine, {
-          mode: 0o600, // Read/write for owner only
-          flag: "a" // Append mode
-        });
-      } catch (error) {
-        // Log to standard logger if audit log fails (critical error)
-        logger.error({
-          error: error.message,
-          auditEntry
-        }, "Failed to write to audit log");
-      }
-    }).catch(err => {
-      // Catch any queue errors to prevent breaking the chain
-      logger.error({ error: err.message }, "Audit log queue error");
+    try {
+      await appendFile(this.auditLogPath, logLine, {
+        mode: 0o600, // Read/write for owner only
+        flag: "a" // Append mode
+      });
+    } catch (error) {
+      // Log to standard logger if audit log fails (critical error)
+      logger.error({
+        error: error.message,
+        auditEntry
+      }, "Failed to write to audit log");
+    }
+  }
+
+  /**
+   * Write audit entry (fire-and-forget async)
+   * For backwards compatibility where sync write was expected but we want async I/O
+   * @param {Object} entry - Audit entry to log
+   */
+  writeDeferred(entry) {
+    // Fire and forget async write
+    this.write(entry).catch(err => {
+      logger.error({ error: err.message }, "Failed async audit write");
     });
   }
 
@@ -66,7 +72,7 @@ class AuditLogger {
    * Log authentication attempt
    */
   logAuth(data) {
-    this.write({
+    this.writeDeferred({
       event: "auth",
       action: data.action || "login",
       success: data.success,
@@ -81,7 +87,7 @@ class AuditLogger {
    * Log agent operation
    */
   logAgentOperation(data) {
-    this.write({
+    this.writeDeferred({
       event: "agent",
       action: data.action, // start, stop, execute
       agentId: data.agentId,
@@ -97,7 +103,7 @@ class AuditLogger {
    * Log configuration change
    */
   logConfigChange(data) {
-    this.write({
+    this.writeDeferred({
       event: "config",
       action: data.action, // modify, update, delete
       resource: data.resource,
@@ -113,7 +119,7 @@ class AuditLogger {
    * Log security event
    */
   logSecurityEvent(data) {
-    this.write({
+    this.writeDeferred({
       event: "security",
       severity: data.severity || "medium",
       action: data.action,
@@ -128,7 +134,7 @@ class AuditLogger {
    * Log emergency action
    */
   logEmergency(data) {
-    this.write({
+    this.writeDeferred({
       event: "emergency",
       action: data.action, // shutdown, kill-switch
       reason: data.reason,
@@ -142,7 +148,7 @@ class AuditLogger {
    * Log access denial
    */
   logAccessDenied(data) {
-    this.write({
+    this.writeDeferred({
       event: "access_denied",
       resource: data.resource,
       action: data.action,
@@ -154,7 +160,7 @@ class AuditLogger {
   }
 
   /**
-   * Read audit logs (with pagination, async)
+   * Read audit logs using streaming (efficient for large files)
    * @param {Object} options - Query options
    * @returns {Promise<Array>} Audit entries
    */
@@ -162,70 +168,91 @@ class AuditLogger {
     const { limit = 100, offset = 0, event = null } = options;
 
     try {
-      await fs.access(this.auditLogPath);
+      await access(this.auditLogPath);
     } catch {
       return [];
     }
 
-    try {
-      const content = await fs.readFile(this.auditLogPath, "utf8");
-      const lines = content.trim().split("\n").filter(Boolean);
+    const entries = [];
+    let lineCount = 0;
+    let skipped = 0;
 
-      let entries = lines.map(line => {
-        try {
-          return JSON.parse(line);
-        } catch {
-          return null;
+    const fileStream = createReadStream(this.auditLogPath);
+    const rl = createInterface({
+      input: fileStream,
+      crlfDelay: Infinity
+    });
+
+    for await (const line of rl) {
+      if (!line.trim()) continue;
+
+      try {
+        const entry = JSON.parse(line);
+        
+        // Filter by event type if specified
+        if (event && entry.event !== event) {
+          continue;
         }
-      }).filter(Boolean);
 
-      // Filter by event type if specified
-      if (event) {
-        entries = entries.filter(e => e.event === event);
+        // Skip offset entries
+        if (skipped < offset) {
+          skipped++;
+          continue;
+        }
+
+        // Add to results
+        entries.push(entry);
+        lineCount++;
+
+        // Stop when limit reached
+        if (lineCount >= limit) {
+          break;
+        }
+      } catch {
+        // Skip invalid lines
       }
-
-      // Apply pagination
-      return entries.slice(offset, offset + limit);
-    } catch (error) {
-      logger.error({ error: error.message }, "Failed to read audit logs");
-      return [];
     }
+
+    return entries;
   }
 
   /**
-   * Get audit log statistics (async)
+   * Get audit log statistics using streaming
    * @returns {Promise<Object>} Statistics
    */
   async getStatistics() {
     try {
-      await fs.access(this.auditLogPath);
+      await access(this.auditLogPath);
     } catch {
       return { totalEntries: 0, events: {} };
     }
 
-    try {
-      const content = await fs.readFile(this.auditLogPath, "utf8");
-      const lines = content.trim().split("\n").filter(Boolean);
+    const events = {};
+    let totalEntries = 0;
 
-      const events = {};
-      lines.forEach(line => {
-        try {
-          const entry = JSON.parse(line);
-          events[entry.event] = (events[entry.event] || 0) + 1;
-        } catch {
-          // Skip invalid lines
-        }
-      });
+    const fileStream = createReadStream(this.auditLogPath);
+    const rl = createInterface({
+      input: fileStream,
+      crlfDelay: Infinity
+    });
 
-      return {
-        totalEntries: lines.length,
-        events,
-        logPath: this.auditLogPath
-      };
-    } catch (error) {
-      logger.error({ error: error.message }, "Failed to get audit statistics");
-      return { totalEntries: 0, events: {}, error: error.message };
+    for await (const line of rl) {
+      if (!line.trim()) continue;
+
+      try {
+        const entry = JSON.parse(line);
+        events[entry.event] = (events[entry.event] || 0) + 1;
+        totalEntries++;
+      } catch {
+        // Skip invalid lines
+      }
     }
+
+    return {
+      totalEntries,
+      events,
+      logPath: this.auditLogPath
+    };
   }
 }
 

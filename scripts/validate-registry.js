@@ -108,7 +108,40 @@ registry.agents.forEach((agent, index) => {
     `${agentRef}: healthcheck.interval_seconds must be between 30 and 300`);
 });
 
+// BSM Governance Rules
+console.log("\n🔒 Enforcing BSM Governance Rules...");
+
+registry.agents.forEach((agent) => {
+  const agentRef = `${agent.id}`;
+
+  // Rule 1: Destructive agents CANNOT have mobile context
+  if (agent.safety?.mode === "destructive") {
+    const hasMobile = agent.contexts.allowed.includes("mobile");
+    must(
+      !hasMobile,
+      `${agentRef}: GOVERNANCE VIOLATION - destructive agents cannot allow 'mobile' context`
+    );
+  }
+
+  // Rule 2: High/Critical risk must require approval
+  if (agent.risk.level === "high" || agent.risk.level === "critical") {
+    must(
+      agent.approval.required === true,
+      `${agentRef}: GOVERNANCE VIOLATION - high/critical risk agents must require approval`
+    );
+  }
+
+  // Rule 3: Internal-only agents should not be selectable
+  if (agent.expose.internal_only === true) {
+    must(
+      agent.expose.selectable === false,
+      `${agentRef}: GOVERNANCE VIOLATION - internal_only agents should not be selectable`
+    );
+  }
+});
+
 console.log(`✅ Registry validation passed: ${registry.agents.length} agents validated`);
 console.log(`   - Agents validated: ${Array.from(seenIds).join(", ")}`);
 console.log(`   - All agents have auto_start=false (security requirement met)`);
 console.log(`   - All governance fields present (risk, approval, startup, healthcheck)`);
+console.log(`   - BSM governance rules enforced (destructive blocked from mobile)`);

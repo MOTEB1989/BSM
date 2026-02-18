@@ -1,12 +1,18 @@
-# BSM Architectural Analysis - Session Summary
+# LexBANK / BSU Platform - Analysis Session Summary
 
 > **Session Date**: 2026-02-06  
 > **Agent**: BSM Autonomous Architect  
 > **Task**: Initial platform analysis and documentation  
 
+## Scope Verified
+
+- **Repository Name**: `LexBANK/BSU` (aligned with `README.md` title: **LexBANK / BSU Platform**).
+- **Repository Type**: Multi-service platform (hybrid Node.js/Go microservices architecture).
+- **Session Scope**: This analysis session belongs to the current repository (`/workspace/BSM`), not an external repository.
+
 ## Objective
 
-Analyze the BSM platform architecture, identify improvement opportunities, and generate comprehensive documentation for developers, architects, and operations teams.
+Analyze the **LexBANK / BSU Platform** architecture, identify improvement opportunities, and generate comprehensive documentation for developers, architects, and operations teams.
 
 ## Analysis Conducted
 
@@ -154,6 +160,10 @@ Updated project README with:
 
 ## Key Findings
 
+### Infrastructure Verification Notes
+- `bsm.onrender.com` appears over HTTPS in the authentication window, which is a positive indicator for the Render-hosted service only.
+- HTTPS is visible for the Render service, while TLS status for `www.lexdo.uk` is not verifiable due to DNS resolution failure.
+
 ### Strengths ✅
 1. **Clean Architecture**: Well-organized modular structure with clear separation of concerns
 2. **Security Foundation**: Strong security measures (token auth, rate limiting, CORS, Helmet)
@@ -180,6 +190,11 @@ Updated project README with:
 #### Long-term (Priority 3)
 9. **Microservices**: Consider microservices architecture for scale
 10. **Advanced Features**: Multi-agent orchestration, RAG, vector DB
+
+## Technical Analysis
+
+- DNS resolution failure occurs before any TLS negotiation, so TLS validation for `www.lexdo.uk` cannot begin until DNS is resolved.
+- The observed HTTPS signal is therefore limited to `bsm.onrender.com` (Render path) and must not be generalized to both domains.
 
 ## Technical Metrics
 

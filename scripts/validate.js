@@ -32,7 +32,16 @@ const allowedActions = new Set([
   "validate_guards",
   "check_api_routes",
   "verify_ui_config",
-  "generate_audit_report"
+  "generate_audit_report",
+  "audit_ios_ui",
+  "validate_mobile_api_contract",
+  "check_safe_area_support",
+  "test_keyboard_behavior",
+  "generate_ios_report",
+  "review_repository",
+  "generate_repository_report",
+  "suggest_improvements",
+  "execute_command"
 ]);
 
 const agentsDir = path.join(process.cwd(), "data", "agents");
@@ -75,6 +84,32 @@ if (fs.existsSync(registryPath)) {
     must(agent.startup.auto_start === false, `${ref}: auto_start must be false`);
   });
   console.log(`✅ Registry validated: ${registry.agents.length} agents with governance fields`);
+}
+
+// Validate orchestrator configuration
+const orchestratorConfigPath = path.join(process.cwd(), ".github", "agents", "orchestrator.config.json");
+if (fs.existsSync(orchestratorConfigPath)) {
+  console.log("Validating orchestrator configuration...");
+  try {
+    const configContent = fs.readFileSync(orchestratorConfigPath, "utf8");
+    const config = JSON.parse(configContent);
+    
+    // Basic validation
+    must(config.name, "Orchestrator config missing name");
+    must(config.version, "Orchestrator config missing version");
+    must(config.agents, "Orchestrator config missing agents array");
+    must(Array.isArray(config.agents) && config.agents.length > 0, "Orchestrator config must have non-empty agents array");
+    
+    // Validate secrets.logging.logSecrets is never true
+    if (config.secrets?.logging?.logSecrets === true) {
+      throw new Error("Security violation: secrets.logging.logSecrets must never be true");
+    }
+    
+    console.log(`✅ Orchestrator config validated: ${config.agents.length} agents configured`);
+  } catch (err) {
+    console.error("❌ Invalid orchestrator config:", err.message);
+    process.exit(1);
+  }
 }
 
 console.log("OK: validation passed");

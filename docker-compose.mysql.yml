@@ -1,0 +1,170 @@
+# ============================================
+# BSM Platform - MySQL Multi-Container Setup
+# Following Microsoft's Docker Multi-Container Tutorial
+# https://learn.microsoft.com/en-us/visualstudio/docker/tutorials/tutorial-multi-container-app-mysql
+# ============================================
+
+version: '3.8'
+
+services:
+  # ==========================================
+  # Node.js Application
+  # ==========================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.example
+      target: development
+    container_name: bsm-app
+    ports:
+      - "3000:3000"
+    environment:
+      # Node.js Configuration
+      - NODE_ENV=development
+      - PORT=3000
+      - LOG_LEVEL=debug
+      
+      # API Keys (from .env or environment)
+      - OPENAI_BSM_KEY=${OPENAI_BSM_KEY}
+      - ADMIN_TOKEN=${ADMIN_TOKEN:-dev-admin-token}
+      
+      # MySQL Connection
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=bsm_user
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-bsm_password}
+      - MYSQL_DATABASE=bsm_db
+      
+      # Redis Connection
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      # Hot-reload support for development
+      - ./src:/app/src:ro
+      - ./data:/app/data:ro
+      # Preserve node_modules
+      - node_modules:/app/node_modules
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - bsm-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ==========================================
+  # MySQL Database
+  # ==========================================
+  mysql:
+    image: mysql:8.0
+    container_name: bsm-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      # MySQL Root Password (required)
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root_password}
+      
+      # Database Configuration
+      - MYSQL_DATABASE=bsm_db
+      - MYSQL_USER=bsm_user
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-bsm_password}
+      
+      # MySQL Configuration
+      - MYSQL_CHARSET=utf8mb4
+      - MYSQL_COLLATION=utf8mb4_unicode_ci
+    volumes:
+      # Persistent data storage
+      - mysql-data:/var/lib/mysql
+      # Optional: Custom MySQL configuration
+      # - ./config/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      # Optional: Initialization scripts
+      # - ./scripts/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - bsm-network
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ==========================================
+  # Redis Cache
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: bsm-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - bsm-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+# ==========================================
+# Volumes
+# ==========================================
+volumes:
+  node_modules:
+    name: bsm-node-modules
+  mysql-data:
+    name: bsm-mysql-data
+  redis-data:
+    name: bsm-redis-data
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  bsm-network:
+    driver: bridge
+    name: bsm-network
+
+# ============================================
+# Usage Instructions:
+# ============================================
+# 
+# Prerequisites:
+# 1. Docker Desktop installed with Docker Compose
+# 2. Create .env file with necessary secrets
+# 3. Ensure ports 3000, 3306, and 6379 are available
+#
+# Start all services:
+#   docker-compose -f docker-compose.mysql.yml up -d
+#
+# View logs:
+#   docker-compose -f docker-compose.mysql.yml logs -f app
+#   docker-compose -f docker-compose.mysql.yml logs -f mysql
+#
+# Check service health:
+#   docker-compose -f docker-compose.mysql.yml ps
+#
+# Connect to MySQL:
+#   docker-compose -f docker-compose.mysql.yml exec mysql mysql -u bsm_user -p
+#   (Password: bsm_password or value from MYSQL_PASSWORD)
+#
+# Stop all services:
+#   docker-compose -f docker-compose.mysql.yml down
+#
+# Stop and remove all data (⚠️ WARNING: Data loss!):
+#   docker-compose -f docker-compose.mysql.yml down -v
+#
+# Rebuild the app:
+#   docker-compose -f docker-compose.mysql.yml up -d --build app
+#
+# ============================================

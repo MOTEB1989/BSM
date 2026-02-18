@@ -2,14 +2,9 @@ import { orchestrator } from "../runners/orchestrator.js";
 import { auditLogger } from "../utils/auditLogger.js";
 import { telegramAgent } from "../orbit/agents/TelegramAgent.js";
 import { buildTelegramStatusMessage } from "../services/telegramStatusService.js";
+import { guardTelegramAgent, getAvailableTelegramAgents } from "../guards/telegramGuard.js";
 import logger from "../utils/logger.js";
-
-const ADMIN_IDS = (process.env.ORBIT_ADMIN_CHAT_IDS || "")
-  .split(",")
-  .map(v => v.trim())
-  .filter(Boolean);
-
-const SECRET_TOKEN = process.env.TELEGRAM_WEBHOOK_SECRET;
+import { verifyTelegramSecret, extractTelegramMessage, isAdminChatId } from "../utils/telegramUtils.js";
 
 /**
  * Telegram Webhook Handler
@@ -21,27 +16,16 @@ const SECRET_TOKEN = process.env.TELEGRAM_WEBHOOK_SECRET;
  */
 export async function telegramWebhook(req, res) {
   try {
-    // 1️⃣ Verify secret token (if set)
-    if (SECRET_TOKEN) {
-      const header = req.headers["x-telegram-bot-api-secret-token"];
-      if (header !== SECRET_TOKEN) {
-        auditLogger.logAccessDenied({
-          resource: "telegram_webhook",
-          action: "webhook_call",
-          reason: "Invalid secret token",
-          user: "telegram:unknown",
-          ip: "telegram",
-          correlationId: req.correlationId
-        });
-        return res.sendStatus(403);
-      }
+    // Verify secret token
+    if (!verifyTelegramSecret(req, res)) {
+      return; // Response already sent by verifyTelegramSecret
     }
 
-    const message = req.body?.message;
-    if (!message?.text) return res.sendStatus(200);
-
-    const chatId = String(message.chat.id);
-    const text = message.text.trim();
+    // Only handle new messages, not edited ones (main webhook behavior)
+    const parsed = extractTelegramMessage(req.body, false);
+    if (!parsed) return res.sendStatus(200);
+    
+    const { chatId, text } = parsed;
 
     logger.info({
       correlationId: req.correlationId,
@@ -49,19 +33,39 @@ export async function telegramWebhook(req, res) {
       text
     }, "Telegram message received");
 
-    // 2️⃣ /start & /help
+    // /start & /help
     if (text === "/start" || text === "/help") {
       await reply(chatId,
         "🤖 BSM Bot\n\n" +
+        "/agents - List available agents\n" +
         "/run <agent> (admin only)\n" +
         "/status (admin only)"
       );
       return res.sendStatus(200);
     }
 
-    const isAdmin = ADMIN_IDS.includes(chatId);
+    const isAdmin = isAdminChatId(chatId);
 
-    // 3️⃣ /status (admin only)
+    // /agents - List available agents
+    if (text === "/agents") {
+      try {
+        const agents = await getAvailableTelegramAgents(isAdmin);
+        if (agents.length === 0) {
+          await reply(chatId, "ℹ️ No agents available in mobile context");
+        } else {
+          const agentList = agents
+            .map(a => `• ${a.id} - ${a.name} (${a.risk} risk)`)
+            .join("\n");
+          await reply(chatId, `📱 Available Agents:\n\n${agentList}\n\nUse /run <agent-id>`);
+        }
+      } catch (error) {
+        logger.error({ error, chatId }, "Failed to list agents");
+        await reply(chatId, "❌ Failed to list agents");
+      }
+      return res.sendStatus(200);
+    }
+
+    // /status (admin only)
     if (text === "/status") {
       if (!isAdmin) {
         auditLogger.logAccessDenied({
@@ -81,7 +85,7 @@ export async function telegramWebhook(req, res) {
       return res.sendStatus(200);
     }
 
-    // 4️⃣ /run <agent> (admin only)
+    // /run <agent> (admin only)
     if (text.startsWith("/run")) {
       if (!isAdmin) {
         auditLogger.logAccessDenied({
@@ -99,6 +103,30 @@ export async function telegramWebhook(req, res) {
       const [, agentId] = text.split(" ");
       if (!agentId) {
         await reply(chatId, "❗ Usage: /run <agent-id>");
+        return res.sendStatus(200);
+      }
+
+      // Apply Telegram guard (context-based restrictions)
+      try {
+        await guardTelegramAgent(agentId, isAdmin);
+      } catch (guardError) {
+        logger.warn({
+          correlationId: req.correlationId,
+          chatId,
+          agentId,
+          error: guardError.message
+        }, "Telegram guard blocked agent execution");
+
+        auditLogger.logAccessDenied({
+          resource: "telegram_agent",
+          action: "run_agent",
+          reason: guardError.message,
+          user: `telegram:${chatId}`,
+          ip: "telegram",
+          correlationId: req.correlationId
+        });
+
+        await reply(chatId, `🚫 ${guardError.message}`);
         return res.sendStatus(200);
       }
 

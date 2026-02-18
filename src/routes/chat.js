@@ -1,38 +1,34 @@
 import { Router } from "express";
 import { runAgent } from "../runners/agentRunner.js";
-import { runGPT } from "../services/gptService.js";
+import { runChat } from "../services/gptService.js";
 import { models } from "../config/models.js";
 import { AppError } from "../utils/errors.js";
 import { env } from "../config/env.js";
+import logger from "../utils/logger.js";
+import { hasUsableApiKey } from "../utils/apiKey.js";
 
 const router = Router();
-
-// Agent-based chat
-router.post("/", async (req, res, next) => {
-  try {
-    const { agentId, input } = req.body;
-    const result = await runAgent({ agentId, input });
-    res.json({ output: result.output });
-  } catch (err) {
-    next(err);
-  }
-});
 
 // AI key status for chat UI
 router.get("/key-status", async (_req, res, next) => {
   try {
     const status = {
-      openai: Boolean(models.openai?.default),
-      anthropic: Boolean(models.anthropic?.default),
-      perplexity: Boolean(models.perplexity?.default),
-      google: Boolean(models.google?.default)
+      openai: hasUsableApiKey(models.openai?.bsm || models.openai?.default),
+      kimi: hasUsableApiKey(models.kimi?.default),
+      perplexity: hasUsableApiKey(models.perplexity?.default),
+      anthropic: hasUsableApiKey(models.anthropic?.default),
+      google: hasUsableApiKey(models.google?.default)
     };
+
+    const anyAvailable = status.openai || status.kimi || status.perplexity || status.anthropic;
 
     const ui = {
       openai: status.openai ? "✅ GPT-4 Ready" : "🔴 GPT-4 Offline",
-      anthropic: status.anthropic ? "✅ Claude Ready" : "🔴 Claude Offline",
+      kimi: status.kimi ? "✅ Kimi Ready" : "🔴 Kimi Offline",
       perplexity: status.perplexity ? "✅ Perplexity Ready" : "🔴 Perplexity Offline",
-      google: status.google ? "✅ Gemini Ready" : "🔴 Gemini Offline"
+      anthropic: status.anthropic ? "✅ Claude Ready" : "🔴 Claude Offline",
+      google: status.google ? "✅ Gemini Ready" : "🔴 Gemini Offline",
+      chat: anyAvailable ? "✅ Chat Available" : "🔴 Chat Offline"
     };
 
     res.json({
@@ -45,6 +41,16 @@ router.get("/key-status", async (_req, res, next) => {
   }
 });
 
+// Agent-based chat
+router.post("/", async (req, res, next) => {
+  try {
+    const { agentId, input, payload } = req.body;
+    const result = await runAgent({ agentId, input, payload });
+    res.json({ output: result.output });
+  } catch (err) {
+    next(err);
+  }
+});
 // Direct GPT chat (no agent required)
 router.post("/direct", async (req, res, next) => {
   try {
@@ -66,16 +72,29 @@ router.post("/direct", async (req, res, next) => {
       throw new AppError("Unsupported language", 400, "INVALID_LANGUAGE");
     }
 
-    const apiKey = models.openai?.default;
-    if (!apiKey) {
-      throw new AppError("AI service is not configured", 503, "MISSING_API_KEY");
+    // Build provider list based on available keys (priority order)
+    const providers = [];
+    const openaiKey = models.openai?.bsm || models.openai?.default;
+    const kimiKey = models.kimi?.default;
+    const perplexityKey = models.perplexity?.default;
+    const anthropicKey = models.anthropic?.default;
+
+    if (hasUsableApiKey(openaiKey)) providers.push({ type: "openai", apiKey: openaiKey });
+    if (hasUsableApiKey(kimiKey)) providers.push({ type: "kimi", apiKey: kimiKey });
+    if (hasUsableApiKey(perplexityKey)) providers.push({ type: "perplexity", apiKey: perplexityKey });
+    if (hasUsableApiKey(anthropicKey)) providers.push({ type: "anthropic", apiKey: anthropicKey });
+
+    if (providers.length === 0) {
+      throw new AppError("No AI service is configured", 503, "MISSING_API_KEY");
     }
 
     const systemPrompt = language === "ar"
       ? "أنت مساعد ذكي من منصة LexBANK. أجب باللغة العربية بشكل مهني ومفيد. ساعد المستخدمين في الأسئلة القانونية والتقنية والإدارية."
       : "You are a smart assistant from the LexBANK platform. Answer professionally and helpfully. Assist users with legal, technical, and administrative questions.";
 
-    const messages = [{ role: "system", content: systemPrompt }];
+    const chatMessages = [
+      { role: "system", content: systemPrompt }
+    ];
 
     // Add conversation history (limit to last 20 messages)
     const recentHistory = history.slice(-20);
@@ -85,18 +104,17 @@ router.post("/direct", async (req, res, next) => {
         typeof msg === "object" &&
         (msg.role === "user" || msg.role === "assistant")
       ) {
-        messages.push({ role: msg.role, content: String(msg.content).slice(0, env.maxAgentInputLength) });
+        chatMessages.push({ role: msg.role, content: String(msg.content).slice(0, env.maxAgentInputLength) });
       }
     }
 
-    messages.push({ role: "user", content: message });
+    chatMessages.push({ role: "user", content: message });
 
-    const result = await runGPT({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      apiKey,
+    const result = await runChat({
       system: systemPrompt,
       user: message,
-      messages
+      messages: chatMessages,
+      providers
     });
 
     const output = (result !== null && result !== undefined && result !== "")

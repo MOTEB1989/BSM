@@ -3,8 +3,6 @@ name: 🤖 BSU CI/CD - Build, Test & Deploy to Render
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -53,38 +51,37 @@ jobs:
         env:
           OPENAI_BSM_KEY: ${{ secrets.OPENAI_BSM_KEY }}
         run: |
-          node -e "
-          const { codeReviewAgent } = require('./src/agents/CodeReviewAgent.js');
-          codeReviewAgent.review({
-            prNumber: 999,
-            files: [{filename: 'test.js', changes: 10}],
-            diff: 'console.log(\"test\")',
-            author: 'test'
-          }).then(r => {
+          node --input-type=module -e "
+          import { codeReviewAgent } from './src/agents/CodeReviewAgent.js';
+          try {
+            const r = await codeReviewAgent.review({
+              prNumber: 999,
+              files: [{filename: 'test.js', changes: 10}],
+              diff: 'console.log(\"test\")',
+              author: 'test'
+            });
             console.log('✅ CodeReviewAgent:', r.score ? 'Working' : 'Failed');
             process.exit(0);
-          }).catch(e => {
+          } catch (e) {
             console.error('❌ CodeReviewAgent:', e.message);
             process.exit(1);
-          });
+          }
           "
 
       - name: Test SecurityAgent
         env:
           PERPLEXITY_KEY: ${{ secrets.PERPLEXITY_KEY }}
         run: |
-          node -e "
-          const { securityAgent } = require('./src/agents/SecurityAgent.js');
-          securityAgent.scan({
-            prNumber: 999,
-            dependencies: [{name: 'lodash', version: '4.17.0'}]
-          }).then(r => {
-            console.log('✅ SecurityAgent:', r.summary ? 'Working' : 'Failed');
+          node --input-type=module -e "
+          import { scanForCVEs } from './src/agents/securityScanner.js';
+          try {
+            const r = await scanForCVEs([{name: 'lodash', version: '4.17.0'}]);
+            console.log('✅ SecurityAgent: Working (' + r.vulnerabilities.length + ' CVEs found)');
             process.exit(0);
-          }).catch(e => {
+          } catch (e) {
             console.error('❌ SecurityAgent:', e.message);
             process.exit(1);
-          });
+          }
           "
 
       - name: Run full test suite

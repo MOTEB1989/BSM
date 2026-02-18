@@ -1,5 +1,8 @@
 import logger from "./logger.js";
 
+// Global registry of circuit breakers for health monitoring
+const circuitBreakers = new Map();
+
 /**
  * Circuit Breaker pattern implementation
  * Prevents cascading failures by monitoring API calls and opening the circuit after threshold failures
@@ -15,6 +18,9 @@ export class CircuitBreaker {
     this.failureCount = 0;
     this.nextAttempt = Date.now();
     this.successCount = 0;
+    
+    // Register this circuit breaker for health monitoring
+    circuitBreakers.set(this.name, this);
   }
 
   async execute(...args) {
@@ -73,3 +79,30 @@ export class CircuitBreaker {
     };
   }
 }
+
+/**
+ * Get stats for all registered circuit breakers
+ * Used by health check endpoint
+ */
+export function getAllCircuitBreakerStats() {
+  const stats = {};
+  for (const [name, breaker] of circuitBreakers.entries()) {
+    stats[name] = breaker.getState();
+  }
+  return stats;
+}
+
+/**
+ * Get or create a circuit breaker by name
+ * Factory function for easy access to circuit breakers
+ */
+export function getCircuitBreaker(name, options = {}) {
+  if (!circuitBreakers.has(name)) {
+    // Create a no-op function for factory-created breakers
+    const noop = async () => {};
+    circuitBreakers.set(name, new CircuitBreaker(noop, { name, ...options }));
+  }
+  return circuitBreakers.get(name);
+}
+
+

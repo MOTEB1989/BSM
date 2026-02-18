@@ -219,9 +219,11 @@ npm start
 2. Secrets and variables → Actions
 3. New repository secret
 4. أضف:
-   - `KM_ENDPOINT`
-   - `KM_TOKEN`
-   - `SNYK_TOKEN`
+   - `OPENAI_API_KEY` (for OpenAI integration)
+   - `ANTHROPIC_API_KEY` (for Claude Assistant workflow)
+   - `KM_ENDPOINT` (if using Key Management)
+   - `KM_TOKEN` (if using Key Management)
+   - `SNYK_TOKEN` (for security scanning)
    - إلخ...
 
 **الاستخدام في Workflow:**
@@ -235,6 +237,16 @@ jobs:
       ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
     steps:
       - run: npm start
+
+# .github/workflows/claude-assistant.yml
+jobs:
+  claude-response:
+    # Only run if secret is configured
+    if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    steps:
+      - uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
 ---
@@ -906,12 +918,14 @@ aws secretsmanager get-secret-value --secret-id BSM_OPENAI_KEY
 - [ ] ملف .env في .gitignore
 - [ ] .env.example لا يحتوي على أسرار حقيقية
 - [ ] ADMIN_TOKEN قوي (16+ حرف)
-- [ ] API Keys صالحة ومحدثة
+- [ ] API Keys صالحة ومحدثة (OPENAI_API_KEY مطلوب)
+- [ ] Optional secrets documented (ANTHROPIC_API_KEY for Claude Assistant)
 - [ ] تم تفعيل Secret Scanning
 - [ ] تم تفعيل Key Rotation policy
 - [ ] تم اختبار التطبيق بدون أسرار في الكود
-- [ ] تم توثيق جميع الأسرار المطلوبة
+- [ ] تم توثيق جميع الأسرار المطلوبة والاختيارية
 - [ ] تم تقييد الأذونات (Least Privilege)
+- [ ] Workflows with optional secrets use conditional execution
 
 ---
 

@@ -31,8 +31,8 @@ jobs:
             echo "ERROR: package.json not found" >&2
             exit 2
           fi
-          echo "Name:    $(node -e "console.log(require('./package.json').name)")"
-          echo "Version: $(node -e "console.log(require('./package.json').version)")"
+          echo "Name:    $(jq -r '.name' package.json)"
+          echo "Version: $(jq -r '.version' package.json)"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

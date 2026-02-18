@@ -4,13 +4,19 @@
   "private": true,
   "type": "module",
   "main": "src/server.js",
+  "license": "UNLICENSED",
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "validate": "node scripts/validate.js",
+    "validate:registry": "node scripts/validate-registry.js",
+    "validate:agent-sync": "node scripts/validate-agent-sync.js",
     "test": "node scripts/validate.js",
+    "health": "node scripts/health-check.js",
+    "health:detailed": "node scripts/health-check.js --detailed",
     "pr-check": "node scripts/pr-review-checklist.js --local",
-    "pr-check:verbose": "node scripts/pr-review-checklist.js --local --verbose"
+    "pr-check:verbose": "node scripts/pr-review-checklist.js --local --verbose",
+    "test:unit": "node --test tests/*.test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

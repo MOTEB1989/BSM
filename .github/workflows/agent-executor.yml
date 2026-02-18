@@ -1,0 +1,59 @@
+name: Agent Auto-Executor
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: Terminal command to execute
+        required: true
+        type: string
+      working_dir:
+        description: Working directory
+        required: false
+        default: .
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Execute Agent Command
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "🤖 Executing: ${{ github.event.inputs.command }}"
+          cd "${{ github.event.inputs.working_dir }}"
+          bash -lc "${{ github.event.inputs.command }}"
+
+      - name: Commit changes (if any)
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --local user.email "agent@bsm.ai"
+          git config --local user.name "BSM Agent"
+          git add -A
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: auto-execute command '${{ github.event.inputs.command }}'"
+            git push
+          else
+            echo "No changes to push"
+          fi
+
+      - name: Notify Telegram
+        if: always() && secrets.TELEGRAM_BOT_TOKEN != '' && secrets.TELEGRAM_CHAT_ID != ''
+        shell: bash
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=⚡ Command executed: ${{ github.event.inputs.command }}%0AStatus: ${{ job.status }}"

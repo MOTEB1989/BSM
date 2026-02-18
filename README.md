@@ -56,13 +56,63 @@ BSU/
 
 ## API Endpoints
 
+### Health & Status Endpoints
+- `GET /health` - Basic health check
+- `GET /api/health` - API health check
+- `GET /api/health/detailed` - Comprehensive health check with system validation
+- `GET /api/status` - System status with features and capabilities
+
 ### Public Endpoints
-- `GET /api/health` - Health check endpoint
 - `GET /api/agents` - List all available agents
 - `GET /api/knowledge` - List all knowledge documents
 - `POST /api/agents/run` - Execute an agent with input
 - `POST /api/chat` - Agent-based chat (requires `agentId` and `input`)
-- `POST /api/chat/direct` - Direct GPT chat with conversation history
+- `GET /api/chat/key-status` - Check AI service status
+- `POST /api/chat/direct` - Direct GPT chat with conversation history (see details below)
+
+#### POST /api/chat/direct
+
+Direct GPT-4o-mini chat endpoint with bilingual support (Arabic/English) and conversation history.
+
+**Request:**
+```json
+{
+  "message": "Your question here",
+  "language": "ar|en",
+  "history": [
+    { "role": "user", "content": "Previous message" },
+    { "role": "assistant", "content": "Previous response" }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "output": "AI response text"
+}
+```
+
+**Error Responses:**
+- `400` - Invalid input (missing message, message too long, invalid language)
+- `429` - Rate limit exceeded (100 requests per 15 minutes per IP)
+- `503` - AI service not configured (missing API key)
+- `500` - Server error
+
+**Configuration:**
+- Message limit: 4000 characters (configurable via `MAX_AGENT_INPUT_LENGTH`)
+- History limit: Last 20 messages
+- Supported languages: `ar` (Arabic), `en` (English)
+- Rate limiting: 100 requests per 15 minutes per IP (configurable)
+
+📖 See [LexPrim Integration Guide](docs/LEXPRIM-INTEGRATION.md) for complete API documentation, deployment steps, and troubleshooting.
+
+### Webhook Endpoints
+- `POST /webhook/github` - GitHub webhook endpoint (primary)
+- `POST /api/webhooks/github` - GitHub webhook endpoint (alternative)
+- `POST /api/webhooks/telegram` - Telegram bot webhook
+
+📖 See [GitHub Webhook Setup Guide](docs/GITHUB-WEBHOOK-SETUP.md) for configuration details.
 
 ### Chat Interface
 - `/chat` - Professional Arabic/English GPT chat interface (Vue 3 + Tailwind)
@@ -70,13 +120,51 @@ BSU/
 ### Admin Endpoints (requires x-admin-token header)
 - `GET /api/admin/agents` - Get agents configuration
 - `GET /api/admin/knowledge` - Get knowledge documents
-- `/admin` - Admin UI dashboard (requires admin token via Basic Auth, `x-admin-token`, or `?token=...`)
+- `/admin` - Admin UI dashboard
+
+### PR Management Endpoints
+- `POST /api/pr/evaluate` - Evaluate PR merge readiness
+- `POST /api/pr/batch-evaluate` - Evaluate multiple PRs
+- `GET /api/pr/config` - Get PR Merge Agent configuration
+- `GET /api/pr/health` - PR operations health check
+
+**CLI Tool:**
+```bash
+# List all open PRs with status
+node scripts/pr-operations.js list
+
+# Review a specific PR
+node scripts/pr-operations.js review <pr-number>
+
+# Approve a PR if quality gates pass
+node scripts/pr-operations.js approve <pr-number>
+
+# Merge an approved PR
+node scripts/pr-operations.js merge <pr-number>
+
+# Close a PR with reason
+node scripts/pr-operations.js close <pr-number> "reason"
+
+# Auto-merge all ready PRs
+node scripts/pr-operations.js auto
+```
+
+📖 See [PR Management Guide](docs/PR-MANAGEMENT.md) for comprehensive documentation.
+
+#### Authentication Barrier
+- الخدمة تعرض مطالبة اسم مستخدم/كلمة مرور (HTTP Basic/Auth challenge) مع حالة `Unauthorized (401)` عند عدم تمرير بيانات اعتماد صحيحة.
+- لواجهة `/admin` استخدم فقط `x-admin-token` header أو `Authorization: Basic ...`؛ تمرير `token` عبر query string (مثل `?token=...`) غير مدعوم ومرفوض.
+
+**احتمالات (غير جازمة):**
+- Basic Auth على مستوى البروكسي أو طبقة البوابة الأمامية.
+- حماية مصادقة داخلية على مستوى التطبيق نفسه.
 
 ### Standalone Frontend (GitHub Pages)
-- Hosted at `https://www.lexdo.uk` via GitHub Pages
+- Hosted at `https://www.lexdo.uk` or `https://lexprim.com` via GitHub Pages
 - Connects to the API backend (configurable URL)
 - Same chat interface with API URL configuration
 - Automated DNS verification setup available (see `dns/GITHUB-PAGES-VERIFICATION.md`)
+- **New:** Full deployment guide for lexprim.com available at [docs/LEXPRIM-DEPLOYMENT.md](docs/LEXPRIM-DEPLOYMENT.md)
 
 ## DNS Management
 
@@ -195,6 +283,16 @@ cp .env.example .env
 # Edit .env with your configuration
 ```
 
+#### Production Host Installation (Ubuntu VPS)
+
+For one-command production provisioning (Nginx, PostgreSQL, Redis, PM2, SSL), use:
+
+```bash
+sudo bash scripts/install-lexbank.sh --non-interactive
+```
+
+You can override defaults via environment variables (for example `DOMAIN`, `EMAIL`, and `ADMIN_TOKEN`).
+
 ### ORBIT Self-Healing Agent Setup
 
 Set up automated monitoring, health checks, and self-healing capabilities:
@@ -260,7 +358,51 @@ npm start
 
 # Validate data structure
 npm run validate
+
+# Health checks
+npm run health              # Quick health check
+npm run health:detailed     # Comprehensive health check with integrity report
 ```
+
+For detailed health check documentation, see [docs/HEALTH-CHECK.md](docs/HEALTH-CHECK.md).
+
+### Docker Deployment
+
+The platform supports multiple Docker deployment configurations:
+
+#### MySQL Multi-Container Setup
+Following [Microsoft's Docker Multi-Container Tutorial](https://learn.microsoft.com/en-us/visualstudio/docker/tutorials/tutorial-multi-container-app-mysql):
+
+```bash
+# Start with MySQL database
+docker-compose -f docker-compose.mysql.yml up -d
+
+# View logs
+docker-compose -f docker-compose.mysql.yml logs -f
+
+# Stop services
+docker-compose -f docker-compose.mysql.yml down
+```
+
+📖 See [docs/MYSQL-MULTI-CONTAINER.md](docs/MYSQL-MULTI-CONTAINER.md) for complete setup guide.
+
+#### PostgreSQL Setup
+```bash
+# Start with PostgreSQL database
+docker-compose -f docker-compose.yml.example up -d
+```
+
+#### Hybrid Node.js/Go Architecture
+```bash
+# Start with PostgreSQL, Redis, and Go services
+docker-compose -f docker-compose.hybrid.yml up -d
+```
+
+**Available Configurations:**
+- `docker-compose.mysql.yml` - MySQL 8.0 + Redis + Node.js app
+- `docker-compose.yml.example` - PostgreSQL 16 + Redis + Node.js app
+- `docker-compose.hybrid.yml` - Full hybrid stack with Go services
+- `Dockerfile.example` - Multi-stage production build
 
 ## GitHub Copilot Pro Integration
 
@@ -361,6 +503,7 @@ The project includes GitHub Actions workflows:
 - [BSU Orchestrator Quick Reference](docs/BSU-SUPREME-ORCHESTRATOR-QUICK-REF.md) - Quick start guide for the orchestrator
 - [CI/CD Recommendations](docs/CICD-RECOMMENDATIONS.md) - Pipeline enhancements and automation strategies
 - [Security & Deployment Guide](docs/SECURITY-DEPLOYMENT.md) - Security best practices and deployment procedures
+- [Documentation Deployment Policy](docs/DOCS-DEPLOYMENT.md) - Official docs CI/CD, build source, and versioning policy
 
 ### API Documentation
 - API endpoints documented above
@@ -369,6 +512,8 @@ The project includes GitHub Actions workflows:
 ### DNS and Infrastructure
 - [DNS Record Types](dns/DNS-RECORD-TYPES.md) - Cloudflare DNS configuration
 - [GitHub Pages Verification](dns/GITHUB-PAGES-VERIFICATION.md) - Custom domain setup
+- [Cloudflare API Names (Arabic)](docs/CLOUDFLARE-API-NAMES.md) - Complete Cloudflare API reference
+- [Cloudflare Quick Reference (Arabic)](docs/CLOUDFLARE-QUICK-REFERENCE-AR.md) - Quick guide to Cloudflare API variables
 
 ## Contributing
 
@@ -389,6 +534,11 @@ Copyright © 2026 LexBANK. All rights reserved.
 
 We maintain active Telegram channels for community support and announcements:
 
+- **🤖 LexFix Support Bot** - Get instant help and support
+  - **Link**: https://t.me/LexFixBot
+  - Ask questions, get troubleshooting help, and community support
+  - Available 24/7 for assistance
+
 - **📢 Official Announcements Channel** - For project updates, releases, and official announcements
   - *Coming soon - Will be announced when available*
   
@@ -398,8 +548,6 @@ We maintain active Telegram channels for community support and announcements:
 - **🤖 ORBIT Admin Bot** - Private bot for repository management (admins only)
   - For administrators: See [ORBIT Quick Setup Guide](docs/ORBIT-QUICK-SETUP.md)
   - Not for general community support
-
-**Note**: We are currently setting up our public Telegram community channels. Once available, links will be posted here and in our documentation.
 
 ### 🐛 Report Issues
 

@@ -1,0 +1,31 @@
+name: Manage Stale Pull Requests
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark and close stale pull requests
+        uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          days-before-pr-stale: 7
+          days-before-pr-close: 3
+          stale-pr-label: stale
+          exempt-pr-labels: blocked,priority-high
+          stale-pr-message: >-
+            هذا الطلب لم يشهد أي نشاط خلال آخر 7 أيام، وتمت إضافة وسم `stale`.
+            سيُغلق خلال 3 أيام إذا لم يتم التحديث.
+          close-pr-message: >-
+            تم إغلاق هذا الطلب تلقائيًا بعد 10 أيام من الخمول.
+            إذا تم التحديث لاحقًا، يمكنكم إعادة فتحه بكل سهولة.
+          remove-stale-when-updated: true
+          ascending: true

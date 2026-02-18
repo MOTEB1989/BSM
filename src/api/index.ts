@@ -8,3 +8,4 @@ export * from './groq-client';
 export * from './cohere-client';
 export * from './mistral-client';
 export * from './perplexity-client';
+export * from './kimi-client';

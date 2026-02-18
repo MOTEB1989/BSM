@@ -6,7 +6,10 @@ services:
     buildCommand: "npm ci"
     startCommand: "npm start"
     # Environment variables should be set in Render dashboard:
-    # - OPENAI_API_KEY or OPENAI_BSM_KEY or OPENAI_BSU_KEY (OpenAI API key)
-    # - ADMIN_TOKEN (admin authentication token)
-    # - CORS_ORIGINS (comma-separated origins, e.g., https://www.lexdo.uk,https://lexdo.uk)
-    # - NODE_ENV (production)
+    # Required:
+    #   - OPENAI_API_KEY or OPENAI_BSM_KEY or OPENAI_BSU_KEY (OpenAI API key)
+    #   - ADMIN_TOKEN (admin authentication token, minimum 16 characters)
+    #   - NODE_ENV (production)
+    # Optional:
+    #   - CORS_ORIGINS (comma-separated origins, e.g., https://www.lexdo.uk,https://lexdo.uk)
+    #   - GITHUB_WEBHOOK_SECRET (required only if using GitHub webhooks)

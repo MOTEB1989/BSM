@@ -15,10 +15,14 @@ import { env } from "./config/env.js";
 import { getHealth } from "./controllers/healthController.js";
 import { initializeAgents } from "./agents/index.js";
 import logger from "./utils/logger.js";
+import { handleGitHubWebhook } from "./controllers/webhookController.js";
 
 import routes from "./routes/index.js";
 
 const app = express();
+
+// Trust proxy when behind reverse proxy (Render, Cloudflare, etc.)
+app.set("trust proxy", 1);
 
 // Initialize AI agents
 try {
@@ -40,6 +44,7 @@ try {
   // Non-critical - app can run without AI agents
 }
 
+
 const corsOptions = env.corsOrigins.length
   ? {
       origin: (origin, callback) => {
@@ -57,6 +62,21 @@ app.use(express.json({ limit: '1mb' }));
 
 app.use(correlationMiddleware);
 app.use(requestLogger);
+
+// GitHub webhook endpoint (before security middleware to allow external requests)
+// GitHub webhooks come from GitHub's servers, not from LAN or mobile devices
+// Rate limited separately to prevent abuse while allowing legitimate webhook traffic
+app.post(
+  "/webhook/github",
+  rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 30, // Allow 30 webhook requests per minute (reasonable for active repos)
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: "Too many webhook requests, please try again later"
+  }),
+  handleGitHubWebhook
+);
 
 // Apply security middleware
 app.use(lanOnlyMiddleware);
@@ -81,6 +101,31 @@ app.get("/", (req, res) => res.redirect("/chat"));
 
 // /docs and /docs/* redirect to chat UI to prevent JSON 404
 app.get("/docs*", (req, res) => res.redirect("/chat"));
+
+// serve Kimi chat interface with CSP headers for external resources
+app.get("/kimi-chat", 
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://unpkg.com",
+          "https://cdn.tailwindcss.com",
+          "https://cdn.jsdelivr.net"
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:"],
+        connectSrc: ["'self'", ...env.corsOrigins]
+      }
+    }
+  }),
+  (req, res) => {
+    res.sendFile(path.join(process.cwd(), "docs/kimi-chat.html"));
+  }
+);
 
 // serve admin UI static
 app.use("/admin", adminUiAuth, express.static(path.join(process.cwd(), "src/admin")));

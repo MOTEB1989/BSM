@@ -14,6 +14,7 @@ jobs:
   weekly-audit:
     runs-on: ubuntu-latest
     env:
+      GITHUB_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
       KM_ENDPOINT: ${{ secrets.KM_ENDPOINT }}
       KM_TOKEN: ${{ secrets.KM_TOKEN }}
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}

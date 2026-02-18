@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>LexPrim - المساعد القانوني الذكي</title>
+  <meta name="description" content="المساعد القانوني الذكي من LexPrim - استشارات قانونية فورية مدعومة بتقنية GPT-4" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    /* iOS Safe Area */
+    .safe-area-inset {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+
+    html {
+      overscroll-behavior: none;
+    }
+
+    body {
+      -webkit-overflow-scrolling: touch;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    }
+
+    #app {
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    @media (display-mode: standalone) {
+      header {
+        padding-top: env(safe-area-inset-top) !important;
+      }
+      .border-t {
+        padding-bottom: env(safe-area-inset-bottom) !important;
+      }
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      button, a, select, input, textarea {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #475569 transparent;
+    }
+
+    .typing-dots span {
+      animation-duration: 1s;
+      animation-iteration-count: infinite;
+    }
+
+    .prose {
+      direction: inherit;
+      text-align: inherit;
+    }
+
+    .prose p {
+      margin-top: 0.5em;
+      margin-bottom: 0.5em;
+    }
+
+    .prose code {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.85em;
+      font-family: 'Courier New', monospace;
+    }
+
+    .prose pre {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 1em;
+      overflow-x: auto;
+      margin: 0.75em 0;
+      direction: ltr;
+      text-align: left;
+    }
+
+    .prose a {
+      color: #60a5fa;
+      text-decoration: underline;
+    }
+
+    .prose a:hover {
+      color: #93c5fd;
+    }
+
+    @keyframes messageIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .flex.justify-start,
+    .flex.justify-end {
+      animation: messageIn 0.3s ease-out;
+    }
+
+    button:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    textarea:focus,
+    button:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+    }
+  </style>
+</head>
+<body class="dark text-white font-sans min-h-screen flex flex-col safe-area-inset">
+
+  <div id="app" class="flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
+      <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-lg font-bold shadow-lg shadow-blue-600/20">
+            ⚖️
+          </div>
+          <div>
+            <h1 class="text-lg font-bold text-white">LexPrim</h1>
+            <p class="text-xs text-slate-400">{{ lang === 'ar' ? 'المساعد القانوني' : 'Legal Assistant' }}</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Language Toggle -->
+          <button @click="toggleLang" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors border border-slate-700">
+            {{ lang === 'ar' ? 'EN' : 'عربي' }}
+          </button>
+
+          <!-- New Chat -->
+          <button @click="clearChat" class="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm">
+            {{ lang === 'ar' ? 'محادثة جديدة' : 'New Chat' }}
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Chat Area -->
+    <main class="flex-1 overflow-hidden flex flex-col max-w-4xl w-full mx-auto">
+
+      <!-- Messages -->
+      <div ref="messagesContainer" class="flex-1 overflow-y-auto px-4 py-6 space-y-4 scroll-smooth" @scroll="handleScroll">
+
+        <!-- Welcome Screen -->
+        <div v-if="messages.length === 0" class="flex flex-col items-center justify-center h-full text-center py-16">
+          <div class="w-20 h-20 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-6">
+            <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+            </svg>
+          </div>
+          <h2 class="text-2xl font-bold mb-2">{{ lang === 'ar' ? 'مرحبًا بك في LexPrim' : 'Welcome to LexPrim' }}</h2>
+          <p class="text-slate-400 mb-8 max-w-md">{{ lang === 'ar' ? 'اسأل عن أي موضوع قانوني أو تقني وسأساعدك برسالة ذكية' : 'Ask about any legal or technical topic and I\'ll help you with a smart response' }}</p>
+
+          <!-- Quick Actions -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
+            <button v-for="q in quickActions" :key="q.text" @click="sendQuickAction(q.text)" class="text-right p-4 bg-slate-900/50 hover:bg-slate-800/80 border border-slate-800 hover:border-blue-600/50 rounded-xl transition-all group">
+              <span class="text-lg mb-1 block">{{ q.icon }}</span>
+              <span class="text-sm text-slate-300 group-hover:text-white transition-colors">{{ q.text }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Message Bubbles -->
+        <div v-for="(msg, i) in messages" :key="i" class="flex" :class="msg.role === 'user' ? 'justify-start' : 'justify-end'">
+          <div class="max-w-[85%] sm:max-w-[75%]">
+            <!-- Avatar + Name -->
+            <div class="flex items-center gap-2 mb-1" :class="msg.role === 'user' ? '' : 'flex-row-reverse'">
+              <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs"
+                :class="msg.role === 'user' ? 'bg-blue-600' : 'bg-emerald-600'">
+                {{ msg.role === 'user' ? (lang === 'ar' ? 'أ' : 'U') : '⚖️' }}
+              </div>
+              <span class="text-xs text-slate-500">{{ msg.role === 'user' ? (lang === 'ar' ? 'أنت' : 'You') : 'LexPrim' }}</span>
+              <span class="text-xs text-slate-600">{{ formatTime(msg.time) }}</span>
+            </div>
+            <!-- Bubble -->
+            <div class="rounded-2xl px-4 py-3 leading-relaxed"
+              :class="msg.role === 'user'
+                ? 'bg-blue-600/20 border border-blue-600/30 text-slate-100'
+                : 'bg-slate-800/80 border border-slate-700/50 text-slate-200'">
+              <div v-if="msg.role === 'assistant'" class="prose prose-invert prose-sm max-w-none" v-html="renderMarkdown(msg.content)"></div>
+              <div v-else class="whitespace-pre-wrap">{{ msg.content }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Typing Indicator -->
+        <div v-if="loading" class="flex justify-end">
+          <div class="max-w-[75%]">
+            <div class="flex items-center gap-2 mb-1 flex-row-reverse">
+              <div class="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center text-xs">⚖️</div>
+              <span class="text-xs text-slate-500">LexPrim</span>
+            </div>
+            <div class="bg-slate-800/80 border border-slate-700/50 rounded-2xl px-4 py-3">
+              <div class="typing-dots flex gap-1 items-center">
+                <span class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
+                <span class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
+                <span class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div v-if="error" class="flex justify-center">
+          <div class="bg-red-900/30 border border-red-800/50 rounded-xl px-4 py-3 text-red-300 text-sm flex items-center gap-2">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>{{ error }}</span>
+            <button @click="error = ''" class="text-red-400 hover:text-red-200">&times;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="border-t border-slate-800 bg-slate-900/50 backdrop-blur-md p-4">
+        <div class="max-w-4xl mx-auto">
+          <div class="flex gap-3 items-end">
+            <div class="flex-1 relative">
+              <textarea
+                ref="inputField"
+                v-model="input"
+                @keydown.enter.exact="handleEnter"
+                :placeholder="lang === 'ar' ? 'اسأل سؤالك هنا...' : 'Ask your question...'"
+                :disabled="loading"
+                rows="1"
+                class="w-full bg-slate-800 border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 resize-none transition-all outline-none text-sm leading-relaxed max-h-32 overflow-y-auto"
+                :dir="lang === 'ar' ? 'rtl' : 'ltr'"
+              ></textarea>
+            </div>
+            <button
+              @click="sendMessage"
+              :disabled="loading || !input.trim()"
+              class="h-11 w-11 flex-shrink-0 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:cursor-not-allowed rounded-xl flex items-center justify-center transition-all shadow-lg shadow-blue-600/20 disabled:shadow-none"
+            >
+              <svg v-if="!loading" class="w-5 h-5 text-white rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+              </svg>
+              <svg v-else class="w-5 h-5 text-slate-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+            </button>
+          </div>
+          <p class="text-xs text-slate-600 mt-2 text-center">
+            {{ lang === 'ar' ? 'LexPrim مدعوم بتقنية GPT-4 | محادثاتك سرية وآمنة' : 'LexPrim powered by GPT-4 | Your conversations are private and secure' }}
+          </p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const { createApp, ref, computed, nextTick, onMounted } = Vue;
+
+    // Configure API base - adjust to your Render backend
+    const API_BASE = 'https://bsm-lexbank.onrender.com'; // Update with your actual backend URL
+
+    createApp({
+      setup() {
+        const messages = ref([]);
+        const input = ref('');
+        const loading = ref(false);
+        const error = ref('');
+        const lang = ref('ar');
+        const messagesContainer = ref(null);
+        const inputField = ref(null);
+
+        const quickActions = computed(() => {
+          if (lang.value === 'ar') {
+            return [
+              { icon: '⚖️', text: 'ما هي أنواع الشركات في السعودية؟' },
+              { icon: '📝', text: 'ساعدني في صياغة عقد' },
+              { icon: '🏢', text: 'ما هي متطلبات الحوكمة؟' },
+              { icon: '💡', text: 'اشرح لي نظام الإفلاس' }
+            ];
+          }
+          return [
+            { icon: '⚖️', text: 'What are company types in Saudi Arabia?' },
+            { icon: '📝', text: 'Help me draft a contract' },
+            { icon: '🏢', text: 'What are governance requirements?' },
+            { icon: '💡', text: 'Explain the bankruptcy system' }
+          ];
+        });
+
+        function toggleLang() {
+          lang.value = lang.value === 'ar' ? 'en' : 'ar';
+          document.documentElement.lang = lang.value;
+          document.documentElement.dir = lang.value === 'ar' ? 'rtl' : 'ltr';
+        }
+
+        function clearChat() {
+          messages.value = [];
+          error.value = '';
+          nextTick(() => inputField.value?.focus());
+        }
+
+        function formatTime(time) {
+          if (!time) return '';
+          const d = new Date(time);
+          return d.toLocaleTimeString(lang.value === 'ar' ? 'ar-SA' : 'en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        }
+
+        function renderMarkdown(text) {
+          if (!text) return '';
+          try {
+            return marked.parse(text, { breaks: true, gfm: true });
+          } catch {
+            return text;
+          }
+        }
+
+        function scrollToBottom() {
+          nextTick(() => {
+            if (messagesContainer.value) {
+              messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+            }
+          });
+        }
+
+        function handleScroll() {
+          // Scroll handling
+        }
+
+        function handleEnter(e) {
+          if (!e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+          }
+        }
+
+        function sendQuickAction(text) {
+          input.value = text;
+          sendMessage();
+        }
+
+        async function sendMessage() {
+          const text = input.value.trim();
+          if (!text || loading.value) return;
+
+          const historyBeforeNewMessage = messages.value
+            .filter(m => m.role === 'user' || m.role === 'assistant')
+            .map(m => ({ role: m.role, content: m.content }));
+
+          error.value = '';
+          input.value = '';
+
+          nextTick(() => {
+            if (inputField.value) inputField.value.style.height = 'auto';
+          });
+
+          messages.value.push({
+            role: 'user',
+            content: text,
+            time: Date.now()
+          });
+          scrollToBottom();
+
+          loading.value = true;
+
+          try {
+            const url = `${API_BASE}/api/chat/direct`;
+            const body = {
+              message: text,
+              language: lang.value,
+              history: historyBeforeNewMessage
+            };
+
+            const res = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'omit',
+              body: JSON.stringify(body)
+            });
+
+            if (!res.ok) {
+              const errData = await res.json().catch(() => ({}));
+              const errorMsg = errData.message || errData.error || `HTTP ${res.status}`;
+              throw new Error(errorMsg);
+            }
+
+            const data = await res.json();
+
+            messages.value.push({
+              role: 'assistant',
+              content: data.output || (lang.value === 'ar' ? 'لم يتم استلام رد.' : 'No response received.'),
+              time: Date.now()
+            });
+          } catch (err) {
+            console.error('Chat error:', err);
+            error.value = lang.value === 'ar'
+              ? `خطأ: ${err.message}`
+              : `Error: ${err.message}`;
+          } finally {
+            loading.value = false;
+            scrollToBottom();
+            nextTick(() => inputField.value?.focus());
+          }
+        }
+
+        onMounted(() => {
+          document.addEventListener('click', (e) => {
+            // Close dropdowns
+          });
+
+          if (inputField.value) {
+            inputField.value.addEventListener('focus', () => {
+              setTimeout(() => {
+                inputField.value?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+              }, 300);
+            });
+          }
+
+          inputField.value?.focus();
+        });
+
+        return {
+          messages,
+          input,
+          loading,
+          error,
+          lang,
+          messagesContainer,
+          inputField,
+          quickActions,
+          toggleLang,
+          clearChat,
+          formatTime,
+          renderMarkdown,
+          scrollToBottom,
+          handleScroll,
+          handleEnter,
+          sendQuickAction,
+          sendMessage
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

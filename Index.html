@@ -38,7 +38,8 @@
     </div>
 
     <script>
-        const API='https://sr-bsm.onrender.com';
+        // Auto-detect API URL: use same origin when served from Express, or configurable URL
+        const API = window.__LEXBANK_API_URL__ || (window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin);
         const AUTH_TOKEN = window.AUTH_TOKEN || '';
 
         function appendMessage(text, isUser, isError = false) {

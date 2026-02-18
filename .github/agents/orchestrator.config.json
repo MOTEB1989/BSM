@@ -1,0 +1,95 @@
+{
+  "name": "BSU Orchestrator",
+  "version": "1.0.0",
+  "description": "Coordinates execution of multiple agents (Architect, Runner, Security) to produce comprehensive analysis reports",
+  "execution": {
+    "mode": "sequential",
+    "timeout": 2400,
+    "timeoutRationale": "Total 40 min (2400s) = 30 min agent execution (1800s) + 10 min orchestrator overhead (600s)",
+    "continueOnError": false
+  },
+  "agents": [
+    {
+      "id": "bsu-autonomous-architect",
+      "name": "Architect",
+      "order": 1,
+      "enabled": true,
+      "timeout": 600,
+      "description": "Analyzes repository architecture and provides recommendations",
+      "outputs": [
+        "reports/ARCHITECTURE-ANALYSIS.md",
+        "reports/ARCHITECTURE-RECOMMENDATIONS.json",
+        "reports/EXECUTIVE-SUMMARY.md"
+      ],
+      "requiredEnvVars": []
+    },
+    {
+      "id": "runner",
+      "name": "Runner",
+      "order": 2,
+      "enabled": true,
+      "timeout": 600,
+      "description": "Runs tests, builds, and deployment simulations",
+      "outputs": [
+        "reports/build-test-report.json",
+        "reports/build-test-report.md",
+        "reports/RUNNER-SUMMARY.md"
+      ],
+      "requiredEnvVars": []
+    },
+    {
+      "id": "security",
+      "name": "Security",
+      "order": 3,
+      "enabled": true,
+      "timeout": 600,
+      "description": "Performs security audit and configuration checks",
+      "outputs": [
+        "reports/SECURITY-AUDIT.md",
+        "reports/SECURITY-SUMMARY.md"
+      ],
+      "requiredEnvVars": []
+    }
+  ],
+  "reporting": {
+    "outputDir": "reports",
+    "formats": ["markdown", "json"],
+    "aggregatedReport": "agents-summary-{timestamp}.md",
+    "includeMetadata": true,
+    "timestampFormat": "YYYY-MM-DDTHH-mm-ss"
+  },
+  "secrets": {
+    "mode": "env",
+    "allowed": [
+      "OPENAI_BSU_KEY",
+      "KM_ENDPOINT",
+      "KM_TOKEN",
+      "SNYK_TOKEN"
+    ],
+    "logging": {
+      "logSecrets": false,
+      "maskInOutput": true
+    }
+  },
+  "ci": {
+    "enabled": true,
+    "scriptPath": "scripts/run_agents.sh",
+    "workflowFile": ".github/workflows/run-bsu-agents.yml",
+    "artifactRetention": {
+      "reports": 90,
+      "logs": 30
+    }
+  },
+  "pr": {
+    "autoCreate": false,
+    "requiresApproval": true,
+    "branch": "bsu-agents-suggestions-{timestamp}",
+    "title": "BSU Agents Suggestions — {timestamp}",
+    "labels": ["automation", "agents"]
+  },
+  "notifications": {
+    "onSuccess": true,
+    "onFailure": true,
+    "channels": []
+  }
+}

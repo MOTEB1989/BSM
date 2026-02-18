@@ -5,10 +5,13 @@ import agents from "./agents.js";
 import knowledge from "./knowledge.js";
 import admin from "./admin.js";
 import chat from "./chat.js";
+import aiProxy from "./ai-proxy.js";
 import orchestrator from "./orchestrator.js";
 import webhooks from "./webhooks.js";
 import emergency from "./emergency.js";
 import control from "./control.js";
+import pr from "./pr.js";
+import agentExecutor from "./agent-executor.js";
 
 const router = Router();
 
@@ -18,9 +21,12 @@ router.use("/agents", agents);
 router.use("/knowledge", knowledge);
 router.use("/admin", admin);
 router.use("/chat", chat);
+router.use("/ai-proxy", aiProxy);
 router.use("/orchestrator", orchestrator);
 router.use("/control", control);
 router.use("/webhooks", webhooks);
 router.use("/emergency", emergency);
+router.use("/pr", pr);
+router.use("/agent", agentExecutor);
 
 export default router;
