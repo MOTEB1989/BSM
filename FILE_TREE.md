@@ -84,6 +84,7 @@
 │   ├── ARCHITECTURE.old.md
 │   ├── AUTOMATION-AGENTS.md
 │   ├── BSM-ORCHESTRATOR.md
+│   ├── BSM-SUPREME-ORCHESTRATOR.md
 │   ├── BSU-SUPREME-ORCHESTRATOR-QUICK-REF.md
 │   ├── BSU-SUPREME-ORCHESTRATOR.md
 │   ├── CICD-RECOMMENDATIONS.md
@@ -305,5 +306,5 @@
 ├── wrangler.jsonc
 └── wrangler.toml
 
-50 directories, 254 files
+50 directories, 255 files
 ```
