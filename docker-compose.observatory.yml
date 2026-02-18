@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database for Observatory metrics
+  postgres:
+    image: postgres:15-alpine
+    container_name: bsm_observatory_db
+    environment:
+      POSTGRES_DB: bsm_observatory
+      POSTGRES_USER: bsm_user
+      POSTGRES_PASSWORD: bsm_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bsm_user -d bsm_observatory"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bsm_network
+
+  # BSM Application with Observatory
+  bsm_app:
+    build:
+      context: .
+      dockerfile: Dockerfile.observatory
+    container_name: bsm_app
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: bsm_observatory
+      DB_USER: bsm_user
+      DB_PASSWORD: bsm_password
+      LOG_LEVEL: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bsm_network
+    restart: unless-stopped
+
+  # Adminer for database management (optional)
+  adminer:
+    image: adminer:latest
+    container_name: bsm_adminer
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      - postgres
+    networks:
+      - bsm_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  bsm_network:
+    driver: bridge

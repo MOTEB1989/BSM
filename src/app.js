@@ -62,6 +62,10 @@ app.get("/docs*", (req, res) => res.redirect("/chat"));
 
 // serve admin UI static
 app.use("/admin", adminUiAuth, express.static(path.join(process.cwd(), "src/admin")));
+
+// serve observatory UI static
+app.use("/observatory", express.static(path.join(process.cwd(), "src/observatory")));
+
 app.use(
   "/chat",
   helmet({

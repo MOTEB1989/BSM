@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Agent Observatory - BSM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <style>
+    /* Dark mode by default */
+    body {
+      background-color: #0f172a;
+      color: #e2e8f0;
+    }
+    
+    .card {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .metric-card {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      border: 1px solid #475569;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .status-online {
+      background-color: #10b981;
+    }
+    
+    .status-warning {
+      background-color: #f59e0b;
+    }
+    
+    .status-offline {
+      background-color: #ef4444;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin-top: 1rem;
+    }
+    
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background-color: #3b82f6;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: #2563eb;
+    }
+    
+    .btn-secondary {
+      background-color: #6366f1;
+      color: white;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #4f46e5;
+    }
+    
+    .tab {
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    
+    .tab:hover {
+      background-color: #334155;
+    }
+    
+    .tab.active {
+      border-bottom-color: #3b82f6;
+      color: #3b82f6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <header class="mb-8">
+      <h1 class="text-4xl font-bold mb-2 flex items-center">
+        <span class="status-indicator status-online mr-3"></span>
+        AI Agent Observatory
+      </h1>
+      <p class="text-gray-400">Real-time monitoring and analytics for BSM AI agents</p>
+    </header>
+    
+    <!-- Navigation Tabs -->
+    <div class="flex space-x-4 border-b border-gray-700 mb-6">
+      <div class="tab active" data-tab="dashboard">Dashboard</div>
+      <div class="tab" data-tab="tokens">Token Usage</div>
+      <div class="tab" data-tab="analytics">Analytics</div>
+      <div class="tab" data-tab="reports">Reports</div>
+    </div>
+    
+    <!-- Dashboard Tab -->
+    <div id="dashboard-tab" class="tab-content">
+      <!-- Time Range Selector -->
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <label class="text-sm text-gray-400 mr-2">Time Range:</label>
+          <select id="time-range" class="bg-gray-700 text-white px-4 py-2 rounded">
+            <option value="1h">Last Hour</option>
+            <option value="6h">Last 6 Hours</option>
+            <option value="24h" selected>Last 24 Hours</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+          </select>
+        </div>
+        <div>
+          <span class="text-sm text-gray-400">Last updated: <span id="last-updated">--</span></span>
+        </div>
+      </div>
+      
+      <!-- Agent Metrics Grid -->
+      <div id="metrics-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Metrics will be dynamically inserted here -->
+      </div>
+      
+      <!-- Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card">
+          <h3 class="text-xl font-semibold mb-4">Response Time Trends</h3>
+          <div class="chart-container">
+            <canvas id="response-time-chart"></canvas>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h3 class="text-xl font-semibold mb-4">Success Rate</h3>
+          <div class="chart-container">
+            <canvas id="success-rate-chart"></canvas>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h3 class="text-xl font-semibold mb-4">Request Volume</h3>
+          <div class="chart-container">
+            <canvas id="request-volume-chart"></canvas>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h3 class="text-xl font-semibold mb-4">Cost Distribution</h3>
+          <div class="chart-container">
+            <canvas id="cost-chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Token Usage Tab -->
+    <div id="tokens-tab" class="tab-content hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card">
+          <h3 class="text-xl font-semibold mb-4">Token Usage by Agent</h3>
+          <div class="chart-container">
+            <canvas id="tokens-agent-chart"></canvas>
+          </div>
+          <div id="tokens-agent-list" class="mt-4 space-y-2">
+            <!-- Token usage list will be inserted here -->
+          </div>
+        </div>
+        
+        <div class="card">
+          <h3 class="text-xl font-semibold mb-4">Top Users by Token Usage</h3>
+          <div id="tokens-user-list" class="space-y-2">
+            <!-- User token usage will be inserted here -->
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Analytics Tab -->
+    <div id="analytics-tab" class="tab-content hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card">
+          <h3 class="text-xl font-semibold mb-4">Conversation Analytics</h3>
+          <div id="conversation-stats" class="space-y-4">
+            <!-- Stats will be inserted here -->
+          </div>
+        </div>
+        
+        <div class="card">
+          <h3 class="text-xl font-semibold mb-4">Sentiment Distribution</h3>
+          <div class="chart-container">
+            <canvas id="sentiment-chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Reports Tab -->
+    <div id="reports-tab" class="tab-content hidden">
+      <div class="card">
+        <h3 class="text-2xl font-semibold mb-6">Export Reports</h3>
+        <div class="space-y-4">
+          <div>
+            <p class="text-gray-400 mb-2">Generate comprehensive reports for management review</p>
+            <div class="flex space-x-4">
+              <button class="btn btn-primary" onclick="downloadReport('pdf')">
+                📄 Download PDF Report
+              </button>
+              <button class="btn btn-secondary" onclick="downloadReport('excel')">
+                📊 Download Excel Report
+              </button>
+            </div>
+          </div>
+          
+          <div class="mt-6">
+            <label class="text-sm text-gray-400 mr-2">Report Time Range:</label>
+            <select id="report-time-range" class="bg-gray-700 text-white px-4 py-2 rounded">
+              <option value="1h">Last Hour</option>
+              <option value="6h">Last 6 Hours</option>
+              <option value="24h" selected>Last 24 Hours</option>
+              <option value="7d">Last 7 Days</option>
+              <option value="30d">Last 30 Days</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="/observatory/app.js"></script>
+</body>
+</html>
