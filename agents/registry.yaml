@@ -246,3 +246,36 @@ agents:
     healthcheck:
       endpoint: /api/agents/readme-architect/health
       interval_seconds: 120
+
+  - id: pentest-agent
+    name: Penetration Testing Agent
+    category: security
+    role: penetration_tester
+    execution:
+      runtime: python
+      service_url: http://localhost:8001
+    contexts:
+      allowed:
+        - api
+        - ci
+        - web
+    expose:
+      selectable: true
+      internal_only: false
+    risk:
+      level: medium
+      rationale: "Actively tests applications with attack payloads but operates in controlled environment"
+    approval:
+      required: true
+      type: automated
+      approvers:
+        - security-team
+        - ci-system
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - development
+        - staging
+    healthcheck:
+      endpoint: /health
+      interval_seconds: 60
