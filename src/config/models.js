@@ -13,6 +13,9 @@ export const models = {
       process.env.OPENAI_API_KEY ||
       process.env.OPENAI_FALLBACK_KEY
   },
+  anthropic: {
+    default: process.env.ANTHROPIC_API_KEY
+  },
   perplexity: {
     default: process.env.PERPLEXITY_KEY
   }

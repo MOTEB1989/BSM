@@ -23,7 +23,7 @@ router.get("/key-status", async (_req, res, next) => {
   try {
     const status = {
       openai: Boolean(models.openai?.default),
-      anthropic: false,
+      anthropic: Boolean(models.anthropic?.default),
       perplexity: Boolean(models.perplexity?.default),
       google: false
     };
