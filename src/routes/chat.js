@@ -8,18 +8,43 @@ import logger from "../utils/logger.js";
 
 const router = Router();
 
-router.get("/key-status", (req, res) => {
-  res.json({
-    timestamp: Date.now(),
-    status: {
+// Unified key-status endpoint — single source of truth
+router.get("/key-status", (_req, res, next) => {
+  try {
+    const status = {
       openai: Boolean(models.openai?.default || models.openai?.bsm || models.openai?.bsu),
-      perplexity: Boolean(models.perplexity?.default)
-    },
-    ui: {
-      openai: "🤖 OpenAI",
-      perplexity: "🔍 Perplexity"
-    }
-  });
+      anthropic: Boolean(models.anthropic?.default),
+      perplexity: Boolean(models.perplexity?.default),
+      google: Boolean(models.google?.default),
+      azure: Boolean(models.azure?.default),
+      groq: Boolean(models.groq?.default),
+      cohere: Boolean(models.cohere?.default),
+      mistral: Boolean(models.mistral?.default)
+    };
+
+    const activeCount = Object.values(status).filter(Boolean).length;
+
+    const ui = {
+      openai: status.openai ? "✅ GPT-4 Ready" : "🔴 GPT-4 Offline",
+      anthropic: status.anthropic ? "✅ Claude Ready" : "🔴 Claude Offline",
+      perplexity: status.perplexity ? "✅ Perplexity Ready" : "🔴 Perplexity Offline",
+      google: status.google ? "✅ Gemini Ready" : "🔴 Gemini Offline",
+      azure: status.azure ? "✅ Azure OpenAI Ready" : "⚫ Azure Offline",
+      groq: status.groq ? "✅ Groq Ready" : "⚫ Groq Offline",
+      cohere: status.cohere ? "✅ Cohere Ready" : "⚫ Cohere Offline",
+      mistral: status.mistral ? "✅ Mistral Ready" : "⚫ Mistral Offline"
+    };
+
+    res.json({
+      configured: status.openai,
+      activeProviders: activeCount,
+      timestamp: new Date().toISOString(),
+      status,
+      ui
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Agent-based chat
@@ -33,33 +58,6 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-
-// AI key status for chat UI
-router.get("/key-status", async (_req, res, next) => {
-  try {
-    const status = {
-      openai: Boolean(models.openai?.bsm || models.openai?.default),
-      anthropic: false,
-      perplexity: Boolean(models.perplexity?.default),
-      google: false
-    };
-
-    const ui = {
-      openai: status.openai ? "✅ GPT-4 Ready" : "🔴 GPT-4 Offline",
-      anthropic: status.anthropic ? "✅ Claude Ready" : "🔴 Claude Offline",
-      perplexity: status.perplexity ? "✅ Perplexity Ready" : "🔴 Perplexity Offline",
-      google: status.google ? "✅ Gemini Ready" : "🔴 Gemini Offline"
-    };
-
-    res.json({
-      timestamp: new Date().toISOString(),
-      status,
-      ui
-    });
-  } catch (err) {
-    next(err);
-  }
-});
 // Direct GPT chat (no agent required)
 router.post("/direct", async (req, res, next) => {
   try {
@@ -131,29 +129,6 @@ router.post("/direct", async (req, res, next) => {
     res.json({ output, modelUsed: selectedModel });
   } catch (err) {
     next(err);
-  }
-});
-
-// Key status endpoint for Vue.js frontend
-router.get("/key-status", async (req, res) => {
-  try {
-    // Check for OpenAI API key (bsm = Business Service Management product key)
-    const apiKey = models.openai?.bsm || models.openai?.default;
-    res.json({ 
-      configured: !!apiKey,
-      timestamp: new Date().toISOString()
-    });
-  } catch (err) {
-    logger.error({
-      correlationId: req.correlationId,
-      message: "Error checking API key status",
-      error: err.message
-    });
-    res.status(500).json({ 
-      configured: false, 
-      error: "Failed to check API key status",
-      timestamp: new Date().toISOString()
-    });
   }
 });
 
