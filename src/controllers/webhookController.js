@@ -6,7 +6,7 @@ import logger from "../utils/logger.js";
 export const handleGitHubWebhook = async (req, res, next) => {
   try {
     const signature = req.headers["x-hub-signature-256"];
-    const payload = JSON.stringify(req.body);
+    const payload = getWebhookPayload(req);
     const secret = process.env.GITHUB_WEBHOOK_SECRET;
 
     if (!verifySignature(payload, signature, secret)) {
@@ -87,6 +87,14 @@ function transformGitHubEvent(event, data) {
   };
 
   return transformers[event] ? transformers[event]() : data;
+}
+
+function getWebhookPayload(req) {
+  if (typeof req.rawBody === "string" && req.rawBody.length > 0) {
+    return req.rawBody;
+  }
+
+  return JSON.stringify(req.body || {});
 }
 
 export function verifySignature(payload, signature, secret) {
