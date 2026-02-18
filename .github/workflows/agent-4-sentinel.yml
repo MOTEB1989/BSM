@@ -1,0 +1,27 @@
+name: 🛡️ The Sentinel (Security)
+
+on: [push, pull_request]
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🕵️ Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: 'javascript'
+
+      - name: 🔍 Perform Analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: 🚨 Dependency Review
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@v3
