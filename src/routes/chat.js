@@ -4,23 +4,8 @@ import { runGPT } from "../services/gptService.js";
 import { models } from "../config/models.js";
 import { AppError } from "../utils/errors.js";
 import { env } from "../config/env.js";
-import logger from "../utils/logger.js";
 
 const router = Router();
-
-router.get("/key-status", (req, res) => {
-  res.json({
-    timestamp: Date.now(),
-    status: {
-      openai: Boolean(models.openai?.default || models.openai?.bsm || models.openai?.bsu),
-      perplexity: Boolean(models.perplexity?.default)
-    },
-    ui: {
-      openai: "🤖 OpenAI",
-      perplexity: "🔍 Perplexity"
-    }
-  });
-});
 
 // Agent-based chat
 router.post("/", async (req, res, next) => {
@@ -33,12 +18,11 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-
 // AI key status for chat UI
 router.get("/key-status", async (_req, res, next) => {
   try {
     const status = {
-      openai: Boolean(models.openai?.bsm || models.openai?.default),
+      openai: Boolean(models.openai?.default),
       anthropic: false,
       perplexity: Boolean(models.perplexity?.default),
       google: false
@@ -60,6 +44,7 @@ router.get("/key-status", async (_req, res, next) => {
     next(err);
   }
 });
+
 // Direct GPT chat (no agent required)
 router.post("/direct", async (req, res, next) => {
   try {
@@ -81,7 +66,7 @@ router.post("/direct", async (req, res, next) => {
       throw new AppError("Unsupported language", 400, "INVALID_LANGUAGE");
     }
 
-    const apiKey = models.openai?.bsm || models.openai?.default;
+    const apiKey = models.openai?.default;
     if (!apiKey) {
       throw new AppError("AI service is not configured", 503, "MISSING_API_KEY");
     }
@@ -90,9 +75,7 @@ router.post("/direct", async (req, res, next) => {
       ? "أنت مساعد ذكي من منصة LexBANK. أجب باللغة العربية بشكل مهني ومفيد. ساعد المستخدمين في الأسئلة القانونية والتقنية والإدارية."
       : "You are a smart assistant from the LexBANK platform. Answer professionally and helpfully. Assist users with legal, technical, and administrative questions.";
 
-    const messages = [
-      { role: "system", content: systemPrompt }
-    ];
+    const messages = [{ role: "system", content: systemPrompt }];
 
     // Add conversation history (limit to last 20 messages)
     const recentHistory = history.slice(-20);
@@ -123,29 +106,6 @@ router.post("/direct", async (req, res, next) => {
     res.json({ output });
   } catch (err) {
     next(err);
-  }
-});
-
-// Key status endpoint for Vue.js frontend
-router.get("/key-status", async (req, res) => {
-  try {
-    // Check for OpenAI API key (bsm = Business Service Management product key)
-    const apiKey = models.openai?.bsm || models.openai?.default;
-    res.json({ 
-      configured: !!apiKey,
-      timestamp: new Date().toISOString()
-    });
-  } catch (err) {
-    logger.error({
-      correlationId: req.correlationId,
-      message: "Error checking API key status",
-      error: err.message
-    });
-    res.status(500).json({ 
-      configured: false, 
-      error: "Failed to check API key status",
-      timestamp: new Date().toISOString()
-    });
   }
 });
 
