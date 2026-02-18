@@ -57,7 +57,36 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 
-            const STATUS_LABELS = ['ready', 'needs-changes', 'blocked', 'stale'];
+            const STATUS_LABELS = ['ready', 'needs-changes', 'blocked', 'stale', 'conflicts'];
+
+            const MERGEABLE_RETRIES = 3;
+            const MERGEABLE_RETRY_DELAY_MS = 1500;
+
+            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            async function getPRDetailsWithMergeable(pullNumber) {
+              let prDetails = null;
+
+              for (let attempt = 1; attempt <= MERGEABLE_RETRIES; attempt++) {
+                const response = await github.rest.pulls.get({
+                  owner,
+                  repo,
+                  pull_number: pullNumber
+                });
+
+                prDetails = response.data;
+
+                if (prDetails.mergeable !== null) {
+                  return { prDetails, mergeableResolved: true, attempts: attempt };
+                }
+
+                if (attempt < MERGEABLE_RETRIES) {
+                  await sleep(MERGEABLE_RETRY_DELAY_MS);
+                }
+              }
+
+              return { prDetails, mergeableResolved: false, attempts: MERGEABLE_RETRIES };
+            }
             
             // Ensure labels exist
             const LABELS = [
@@ -95,11 +124,13 @@ jobs:
               needsChanges: [],
               blocked: [],
               stale: [],
-              conflicts: []
+              conflicts: [],
+              unresolvedMergeable: []
             };
 
             for (const pr of prs) {
-              if (pr.draft) continue; // Skip drafts
+              const { prDetails, mergeableResolved, attempts } = await getPRDetailsWithMergeable(pr.number);
+              if (prDetails?.draft ?? pr.draft) continue; // Skip drafts
 
               const daysSince = Math.floor((Date.now() - new Date(pr.updated_at)) / (1000 * 60 * 60 * 24));
               
@@ -127,7 +158,11 @@ jobs:
               let reason = '';
 
               // Classification logic
-              if (pr.mergeable === false) {
+              if (!mergeableResolved) {
+                newLabel = 'blocked';
+                reason = `Mergeability still null after ${attempts} checks`;
+                summary.unresolvedMergeable.push({ number: pr.number, title: pr.title, attempts });
+              } else if (prDetails?.mergeable === false) {
                 newLabel = 'conflicts';
                 reason = 'Has merge conflicts';
                 summary.conflicts.push({ number: pr.number, title: pr.title });
@@ -178,25 +213,30 @@ jobs:
             }
 
             // Generate summary issue comment
-            const summaryText = `## 📊 PR Management Summary
-            
-**Total Open PRs:** ${prs.length}
-
-### ✅ Ready to Merge (${summary.ready.length})
-${summary.ready.length > 0 ? summary.ready.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*'}
-
-### ⚠️ Needs Changes (${summary.needsChanges.length})
-${summary.needsChanges.length > 0 ? summary.needsChanges.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*'}
-
-### ⚔️ Has Conflicts (${summary.conflicts.length})
-${summary.conflicts.length > 0 ? summary.conflicts.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*'}
-
-### 🕰️ Stale (${summary.stale.length})
-${summary.stale.length > 0 ? summary.stale.map(p => `- #${p.number}: ${p.title} (${p.days}d)`).join('\n') : '*None*'}
-
----
-*Last updated: ${new Date().toISOString()}*
-*Automated by PR Management workflow*`;
+            const summaryText = [
+              '## 📊 PR Management Summary',
+              '',
+              `**Total Open PRs:** ${prs.length}`,
+              '',
+              `### ✅ Ready to Merge (${summary.ready.length})`,
+              summary.ready.length > 0 ? summary.ready.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*',
+              '',
+              `### ⚠️ Needs Changes (${summary.needsChanges.length})`,
+              summary.needsChanges.length > 0 ? summary.needsChanges.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*',
+              '',
+              `### ⚔️ Has Conflicts (${summary.conflicts.length})`,
+              summary.conflicts.length > 0 ? summary.conflicts.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*',
+              '',
+              `### ⏳ Mergeability Pending (${summary.unresolvedMergeable.length})`,
+              summary.unresolvedMergeable.length > 0 ? summary.unresolvedMergeable.map(p => `- #${p.number}: ${p.title} (null after ${p.attempts} checks)`).join('\n') : '*None*',
+              '',
+              `### 🕰️ Stale (${summary.stale.length})`,
+              summary.stale.length > 0 ? summary.stale.map(p => `- #${p.number}: ${p.title} (${p.days}d)`).join('\n') : '*None*',
+              '',
+              '---',
+              `*Last updated: ${new Date().toISOString()}*`,
+              '*Automated by PR Management workflow*'
+            ].join('\n');
 
             core.summary.addRaw(summaryText);
             await core.summary.write();
@@ -217,6 +257,33 @@ ${summary.stale.length > 0 ? summary.stale.map(p => `- #${p.number}: ${p.title} 
               per_page: 100
             });
 
+            const MERGEABLE_RETRIES = 3;
+            const MERGEABLE_RETRY_DELAY_MS = 1500;
+            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            async function getPRDetailsWithMergeable(pullNumber) {
+              let prDetails = null;
+
+              for (let attempt = 1; attempt <= MERGEABLE_RETRIES; attempt++) {
+                const response = await github.rest.pulls.get({
+                  owner,
+                  repo,
+                  pull_number: pullNumber
+                });
+                prDetails = response.data;
+
+                if (prDetails.mergeable !== null) {
+                  return { prDetails, mergeableResolved: true, attempts: attempt };
+                }
+
+                if (attempt < MERGEABLE_RETRIES) {
+                  await sleep(MERGEABLE_RETRY_DELAY_MS);
+                }
+              }
+
+              return { prDetails, mergeableResolved: false, attempts: MERGEABLE_RETRIES };
+            }
+
             const readyPRs = prs.filter(pr => 
               !pr.draft && pr.labels.some(l => l.name === 'ready')
             );
@@ -225,6 +292,17 @@ ${summary.stale.length > 0 ? summary.stale.map(p => `- #${p.number}: ${p.title} 
 
             for (const pr of readyPRs) {
               try {
+                const { prDetails, mergeableResolved, attempts } = await getPRDetailsWithMergeable(pr.number);
+
+                if (!mergeableResolved) {
+                  console.log(`⏳ Skipping #${pr.number}: mergeable is still null after ${attempts} checks`);
+                  continue;
+                }
+
+                if (prDetails?.mergeable === false) {
+                  console.log(`⚔️ Skipping #${pr.number}: merge conflicts detected via pulls.get`);
+                  continue;
+                }
                 // Add auto-merge label
                 await github.rest.issues.addLabels({
                   owner,
@@ -264,12 +342,55 @@ ${summary.stale.length > 0 ? summary.stale.map(p => `- #${p.number}: ${p.title} 
               per_page: 100
             });
 
-            const stalePRs = prs.filter(pr => {
+            const MERGEABLE_RETRIES = 3;
+            const MERGEABLE_RETRY_DELAY_MS = 1500;
+            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            async function getPRDetailsWithMergeable(pullNumber) {
+              let prDetails = null;
+
+              for (let attempt = 1; attempt <= MERGEABLE_RETRIES; attempt++) {
+                const response = await github.rest.pulls.get({
+                  owner,
+                  repo,
+                  pull_number: pullNumber
+                });
+                prDetails = response.data;
+
+                if (prDetails.mergeable !== null) {
+                  return { prDetails, mergeableResolved: true, attempts: attempt };
+                }
+
+                if (attempt < MERGEABLE_RETRIES) {
+                  await sleep(MERGEABLE_RETRY_DELAY_MS);
+                }
+              }
+
+              return { prDetails, mergeableResolved: false, attempts: MERGEABLE_RETRIES };
+            }
+
+            const stalePRs = [];
+            const unresolvedMergeability = [];
+
+            for (const pr of prs) {
               const daysSince = Math.floor((Date.now() - new Date(pr.updated_at)) / (1000 * 60 * 60 * 24));
-              return daysSince >= 30 && pr.labels.some(l => l.name === 'stale');
-            });
+              if (daysSince < 30 || !pr.labels.some(l => l.name === 'stale')) {
+                continue;
+              }
+
+              const { mergeableResolved, attempts } = await getPRDetailsWithMergeable(pr.number);
+              if (!mergeableResolved) {
+                unresolvedMergeability.push({ number: pr.number, attempts });
+                continue;
+              }
+
+              stalePRs.push(pr);
+            }
 
             console.log(`Found ${stalePRs.length} stale PRs to close`);
+            if (unresolvedMergeability.length > 0) {
+              console.log(`⏳ Skipped ${unresolvedMergeability.length} stale PR(s): mergeable still null after retries`);
+            }
 
             for (const pr of stalePRs) {
               await github.rest.issues.createComment({

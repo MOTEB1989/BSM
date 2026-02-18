@@ -12,6 +12,8 @@ if (!GITHUB_TOKEN) {
 }
 
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
+const MERGEABLE_RETRIES = 3;
+const MERGEABLE_RETRY_DELAY_MS = 1500;
 
 // PR Status Classifications
 const STATUS = {
@@ -76,7 +78,36 @@ function daysSinceUpdate(dateString) {
   return Math.floor((now - updated) / (1000 * 60 * 60 * 24));
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function getPRDetailsWithMergeable(prNumber) {
+  let prDetails = null;
+
+  for (let attempt = 1; attempt <= MERGEABLE_RETRIES; attempt++) {
+    const response = await octokit.rest.pulls.get({
+      owner: OWNER,
+      repo: REPO,
+      pull_number: prNumber
+    });
+
+    prDetails = response.data;
+
+    if (prDetails.mergeable !== null) {
+      return { prDetails, mergeableResolved: true, attempts: attempt };
+    }
+
+    if (attempt < MERGEABLE_RETRIES) {
+      await sleep(MERGEABLE_RETRY_DELAY_MS);
+    }
+  }
+
+  return { prDetails, mergeableResolved: false, attempts: MERGEABLE_RETRIES };
+}
+
 async function classifyPR(pr) {
+  const { prDetails, mergeableResolved, attempts } = await getPRDetailsWithMergeable(pr.number);
   const reviews = await getPRReviews(pr.number);
   const combinedStatus = await getCombinedStatus(pr.head.sha);
   const checkRuns = await getCheckRuns(pr.head.sha);
@@ -84,8 +115,8 @@ async function classifyPR(pr) {
   const daysSince = daysSinceUpdate(pr.updated_at);
   const hasApproval = reviews.some(r => r.state === "APPROVED");
   const hasChangesRequested = reviews.some(r => r.state === "CHANGES_REQUESTED");
-  const isConflicting = pr.mergeable === false;
-  const isDraft = pr.draft;
+  const isConflicting = prDetails?.mergeable === false;
+  const isDraft = prDetails?.draft ?? pr.draft;
   
   // Check CI status
   const allChecksPass = 
@@ -99,6 +130,13 @@ async function classifyPR(pr) {
 
   if (isConflicting) {
     return { status: STATUS.CONFLICTING, reason: "PR has merge conflicts" };
+  }
+
+  if (!mergeableResolved) {
+    return {
+      status: STATUS.BLOCKED,
+      reason: `Mergeability is still being calculated (mergeable=null after ${attempts} checks)`
+    };
   }
 
   if (daysSince >= 14) {

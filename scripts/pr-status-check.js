@@ -11,6 +11,8 @@ import https from 'https';
 const OWNER = process.env.GITHUB_REPOSITORY_OWNER || 'LexBANK';
 const REPO = process.env.GITHUB_REPOSITORY_NAME || 'BSM';
 const TOKEN = process.env.GITHUB_TOKEN;
+const MERGEABLE_RETRIES = 3;
+const MERGEABLE_RETRY_DELAY_MS = 1500;
 
 if (!TOKEN) {
   console.error('❌ Error: GITHUB_TOKEN environment variable is required');
@@ -49,6 +51,28 @@ function githubRequest(path) {
   });
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function getPRDetailsWithMergeable(prNumber) {
+  let prDetails = null;
+
+  for (let attempt = 1; attempt <= MERGEABLE_RETRIES; attempt++) {
+    prDetails = await githubRequest(`/repos/${OWNER}/${REPO}/pulls/${prNumber}`);
+
+    if (prDetails.mergeable !== null) {
+      return { prDetails, mergeableResolved: true, attempts: attempt };
+    }
+
+    if (attempt < MERGEABLE_RETRIES) {
+      await sleep(MERGEABLE_RETRY_DELAY_MS);
+    }
+  }
+
+  return { prDetails, mergeableResolved: false, attempts: MERGEABLE_RETRIES };
+}
+
 async function main() {
   console.log('🔍 Checking open pull requests...\n');
 
@@ -66,6 +90,7 @@ async function main() {
       total: prs.length,
       draft: 0,
       conflicts: 0,
+      unresolvedMergeable: 0,
       ready: 0,
       needsReview: 0,
       stale: 0
@@ -78,9 +103,10 @@ async function main() {
     console.log('─'.repeat(80));
 
     for (const pr of prs) {
+      const { prDetails, mergeableResolved, attempts } = await getPRDetailsWithMergeable(pr.number);
       const daysSince = Math.floor((now - new Date(pr.updated_at).getTime()) / (1000 * 60 * 60 * 24));
-      const isDraft = pr.draft;
-      const hasConflicts = pr.mergeable === false;
+      const isDraft = prDetails?.draft ?? pr.draft;
+      const hasConflicts = prDetails?.mergeable === false;
       const isStale = daysSince >= staleDays;
 
       let status = '🟢 Ready';
@@ -90,6 +116,10 @@ async function main() {
         status = '📝 Draft';
         stats.draft++;
         details.push('draft');
+      } else if (!mergeableResolved) {
+        status = '⏳ Mergeability Pending';
+        stats.unresolvedMergeable++;
+        details.push(`mergeable still null after ${attempts} checks`);
       } else if (hasConflicts) {
         status = '⚔️ Conflicts';
         stats.conflicts++;
@@ -119,6 +149,7 @@ async function main() {
     console.log(`   Total Open: ${stats.total}`);
     console.log(`   Draft: ${stats.draft}`);
     console.log(`   Conflicts: ${stats.conflicts}`);
+    console.log(`   Mergeability Pending: ${stats.unresolvedMergeable}`);
     console.log(`   Stale (${staleDays}+ days): ${stats.stale}`);
     console.log(`   Needs Review: ${stats.needsReview}`);
 
@@ -127,6 +158,11 @@ async function main() {
     if (stats.conflicts > 0) {
       console.log(`   ⚔️  ${stats.conflicts} PR(s) need conflict resolution`);
       console.log('      Run: gh workflow run pr-management.yml -f action=triage');
+    }
+
+    if (stats.unresolvedMergeable > 0) {
+      console.log(`   ⏳ ${stats.unresolvedMergeable} PR(s) are still waiting for GitHub mergeability calculation`);
+      console.log('      Action: Re-run this check in a few minutes before marking as conflicting');
     }
     
     if (stats.stale > 0) {
