@@ -1,0 +1,13 @@
+{
+  "github.copilot.chat.mcp.servers": {
+    "lexbank": {
+      "command": "node",
+      "args": [
+        "/absolute/path/to/BSM/mcp-servers/bsu-agent-server.js"
+      ],
+      "env": {
+        "API_BASE": "https://sr-bsm.onrender.com/api"
+      }
+    }
+  }
+}

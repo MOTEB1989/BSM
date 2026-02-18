@@ -16,10 +16,53 @@ The platform now features a **hybrid microservices architecture** combining:
 
 📖 See [Go Integration Architecture](docs/GO-INTEGRATION-ARCHITECTURE.md) for details.
 
+## 🔌 GitHub Copilot Integration (MCP Server)
+
+The platform now includes a **Model Context Protocol (MCP) Server** for seamless integration with GitHub Copilot and other MCP-compatible tools.
+
+### Features
+- 🤖 Direct access to all BSM AI agents (Gemini, Claude, Perplexity, GPT, Kimi)
+- 📊 Real-time agent status monitoring
+- 🔍 Banking knowledge base queries
+- 🔐 Secure API integration
+
+### Quick Setup
+
+1. **Install MCP Server:**
+   ```bash
+   cd mcp-servers
+   ./install.sh
+   ```
+
+2. **Configure GitHub Copilot:**
+   Add to VS Code settings.json:
+   ```json
+   {
+     "github.copilot.chat.mcp.servers": {
+       "lexbank": {
+         "command": "node",
+         "args": ["/absolute/path/to/BSM/mcp-servers/bsu-agent-server.js"],
+         "env": {
+           "API_BASE": "https://sr-bsm.onrender.com/api"
+         }
+       }
+     }
+   }
+   ```
+
+3. **Start using:** `@lexbank use check_agents_status`
+
+📖 **Full Documentation:** [MCP-SERVER-SETUP.md](./MCP-SERVER-SETUP.md) | [mcp-servers/README.md](./mcp-servers/README.md)
+
 ## Project Structure
 
 ```
 BSU/
+├── mcp-servers/             # GitHub Copilot MCP Server
+│   ├── bsu-agent-server.js # MCP server implementation
+│   ├── package.json        # MCP server dependencies
+│   ├── install.sh          # Installation script
+│   └── README.md           # MCP server documentation
 ├── data/                    # Data storage
 │   ├── agents/             # Agent configurations (YAML)
 │   └── knowledge/          # Knowledge documents
