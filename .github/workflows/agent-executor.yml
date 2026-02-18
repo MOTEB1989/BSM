@@ -36,6 +36,13 @@ jobs:
           cd "${{ github.event.inputs.working_dir }}"
           bash -lc "${{ github.event.inputs.command }}"
 
+      - name: Run quality gate before auto-commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run ci:check
+
       - name: Commit changes (if any)
         shell: bash
         run: |

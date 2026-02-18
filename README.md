@@ -356,6 +356,9 @@ npm run dev
 # Production mode
 npm start
 
+# Unified local quality gate (same as CI)
+npm run ci:check
+
 # Validate data structure
 npm run validate
 
@@ -462,7 +465,7 @@ With GitHub Copilot Pro integration, our development workflow includes:
 
 The project includes GitHub Actions workflows:
 
-- **Validate**: Runs on every PR and push to main, validates data structure
+- **Validate**: Runs on every PR and push to main using `npm run ci:check` (same command used locally)
 - **CodeQL**: Security analysis for JavaScript code
 - **Pages**: Deploys `docs/` to GitHub Pages on push to main
 
@@ -512,10 +515,11 @@ The project includes GitHub Actions workflows:
 
 Contributions are welcome! Please ensure that:
 - Code follows the project's style guidelines
-- All tests pass successfully (`npm run validate`)
+- Quality gate passes successfully (`npm run ci:check`)
 - Documentation is updated accordingly
 - GitHub Copilot suggestions are reviewed for quality
 - Security best practices are followed
+- Pre-commit hook is enabled (`git config core.hooksPath .githooks`) to block commits when quality checks fail
 
 ## License
 
