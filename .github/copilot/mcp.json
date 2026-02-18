@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "lexbank-unified": {
+      "command": "node",
+      "args": [
+        "mcp-servers/bsu-agent-server.js"
+      ],
+      "env": {
+        "BSM_API_URL": "https://sr-bsm.onrender.com/api",
+        "NODE_ENV": "production"
+      },
+      "metadata": {
+        "name": "LexBANK/BSU Unified Agent Server",
+        "version": "2.0.0",
+        "description": "Unified MCP server for LexBANK/BSU AI agents with GitHub Copilot integration",
+        "capabilities": [
+          "chat",
+          "agents",
+          "knowledge",
+          "orchestrator"
+        ]
+      }
+    }
+  }
+}
