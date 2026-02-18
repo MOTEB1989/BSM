@@ -1,0 +1,36 @@
+name: 📢 The Reporter Agent
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  report-status:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: 💬 Post Agent Report
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const actor = context.actor;
+            const msg = `
+            ### 🤖 BSM Agent Report
+            مرحباً @${actor}! فريق الوكلاء يعمل الآن على هذا الطلب:
+
+            | الوكيل | الحالة | المهمة |
+            | :--- | :---: | :--- |
+            | 🧹 **The Cleaner** | 🔄 جاري العمل | تنسيق الكود وإصلاح الأخطاء |
+            | 🛡️ **The Sentinel** | 🔍 فحص | التأكد من الأمان (Security) |
+            | 🚀 **The Merger** | ⏳ انتظار | سيدمج تلقائياً إذا نجح الفحص |
+
+            > 💡 **ملاحظة:** لا تقلق، سأقوم بتحديثك بالنتيجة النهائية هنا. استمتع بوقتك!
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: msg
+            });

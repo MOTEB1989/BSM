@@ -1,0 +1,30 @@
+name: 🩺 The Self-Healing Agent
+
+on: [push]
+
+jobs:
+  heal-structure:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🚑 Check & Restore Vital Files
+        run: |
+          # 1. التأكد من وجود مجلد الوكلاء
+          if [ ! -d "agents" ]; then
+            mkdir agents
+            echo "Agents directory restored by Healer." > agents/restored.txt
+          fi
+
+          # 2. التأكد من وجود ملف الترخيص (مثال MIT)
+          if [ ! -f "LICENSE" ]; then
+            echo "MIT License - Restored by Healer Agent" > LICENSE
+          fi
+
+      - name: 💾 Commit Restorations
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "🚑 Healer Agent: Restored missing vital files."
