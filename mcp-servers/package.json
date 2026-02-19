@@ -15,6 +15,9 @@
   "devDependencies": {
     "nodemon": "^3.1.0"
   },
+  "overrides": {
+    "minimatch": ">=10.2.1"
+  },
   "bin": {
     "lexbank-mcp": "./bsu-agent-server.js"
   },
