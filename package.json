@@ -8,7 +8,10 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "validate": "node scripts/validate.js",
-    "test": "node scripts/validate.js",
+    "test": "npm run validate && mocha tests/**/*.test.js --timeout 5000",
+    "test:unit": "mocha tests/**/*.test.js --timeout 5000",
+    "test:coverage": "c8 --reporter=text --reporter=html --reporter=lcov mocha tests/**/*.test.js --timeout 5000",
+    "test:observatory": "mocha tests/services/observatory*.test.js tests/services/alertService.test.js tests/middleware/*.test.js tests/routes/observatory.test.js --timeout 5000",
     "pr-check": "node scripts/pr-review-checklist.js --local",
     "pr-check:verbose": "node scripts/pr-review-checklist.js --local --verbose"
   },
@@ -31,8 +34,13 @@
     "yaml": "^2.4.5"
   },
   "devDependencies": {
+    "c8": "^10.1.3",
+    "chai": "^6.2.2",
+    "mocha": "^11.7.5",
     "nodemon": "^3.1.0",
-    "pino-pretty": "^11.0.0"
+    "pino-pretty": "^11.0.0",
+    "sinon": "^21.0.1",
+    "supertest": "^7.2.2"
   },
   "overrides": {
     "minimatch": "^10.2.1"
