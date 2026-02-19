@@ -35,7 +35,10 @@
     "yaml": "^2.4.5"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0",
+    "nodemon": "^3.1.11",
     "pino-pretty": "^11.0.0"
+  },
+  "overrides": {
+    "minimatch": "^10.2.1"
   }
 }
