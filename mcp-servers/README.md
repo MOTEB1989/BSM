@@ -127,6 +127,18 @@ The server communicates via stdio, so you'll need an MCP client to interact with
 
 The MCP server connects to: `https://sr-bsm.onrender.com/api`
 
+## Platform Endpoints
+
+The BSM platform is accessible through multiple endpoints:
+
+- **Backend API**: https://sr-bsm.onrender.com
+- **Frontend (GitHub Pages)**: https://moteb1989.github.io/BSM/
+- **Primary Chat Interface**: https://lexprim.com
+- **Agent Management Hub**: https://corehub.nexus
+- **Cloudflare Pages**: https://9e71cbf3.lexbank.pages.dev/
+
+All endpoints are configured with proper CORS settings and API routing.
+
 ## Version
 
 Current version: **2.0.0**

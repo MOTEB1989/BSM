@@ -12,6 +12,10 @@ const config = {
     backend: 'https://sr-bsm.onrender.com',
     // Agent Management Hub
     corehub: 'https://corehub.nexus',
+    // Primary Chat Interface (Nuxt 3)
+    lexprim: 'https://lexprim.com',
+    // Alternative Cloudflare Pages Deployment
+    lexbankPages: 'https://9e71cbf3.lexbank.pages.dev',
     // Repository
     repo: 'https://github.com/MOTEB1989/BSM',
     // Legacy redirect (LexBANK/BSM -> MOTEB1989/BSM)
@@ -63,10 +67,15 @@ const config = {
     allowedOrigins: [
       'https://moteb1989.github.io',
       'https://corehub.nexus',
+      'https://www.corehub.nexus',
       'https://sr-bsm.onrender.com',
+      'https://lexprim.com',
+      'https://www.lexprim.com',
+      'https://9e71cbf3.lexbank.pages.dev',
+      'https://lexdo.uk',
+      'https://www.lexdo.uk',
       'http://localhost:3000',
-      'https://github.com',
-      'https://lexdo.uk'
+      'https://github.com'
     ],
 
     // Content Security Policy
