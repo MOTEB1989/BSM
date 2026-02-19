@@ -3,110 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BSU Nexus</title>
+    <title>BSM - المنصة الموحدة</title>
+    <meta name="description" content="المنصة الموحدة لـ BSM/LexBANK - 9 نماذج AI و13 وكيل ذكي">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏦</text></svg>">
+    <script src="shared/config.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        body {
-            background: #0a0a0a;
-            color: #fff;
-            font-family: system-ui;
-        }
-
-        .glass {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-        }
+        body{font-family:'Tajawal',sans-serif;background:linear-gradient(135deg,#0a0e27 0%,#1a1f3a 50%,#0a0e27 100%)}
+        .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1)}
+        .agent-card{transition:all 0.3s;cursor:pointer}
+        .agent-card:hover{transform:translateY(-4px);box-shadow:0 20px 40px -10px rgba(59,130,246,0.5)}
+        .agent-card.selected{background:rgba(59,130,246,0.2);border-color:#3b82f6}
+        .message-bubble{animation:slideIn 0.3s}
+        @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .typing-indicator span{animation:blink 1.4s infinite}
+        @keyframes blink{0%,60%,100%{opacity:1}30%{opacity:0.3}}
     </style>
 </head>
-<body class="h-screen flex flex-col">
-    <header class="glass m-4 p-4 flex justify-between items-center">
-        <h1 class="font-bold text-lg">BSU Nexus</h1>
-        <span class="text-green-400 text-sm">● متصل</span>
-    </header>
-    
-    <div id="chat" class="flex-1 overflow-y-auto p-4 space-y-4">
-        <div class="text-center text-gray-400 mt-8">مرحباً بك في النظام الذكي</div>
+<body class="min-h-screen text-white">
+    <div id="app" class="flex flex-col h-screen">
+        <header class="glass border-b border-white/10">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">🏦</div>
+                    <div>
+                        <h1 class="text-lg font-bold" id="app-title">BSM - البنك الذكي</h1>
+                        <p class="text-xs text-gray-400">المنصة الموحدة</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 px-3 py-1 bg-black/20 rounded-lg">
+                        <div id="status-dot" class="w-2 h-2 rounded-full bg-red-500"></div>
+                        <span id="status-text" class="text-xs">غير متصل</span>
+                    </div>
+                    <button onclick="app.toggleLang()" class="px-3 py-1 bg-black/20 rounded-lg text-xs">EN</button>
+                    <button onclick="app.clear()" class="px-3 py-1 bg-black/20 rounded-lg">🗑️</button>
+                </div>
+            </div>
+        </header>
+        
+        <main class="flex-1 overflow-hidden">
+            <div class="max-w-7xl mx-auto h-full flex gap-4 p-4">
+                <aside class="w-80 glass rounded-2xl p-4 overflow-y-auto">
+                    <h2 class="text-sm font-bold mb-4">اختر الوكيل</h2>
+                    <div id="agents-list" class="space-y-2"></div>
+                </aside>
+                
+                <div class="flex-1 flex flex-col">
+                    <div id="messages" class="flex-1 overflow-y-auto space-y-4 mb-4">
+                        <div class="text-center py-12">
+                            <div class="text-6xl mb-4">🤖</div>
+                            <h2 class="text-2xl font-bold mb-2">مرحباً بك</h2>
+                            <p class="text-gray-400">اختر وكيلاً وابدأ المحادثة</p>
+                        </div>
+                    </div>
+                    
+                    <div class="glass rounded-2xl p-4">
+                        <div class="flex gap-3">
+                            <input type="text" id="input" placeholder="اكتب رسالتك..." class="flex-1 bg-black/30 border border-white/10 rounded-xl px-4 py-3" onkeypress="if(event.key==='Enter')app.send()"/>
+                            <button id="btn" onclick="app.send()" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-bold">إرسال</button>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-400" id="selected">لم يتم اختيار وكيل</div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
     
-    <div class="glass m-4 p-4">
-        <div class="flex gap-2">
-            <input id="msg" type="text" placeholder="اكتب رسالتك..." class="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white">
-            <button id="send-btn" class="bg-blue-600 px-4 py-2 rounded-lg">إرسال</button>
-        </div>
-    </div>
-
     <script>
-        // Auto-detect API URL: use same origin when served from Express, or configurable URL
-        const API = window.__LEXBANK_API_URL__ || (window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin);
-        const AUTH_TOKEN = window.AUTH_TOKEN || '';
-
-        function appendMessage(text, isUser, isError = false) {
-            const chat = document.getElementById('chat');
-            const wrapper = document.createElement('div');
-            const messageDiv = document.createElement('div');
-
-            wrapper.className = isUser ? 'flex justify-end' : 'flex justify-start';
-
-            if (isError) {
-                messageDiv.className = 'bg-red-600/50 rounded-lg p-3';
-            } else if (isUser) {
-                messageDiv.className = 'bg-blue-600 rounded-lg p-3 max-w-[80%]';
-            } else {
-                messageDiv.className = 'glass rounded-lg p-3 max-w-[80%]';
-            }
-
-            messageDiv.textContent = text;
-            wrapper.appendChild(messageDiv);
-            chat.appendChild(wrapper);
-        }
-
-        async function send(){
-            const input=document.getElementById('msg');
-            const text=input.value.trim();
-            // Basic input validation to avoid empty or excessively long messages
-            // 1000 char limit prevents potential DoS and keeps messages reasonable for API processing
-            if(!text || text.length > 1000){
-                return;
-            }
+        const app={
+            cfg:window.BSM_CONFIG,
+            api:window.API_BASE||'https://sr-bsm.onrender.com',
+            lang:'ar',
+            agent:null,
+            history:[],
             
-            const chat=document.getElementById('chat');
-            appendMessage(text, true);
-            input.value='';
+            init(){
+                console.log('🚀 BSM Unified Platform');
+                console.log('📡 API:',this.api);
+                this.loadAgents();
+                this.checkHealth();
+            },
             
-            try{
-                const headers = {
-                    'Content-Type':'application/json'
-                };
-                if (AUTH_TOKEN) {
-                    headers['Authorization'] = 'Bearer ' + AUTH_TOKEN;
-                }
-                const res=await fetch(`${API}/api/chat/direct`,{
-                    method:'POST',
-                    headers:headers,
-                    body:JSON.stringify({message:text,model:'gpt-4o-mini'})
+            loadAgents(){
+                const list=document.getElementById('agents-list');
+                Object.values(this.cfg.agents).forEach(a=>{
+                    const div=document.createElement('div');
+                    div.className='agent-card glass rounded-xl p-3';
+                    div.innerHTML=`<div class="flex gap-3"><div class="text-2xl">${a.icon}</div><div class="flex-1"><h3 class="font-bold text-sm">${a.name[this.lang]}</h3><p class="text-xs text-gray-400">${a.description[this.lang]}</p></div></div>`;
+                    div.onclick=()=>this.selectAgent(a);
+                    list.appendChild(div);
                 });
-                if(!res.ok){
-                    throw new Error('HTTP error '+res.status);
+            },
+            
+            selectAgent(a){
+                this.agent=a;
+                document.querySelectorAll('.agent-card').forEach(c=>c.classList.remove('selected'));
+                event.target.closest('.agent-card').classList.add('selected');
+                document.getElementById('selected').textContent=`الوكيل: ${a.name[this.lang]}`;
+            },
+            
+            async send(){
+                const input=document.getElementById('input');
+                const msg=input.value.trim();
+                if(!msg||!this.agent){alert('اختر وكيلاً أولاً');return;}
+                input.value='';
+                this.addMsg(msg,'user');
+                this.showTyping();
+                document.getElementById('btn').disabled=true;
+                
+                try{
+                    const res=await fetch(`${this.api}${this.agent.endpoint}`,{
+                        method:'POST',
+                        headers:{'Content-Type':'application/json'},
+                        body:JSON.stringify({agentId:this.agent.id,input:msg,context:{language:this.lang}})
+                    });
+                    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+                    const data=await res.json();
+                    const reply=data?.response||data?.message||'خطأ';
+                    this.hideTyping();
+                    this.addMsg(reply,'assistant');
+                }catch(e){
+                    this.hideTyping();
+                    this.addMsg(`خطأ: ${e.message}`,'error');
+                }finally{
+                    document.getElementById('btn').disabled=false;
                 }
-                const data=await res.json();
-                const reply = data?.response ?? data?.message ?? null;
-                const safeReply = (typeof reply === 'string' && reply.trim().length>0)
-                    ? reply
-                    : 'حدث خطأ في معالجة الاستجابة';
-                appendMessage(safeReply, false);
-            }catch(e){
-                appendMessage('خطأ في الاتصال', false, true);
-            }
-            chat.scrollTop=chat.scrollHeight;
-        }
-
-        // Add event listeners
-        document.getElementById('send-btn').addEventListener('click', send);
-        document.getElementById('msg').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') send();
-        });
+            },
+            
+            addMsg(content,type){
+                const div=document.createElement('div');
+                div.className='message-bubble';
+                if(type==='user'){
+                    div.innerHTML=`<div class="flex justify-end"><div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl px-4 py-3 max-w-2xl"><p>${this.esc(content)}</p></div></div>`;
+                }else if(type==='error'){
+                    div.innerHTML=`<div class="flex justify-start"><div class="bg-red-500/20 rounded-2xl px-4 py-3 max-w-2xl"><p class="text-red-300">${this.esc(content)}</p></div></div>`;
+                }else{
+                    const html=marked.parse(content);
+                    div.innerHTML=`<div class="flex justify-start"><div class="glass rounded-2xl px-4 py-3 max-w-2xl">${html}</div></div>`;
+                }
+                document.getElementById('messages').appendChild(div);
+                div.scrollIntoView({behavior:'smooth'});
+                this.history.push({content,type,ts:Date.now()});
+                localStorage.setItem('bsm_history',JSON.stringify(this.history));
+            },
+            
+            showTyping(){
+                const div=document.createElement('div');
+                div.id='typing';
+                div.innerHTML='<div class="flex justify-start"><div class="glass rounded-2xl px-4 py-3"><div class="typing-indicator flex gap-1"><span class="w-2 h-2 bg-gray-400 rounded-full"></span><span class="w-2 h-2 bg-gray-400 rounded-full"></span><span class="w-2 h-2 bg-gray-400 rounded-full"></span></div></div></div>';
+                document.getElementById('messages').appendChild(div);
+            },
+            
+            hideTyping(){
+                const t=document.getElementById('typing');
+                if(t)t.remove();
+            },
+            
+            async checkHealth(){
+                try{
+                    const res=await fetch(`${this.api}/health`,{signal:AbortSignal.timeout(5000)});
+                    if(res.ok){
+                        document.getElementById('status-dot').className='w-2 h-2 rounded-full bg-green-500';
+                        document.getElementById('status-text').textContent='متصل';
+                    }
+                }catch(e){
+                    document.getElementById('status-dot').className='w-2 h-2 rounded-full bg-red-500';
+                    document.getElementById('status-text').textContent='غير متصل';
+                }
+                setTimeout(()=>this.checkHealth(),30000);
+            },
+            
+            toggleLang(){
+                this.lang=this.lang==='ar'?'en':'ar';
+                const dir=this.lang==='ar'?'rtl':'ltr';
+                document.documentElement.setAttribute('lang',this.lang);
+                document.documentElement.setAttribute('dir',dir);
+                document.getElementById('app-title').textContent=this.cfg.getText(this.lang).appName;
+                document.getElementById('agents-list').innerHTML='';
+                this.loadAgents();
+            },
+            
+            clear(){
+                if(confirm('مسح المحادثة؟')){
+                    this.history=[];
+                    localStorage.removeItem('bsm_history');
+                    document.getElementById('messages').innerHTML='<div class="text-center py-12"><div class="text-6xl mb-4">🤖</div><h2 class="text-2xl font-bold mb-2">مرحباً بك</h2><p class="text-gray-400">اختر وكيلاً وابدأ المحادثة</p></div>';
+                }
+            },
+            
+            esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+        };
+        
+        document.addEventListener('DOMContentLoaded',()=>app.init());
     </script>
 </body>
 </html>

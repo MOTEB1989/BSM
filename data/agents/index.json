@@ -1,6 +1,7 @@
 {
   "agents": [
     "my-agent.yaml",
+    "agent-auto.yaml",
     "legal-agent.yaml",
     "governance-agent.yaml",
     "ios-chat-integration-agent.yaml",
@@ -11,6 +12,10 @@
     "integrity-agent.yaml",
     "bsu-audit-agent.yaml",
     "repository-review.yaml",
-    "kimi-agent.yaml"
+    "kimi-agent.yaml",
+    "gemini-agent.yaml",
+    "claude-agent.yaml",
+    "perplexity-agent.yaml",
+    "groq-agent.yaml"
   ]
 }
