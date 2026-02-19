@@ -26,6 +26,19 @@ require_gh() {
   fi
 }
 
+# Cross-platform date calculation using Python3
+# Works on both Linux (GNU date) and macOS (BSD date)
+calculate_cutoff_date() {
+  local days_ago="$1"
+  python3 - <<'PY' "$days_ago"
+import sys
+from datetime import datetime, timedelta, timezone
+days = int(sys.argv[1])
+cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+print(cutoff.strftime('%Y-%m-%d'))
+PY
+}
+
 build_pr_search_query() {
   local query_parts=()
 
@@ -41,8 +54,11 @@ build_pr_search_query() {
   if [[ -n "${PR_STALE_DAYS:-}" ]]; then
     if [[ "${PR_STALE_DAYS}" =~ ^[0-9]+$ ]]; then
       local cutoff_date
-      cutoff_date="$(date -u -d "${PR_STALE_DAYS} days ago" +%Y-%m-%d 2>/dev/null || true)"
-      [[ -n "${cutoff_date}" ]] && query_parts+=("updated:<${cutoff_date}")
+      if cutoff_date="$(calculate_cutoff_date "${PR_STALE_DAYS}")"; then
+        query_parts+=("updated:<${cutoff_date}")
+      else
+        echo -e "${YELLOW}Warning: Failed to calculate cutoff date for PR_STALE_DAYS=${PR_STALE_DAYS}. Skipping date filter.${NC}" >&2
+      fi
     else
       echo -e "${YELLOW}Warning: PR_STALE_DAYS is invalid. Ignoring.${NC}"
     fi

@@ -26,14 +26,30 @@ require_gh() {
   fi
 }
 
+# Cross-platform date calculation using Python3
+# Works on both Linux (GNU date) and macOS (BSD date)
+calculate_cutoff_date() {
+  local days_ago="$1"
+  python3 - <<'PY' "$days_ago"
+import sys
+from datetime import datetime, timedelta, timezone
+days = int(sys.argv[1])
+cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+print(cutoff.strftime('%Y-%m-%d'))
+PY
+}
+
 build_pr_search_query() {
   local q=()
   [[ -n "${PR_AUTHOR:-}" ]] && q+=("author:${PR_AUTHOR}")
   [[ "${PR_DRAFT_ONLY:-true}" == "true" ]] && q+=("draft:true")
   if [[ -n "${PR_STALE_DAYS:-}" ]] && [[ "${PR_STALE_DAYS}" =~ ^[0-9]+$ ]]; then
     local cutoff
-    cutoff="$(date -u -d "${PR_STALE_DAYS} days ago" +%Y-%m-%d 2>/dev/null || true)"
-    [[ -n "$cutoff" ]] && q+=("updated:<${cutoff}")
+    if cutoff="$(calculate_cutoff_date "${PR_STALE_DAYS}")"; then
+      q+=("updated:<${cutoff}")
+    else
+      echo -e "${YELLOW}Warning: Failed to calculate cutoff date for PR_STALE_DAYS=${PR_STALE_DAYS}. Skipping date filter.${NC}" >&2
+    fi
   fi
   [[ -n "${PR_LABEL:-}" ]] && q+=("label:${PR_LABEL}")
   [[ -n "${PR_SEARCH_EXTRA:-}" ]] && q+=("${PR_SEARCH_EXTRA}")
@@ -45,8 +61,11 @@ build_issue_search_query() {
   [[ -n "${ISSUE_AUTHOR:-}" ]] && q+=("author:${ISSUE_AUTHOR}")
   if [[ -n "${ISSUE_STALE_DAYS:-}" ]] && [[ "${ISSUE_STALE_DAYS}" =~ ^[0-9]+$ ]]; then
     local cutoff
-    cutoff="$(date -u -d "${ISSUE_STALE_DAYS} days ago" +%Y-%m-%d 2>/dev/null || true)"
-    [[ -n "$cutoff" ]] && q+=("updated:<${cutoff}")
+    if cutoff="$(calculate_cutoff_date "${ISSUE_STALE_DAYS}")"; then
+      q+=("updated:<${cutoff}")
+    else
+      echo -e "${YELLOW}Warning: Failed to calculate cutoff date for ISSUE_STALE_DAYS=${ISSUE_STALE_DAYS}. Skipping date filter.${NC}" >&2
+    fi
   fi
   [[ -n "${ISSUE_LABEL:-}" ]] && q+=("label:${ISSUE_LABEL}")
   [[ -n "${ISSUE_SEARCH_EXTRA:-}" ]] && q+=("${ISSUE_SEARCH_EXTRA}")
