@@ -1,9 +1,20 @@
 import { Server } from 'socket.io';
+import crypto from 'crypto';
 import { getRealTimeMetrics, getAgentMetrics, getTokenUsageByAgent } from './observatoryService.js';
 import { checkAlerts } from './alertService.js';
+import { env } from '../config/env.js';
 import logger from '../utils/logger.js';
 
 let io = null;
+
+// Constant-time string comparison to prevent timing attacks
+const timingSafeEqual = (a, b) => {
+  if (!a || !b) return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+};
 
 // Initialize Socket.io
 export function initializeSocketIO(httpServer) {
@@ -12,6 +23,25 @@ export function initializeSocketIO(httpServer) {
       origin: process.env.CORS_ORIGINS?.split(',') || '*',
       methods: ['GET', 'POST']
     }
+  });
+  
+  // Authentication middleware
+  io.use((socket, next) => {
+    const token = socket.handshake.auth.token || socket.handshake.query.token;
+    
+    // Check if admin token is configured
+    if (!env.adminToken) {
+      logger.error('ADMIN_TOKEN not configured for WebSocket authentication');
+      return next(new Error('Server configuration error'));
+    }
+    
+    // Verify token using timing-safe comparison
+    if (!token || !timingSafeEqual(token, env.adminToken)) {
+      logger.warn({ socketId: socket.id }, 'Unauthorized WebSocket connection attempt');
+      return next(new Error('Authentication failed'));
+    }
+    
+    next();
   });
   
   io.on('connection', (socket) => {

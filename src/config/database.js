@@ -4,6 +4,36 @@ import logger from '../utils/logger.js';
 
 const { Pool } = pg;
 
+// Weak password list
+const WEAK_PASSWORDS = ['bsm_password', 'password', '123456', 'admin', 'root'];
+
+// Validate database password in production
+function validateDatabasePassword(password) {
+  if (env.nodeEnv !== 'production') {
+    return; // Skip validation in non-production environments
+  }
+  
+  if (!password) {
+    const error = 'Database password must be set in production';
+    logger.error(error);
+    throw new Error(error);
+  }
+  
+  // Check minimum length
+  if (password.length < 12) {
+    const error = 'Database password must be at least 12 characters in production';
+    logger.error(error);
+    throw new Error(error);
+  }
+  
+  // Check against weak password list
+  if (WEAK_PASSWORDS.includes(password)) {
+    const error = `Database password cannot be a weak password (${password}) in production`;
+    logger.error(error);
+    throw new Error(error);
+  }
+}
+
 // Database configuration
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -15,6 +45,9 @@ const dbConfig = {
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
 };
+
+// Validate password before proceeding
+validateDatabasePassword(dbConfig.password);
 
 // Create pool instance
 let pool = null;
