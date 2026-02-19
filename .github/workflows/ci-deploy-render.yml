@@ -13,6 +13,8 @@ jobs:
   # ==================== مرحلة 1: الاختبار ====================
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     name: 🧪 Test AI Agents
     steps:
       - name: Checkout code
@@ -71,6 +73,8 @@ jobs:
   # ==================== مرحلة 2: البناء ====================
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     name: 📦 Build Project
     needs: test
     steps:
@@ -104,6 +108,8 @@ jobs:
   # ==================== مرحلة 3: النشر إلى Render ====================
   deploy-render:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     name: 🚀 Deploy to Render
     needs: [test, build]
     if: github.ref == 'refs/heads/main'
@@ -147,6 +153,8 @@ jobs:
   # ==================== مرحلة 4: إشعار Slack ====================
   notify:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     name: 📢 Notify Slack
     needs: [test, build, deploy-render]
     if: always()

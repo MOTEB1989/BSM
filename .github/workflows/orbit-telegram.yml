@@ -10,6 +10,8 @@ on:
 jobs:
   deploy-telegram:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       ORBIT_ADMIN_CHAT_IDS: ${{ secrets.ORBIT_ADMIN_CHAT_IDS }}

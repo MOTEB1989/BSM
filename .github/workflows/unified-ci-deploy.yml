@@ -30,6 +30,8 @@ jobs:
   # ==================== Phase 1: Preflight Checks ====================
   preflight:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     name: "\U0001F6EB Preflight Checks"
     steps:
       - name: Checkout repo
@@ -58,6 +60,8 @@ jobs:
   # ==================== Phase 2: Test AI Agents ====================
   test-agents:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     name: "\U0001F9EA Test AI Agents"
     needs: preflight
     steps:
@@ -148,6 +152,8 @@ jobs:
   # ==================== Phase 3: Build Project ====================
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     name: "\U0001F4E6 Build Project"
     needs: [preflight, test-agents]
     steps:
@@ -187,6 +193,8 @@ jobs:
   # ==================== Phase 4: Deploy to Render ====================
   deploy-render:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     name: "\U0001F680 Deploy to Render"
     needs: [preflight, test-agents, build]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
@@ -271,6 +279,8 @@ jobs:
   # ==================== Phase 5: Smoke Test ====================
   smoke-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     name: "\U0001F4A8 Smoke Test"
     needs: deploy-render
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
@@ -294,6 +304,8 @@ jobs:
   # ==================== Phase 6: Slack Notification ====================
   notify:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     name: "\U0001F4E2 Notify Slack"
     needs: [preflight, test-agents, build, deploy-render, smoke-test]
     if: always()
