@@ -14,6 +14,8 @@ jobs:
   validate-keys:
     name: "Validate All AI Keys"
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       openai_status: ${{ steps.check.outputs.openai }}
       anthropic_status: ${{ steps.check.outputs.anthropic }}
@@ -170,6 +172,8 @@ jobs:
     name: "Update Dashboard"
     needs: validate-keys
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     if: always()
     steps:
       - uses: actions/checkout@v4
@@ -211,6 +215,8 @@ jobs:
     name: "Alert on Failure"
     needs: validate-keys
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: failure()
     steps:
       - name: Send Slack Alert
@@ -249,6 +255,8 @@ jobs:
     name: "Deploy with Valid Keys"
     needs: validate-keys
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: needs.validate-keys.result == 'success'
     steps:
       - name: Deploy to Production

@@ -6,6 +6,8 @@ on:
 jobs:
   dedupe:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Run file dedupe script
