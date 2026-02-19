@@ -6,6 +6,7 @@ set -euo pipefail
 
 if ! command -v rg >/dev/null 2>&1; then
   echo "❌ Required tool 'rg' (ripgrep) is not installed; cannot run force push policy check."
+  echo "   Please install ripgrep (rg) and re-run this check. See installation options at: https://github.com/BurntSushi/ripgrep#installation"
   exit 1
 fi
 matches="$(rg -n -P '^\s*(?!#)(?:sudo\s+)?git\s+push\b[^\n]*--force(?!-with-lease)' scripts -g '*.sh' || true)"
