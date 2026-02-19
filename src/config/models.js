@@ -10,6 +10,9 @@ export const models = {
     // Support both variable names for backward compatibility across environments
     default: process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_KEY
   },
+  gemini: {
+    default: process.env.GEMINI_API_KEY
+  },
   perplexity: {
     default: process.env.PERPLEXITY_KEY
   },
