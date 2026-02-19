@@ -49,6 +49,9 @@ jobs:
         env:
           OPENAI_BSM_KEY: ${{ secrets.OPENAI_BSM_KEY }}
         run: |
+          # Mask secrets from logs
+          echo "::add-mask::$OPENAI_BSM_KEY"
+          
           score=$(node --input-type=module -e "
           import { codeReviewAgent } from './src/agents/CodeReviewAgent.js';
           try {
@@ -71,6 +74,9 @@ jobs:
         env:
           PERPLEXITY_KEY: ${{ secrets.PERPLEXITY_KEY }}
         run: |
+          # Mask secrets from logs
+          echo "::add-mask::$PERPLEXITY_KEY"
+          
           passed=$(node --input-type=module -e "
           import { scanForCVEs } from './src/agents/securityScanner.js';
           try {

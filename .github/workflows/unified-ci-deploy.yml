@@ -44,6 +44,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Security audit dependencies
+        run: npm audit --production --audit-level=high
+
       - name: Verify project structure
         run: |
           echo "=== Project Structure ==="
@@ -72,6 +75,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Security audit dependencies
+        run: npm audit --production --audit-level=high
 
       # Test CodeReviewAgent (requires OpenAI API key)
       - name: Test CodeReviewAgent
@@ -162,6 +168,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Security audit dependencies
+        run: npm audit --production --audit-level=high
 
       - name: Build frontend (if exists)
         run: |

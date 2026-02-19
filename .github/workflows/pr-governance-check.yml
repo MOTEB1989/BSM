@@ -38,6 +38,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Security audit dependencies
+        run: npm audit --production --audit-level=high
+      
       - name: Run agent validation
         run: npm run validate
         continue-on-error: false

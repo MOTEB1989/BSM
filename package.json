@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "validate": "node scripts/validate.js && npm run policy:force-push",
+    "validate": "node scripts/validate.js && npm run policy:force-push && npm audit --production --audit-level=high",
     "validate:registry": "node scripts/validate-registry.js",
     "validate:agent-sync": "node scripts/validate-agent-sync.js",
     "test": "npm run validate",
