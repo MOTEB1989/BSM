@@ -155,6 +155,12 @@ This pattern is used in:
 #### "ANTHROPIC_API_KEY not configured"
 This is expected if you haven't set up the Claude Assistant. The workflow will skip automatically.
 
+#### Claude Assistant 404 Errors
+If you see a 404 error in the Claude Assistant workflow:
+- This is a known limitation when comparing non-existent branches
+- **Solution:** Simply re-comment `@claude` to trigger a new run
+- See [Claude Assistant Known Issues](../../docs/CLAUDE-ASSISTANT-KNOWN-ISSUES.md) for details
+
 #### CodeQL Failures
 - Usually indicates security issues in the code
 - Review the CodeQL alerts in the Security tab
@@ -206,6 +212,7 @@ When adding new workflows:
 
 ## Related Documentation
 
+- [CLAUDE-ASSISTANT-KNOWN-ISSUES.md](../../docs/CLAUDE-ASSISTANT-KNOWN-ISSUES.md) - Known issues and limitations
 - [SECRETS-MANAGEMENT.md](../../docs/SECRETS-MANAGEMENT.md) - Comprehensive secrets guide
 - [WORKFLOW-COMPARISON.md](../../docs/WORKFLOW-COMPARISON.md) - Before/after comparison
 - [CICD-RECOMMENDATIONS.md](../../docs/CICD-RECOMMENDATIONS.md) - CI/CD best practices

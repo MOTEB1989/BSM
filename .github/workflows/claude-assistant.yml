@@ -12,6 +12,10 @@ name: Claude Assistant
 # - Comment "@claude" on any issue or PR to trigger assistance
 # - Claude will analyze the context and provide helpful responses
 # - Supports issue comments, PR review comments, and PR reviews
+#
+# Known Issues:
+# - May encounter 404 errors when comparing non-existent branches (transient, retry by re-commenting @claude)
+# - See docs/CLAUDE-ASSISTANT-KNOWN-ISSUES.md for details and workarounds
 
 on:
   issue_comment:
