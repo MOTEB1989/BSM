@@ -18,7 +18,14 @@
           "agents",
           "knowledge",
           "orchestrator"
-        ]
+        ],
+        "endpoints": {
+          "backend": "https://sr-bsm.onrender.com",
+          "frontend": "https://moteb1989.github.io/BSM",
+          "chat": "https://lexprim.com",
+          "corehub": "https://corehub.nexus",
+          "cloudflarePages": "https://9e71cbf3.lexbank.pages.dev"
+        }
       }
     }
   }
