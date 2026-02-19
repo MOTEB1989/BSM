@@ -65,8 +65,9 @@ if [[ "$USE_FORCE_WITH_LEASE" == "true" && -z "${REASON// }" ]]; then
 fi
 
 if [[ "$USE_FORCE_WITH_LEASE" == "true" ]]; then
-  mkdir -p .git
-  printf '%s\t%s\t%s\t%s\n' "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" "$REMOTE" "$BRANCH" "$REASON" >> .git/force-with-lease-audit.log
+  GIT_DIR="$(git rev-parse --git-dir 2>/dev/null || echo ".git")"
+  mkdir -p "$GIT_DIR"
+  printf '%s\t%s\t%s\t%s\n' "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" "$REMOTE" "$BRANCH" "$REASON" >> "$GIT_DIR/force-with-lease-audit.log"
   echo "⚠️ Exceptional push mode enabled: --force-with-lease"
   echo "📝 Reason documented: $REASON"
   exec git push --force-with-lease "$REMOTE" "$BRANCH" "${EXTRA_ARGS[@]}"
