@@ -2,7 +2,7 @@
 
 # BSM - Close Draft PRs Script
 # This script closes all draft/experimental PRs created by Copilot
-# Generated: 2026-02-08
+# Updated: 2026-02-19
 
 set -e
 
@@ -10,6 +10,7 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}========================================${NC}"
@@ -31,20 +32,46 @@ if ! gh auth status &> /dev/null; then
     exit 1
 fi
 
-echo -e "${YELLOW}This script will close the following DRAFT PRs:${NC}"
+# Dynamic PR detection mode
+MODE="${1:-interactive}"
+
+echo -e "${BLUE}Mode: ${MODE}${NC}"
 echo ""
 
-# List of draft PRs to close (all Copilot drafts except #88)
-# Generated from GitHub API - 34 draft PRs by Copilot
-DRAFT_PRS=(
-    20 25 26 33 34 35 36 37 40 41 42 43 44 47 48 55 56 57 58 63 65 66 69 70 71 72 73 74 75 76 78 80 83 84
-)
+# Fetch draft PRs dynamically from GitHub API
+echo -e "${YELLOW}Fetching open draft PRs from GitHub...${NC}"
+DRAFT_PRS=($(gh pr list --state open --draft --json number -q '.[].number' 2>/dev/null || echo ""))
 
-echo "Total PRs to close: ${#DRAFT_PRS[@]}"
+# Also fetch stale PRs (older than 30 days with conflicts)
+CUTOFF_DATE=$(python3 -c "from datetime import datetime, timedelta, timezone; print((datetime.now(timezone.utc) - timedelta(days=30)).isoformat())")
+STALE_PRS=($(gh pr list --state open --json number,updatedAt,mergeable -q ".[] | select(.updatedAt < \"${CUTOFF_DATE}\" and .mergeable == \"CONFLICTING\") | .number" 2>/dev/null || echo ""))
+
+# Combine and deduplicate
+ALL_PRS=($(echo "${DRAFT_PRS[@]}" "${STALE_PRS[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+
+echo ""
+echo -e "${YELLOW}This script will close the following PRs:${NC}"
+echo ""
+
+# Filter out current working PR (84)
+CURRENT_PR="${CURRENT_PR:-84}"
+FILTERED_PRS=()
+for pr in "${ALL_PRS[@]}"; do
+    if [ "$pr" != "$CURRENT_PR" ] && [ -n "$pr" ]; then
+        FILTERED_PRS+=("$pr")
+    fi
+done
+
+if [ ${#FILTERED_PRS[@]} -eq 0 ]; then
+    echo -e "${GREEN}No draft or stale PRs found to close!${NC}"
+    exit 0
+fi
+
+echo "Total PRs to close: ${#FILTERED_PRS[@]}"
 echo ""
 
 # Display each PR
-for pr in "${DRAFT_PRS[@]}"; do
+for pr in "${FILTERED_PRS[@]}"; do
     TITLE=$(gh pr view $pr --json title -q '.title' 2>/dev/null || echo "PR not found")
     echo -e "  - PR #${pr}: ${TITLE}"
 done
@@ -80,7 +107,7 @@ Thank you for your contribution to the BSM project! 🚀"
 CLOSED_COUNT=0
 FAILED_COUNT=0
 
-for pr in "${DRAFT_PRS[@]}"; do
+for pr in "${FILTERED_PRS[@]}"; do
     echo -ne "Closing PR #${pr}... "
     
     if gh pr close $pr --comment "$CLOSURE_MESSAGE" 2>/dev/null; then

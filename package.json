@@ -23,7 +23,10 @@
     "prepare": "node scripts/install-git-hooks.js",
     "mcp:install": "cd mcp-servers && npm install",
     "mcp:start": "node mcp-servers/bsu-agent-server.js",
-    "postinstall": "npm run mcp:install"
+    "postinstall": "npm run mcp:install",
+    "agents:integrity": "node scripts/run-integrity-check.js",
+    "agents:audit": "node scripts/audit-runner.js",
+    "agents:orchestrate": "bash scripts/run_agents.sh"
   },
   "dependencies": {
     "cors": "^2.8.5",
