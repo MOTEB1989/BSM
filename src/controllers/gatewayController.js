@@ -13,6 +13,20 @@ export async function gatewayChat(req, res, next) {
   try {
     // Extract API key from header or body
     const apiKey = req.headers['x-api-key'] || req.body.apiKey;
+    
+    // Validate API key format
+    if (apiKey) {
+      if (typeof apiKey !== 'string') {
+        throw new AppError('API key must be a string', 400);
+      }
+      if (apiKey.length > 1000) {
+        throw new AppError('API key is too long', 400);
+      }
+      // API keys should match format: gw_<64 hex chars>
+      if (!/^gw_[a-f0-9]{64}$/.test(apiKey)) {
+        throw new AppError('Invalid API key format', 401);
+      }
+    }
 
     const {
       messages,
@@ -28,6 +42,27 @@ export async function gatewayChat(req, res, next) {
 
     if (!messages || !Array.isArray(messages)) {
       throw new AppError('Messages array is required', 400);
+    }
+    
+    // Validate max_tokens to prevent abuse
+    if (typeof max_tokens !== 'number' || max_tokens < 1) {
+      throw new AppError('max_tokens must be a positive number', 400);
+    }
+    if (max_tokens > 32000) {
+      throw new AppError('max_tokens must not exceed 32000', 400);
+    }
+    
+    // Validate messages array size to prevent memory exhaustion
+    if (messages.length > 100) {
+      throw new AppError('Messages array must not exceed 100 messages', 400);
+    }
+    
+    // Validate message content size
+    const totalContentSize = messages.reduce((sum, msg) => {
+      return sum + (msg.content?.length || 0);
+    }, 0);
+    if (totalContentSize > 100000) {
+      throw new AppError('Total message content exceeds maximum size (100KB)', 400);
     }
 
     const request = {
@@ -215,6 +250,48 @@ export async function adminAddProvider(req, res, next) {
     const validTypes = ['openai', 'anthropic', 'google', 'kimi', 'perplexity'];
     if (!validTypes.includes(type)) {
       throw new AppError(`Invalid provider type. Must be one of: ${validTypes.join(', ')}`, 400);
+    }
+
+    // SSRF protection: validate API URL
+    const allowedDomains = [
+      'api.openai.com',
+      'api.anthropic.com',
+      'generativelanguage.googleapis.com',
+      'api.moonshot.cn',
+      'api.perplexity.ai'
+    ];
+    
+    try {
+      const urlObj = new URL(apiUrl);
+      
+      // Must use HTTPS
+      if (urlObj.protocol !== 'https:') {
+        throw new AppError('API URL must use HTTPS protocol', 400);
+      }
+      
+      // Must be from allowed domains
+      if (!allowedDomains.includes(urlObj.hostname)) {
+        throw new AppError(
+          `API URL must be from allowed domains: ${allowedDomains.join(', ')}`,
+          400
+        );
+      }
+      
+      // Block private IP ranges
+      const hostname = urlObj.hostname;
+      if (
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname.startsWith('192.168.') ||
+        hostname.startsWith('10.') ||
+        hostname.startsWith('172.16.') ||
+        hostname === '169.254.169.254' // AWS metadata
+      ) {
+        throw new AppError('API URL cannot point to private/internal addresses', 400);
+      }
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Invalid API URL format', 400);
     }
 
     const provider = await providerRegistry.addProvider({

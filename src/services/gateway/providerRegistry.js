@@ -1,6 +1,6 @@
-import { query } from '../database/client.js';
-import logger from '../utils/logger.js';
-import { AppError } from '../utils/errors.js';
+import { query } from '../../database/client.js';
+import logger from '../../utils/logger.js';
+import { AppError } from '../../utils/errors.js';
 
 // Model pricing per 1M tokens (USD)
 const MODEL_PRICING = {

@@ -115,11 +115,11 @@ export class FallbackManager {
     }
 
     // All providers failed
+    logger.error({ errors, fallbackChain }, 'All providers failed');
     throw new AppError(
-      `All providers failed. Attempted: ${fallbackChain.join(' → ')}`,
+      'Service temporarily unavailable. Please try again later.',
       503,
-      'ALL_PROVIDERS_FAILED',
-      { errors, fallbackChain }
+      'ALL_PROVIDERS_FAILED'
     );
   }
 

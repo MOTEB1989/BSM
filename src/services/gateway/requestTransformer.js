@@ -165,7 +165,11 @@ export class RequestTransformer {
       const headers = this.getHeaders(provider, apiKey);
       const url = this.getUrl(provider, requestBody.model);
 
-      logger.debug({ provider: provider.name, url }, 'Making provider request');
+      // Don't log full URL with API keys for security
+      const sanitizedUrl = provider.type === 'google' 
+        ? provider.apiUrl 
+        : url;
+      logger.debug({ provider: provider.name, url: sanitizedUrl }, 'Making provider request');
 
       const response = await fetch(url, {
         method: 'POST',
@@ -224,6 +228,8 @@ export class RequestTransformer {
 
   getUrl(provider, model) {
     if (provider.type === 'google') {
+      // Google Gemini API requires API key in URL query parameter
+      // Security note: This URL should never be logged in full
       const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
       return `${provider.apiUrl}?key=${apiKey}`;
     }
