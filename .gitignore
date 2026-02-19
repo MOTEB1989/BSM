@@ -36,3 +36,8 @@ certificates/
 ssl/
 
 __pycache__/
+
+# Test coverage
+coverage/
+.nyc_output/
+*.lcov
