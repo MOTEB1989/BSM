@@ -263,30 +263,26 @@ jobs:
             const governanceEmoji = governancePassed ? '✅' : '❌';
             const mergeEmoji = mergeDecision === 'approve' ? '✅' : (mergeDecision === 'block' ? '🚫' : '⚠️');
             
-            const body = `### 🏛️ تقرير الحوكمة (Governance Report)
-
-| الوكيل / Agent | المهمة / Task | الحالة / Status |
-|---|---|---|
-| 👮‍♂️ Integrity | فحص القوانين / Check Laws | ${governanceEmoji} Passed (Score: ${integrityScore}/100) |
-| 🛡️ Security | فحص الأمان / Security Audit | ${securityEmoji} ${securityStatus.toUpperCase()} |
-| 🧹 Cleaner | تنظيف الكود / Code Cleanup | ${statusEmoji(polisherResult)} ${polisherResult.toUpperCase()} |
-| 🧠 Strategist | قرار الدمج / Merge Decision | ${mergeEmoji} ${mergeDecision.toUpperCase()} |
-
-**Merge Decision Reason:** ${mergeReason}
-
----
-> **🏛️ BSM System:** All agents operated in unison.
-> **التاريخ / Timestamp:** ${new Date().toISOString()}`;
+            const body = '### 🏛️ تقرير الحوكمة (Governance Report)\n\n' +
+              '| الوكيل / Agent | المهمة / Task | الحالة / Status |\n' +
+              '|---|---|---|\n' +
+              '| 👮‍♂️ Integrity | فحص القوانين / Check Laws | ' + governanceEmoji + ' Passed (Score: ' + integrityScore + '/100) |\n' +
+              '| 🛡️ Security | فحص الأمان / Security Audit | ' + securityEmoji + ' ' + securityStatus.toUpperCase() + ' |\n' +
+              '| 🧹 Cleaner | تنظيف الكود / Code Cleanup | ' + statusEmoji(polisherResult) + ' ' + polisherResult.toUpperCase() + ' |\n' +
+              '| 🧠 Strategist | قرار الدمج / Merge Decision | ' + mergeEmoji + ' ' + mergeDecision.toUpperCase() + ' |\n\n' +
+              '**Merge Decision Reason:** ' + mergeReason + '\n\n---\n' +
+              '> **🏛️ BSM System:** All agents operated in unison.\n' +
+              '> **التاريخ / Timestamp:** ' + new Date().toISOString();
             
             try {
               await github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body
+                body: body
               });
               console.log('✅ Report posted successfully');
             } catch (error) {
-              console.log(`⚠️ Failed to post comment: ${error.message}`);
+              console.log('⚠️ Failed to post comment: ' + error.message);
             }
 
