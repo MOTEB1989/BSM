@@ -9,12 +9,12 @@ if ! command -v rg >/dev/null 2>&1; then
   echo "   Please install ripgrep (rg) and re-run this check. See installation options at: https://github.com/BurntSushi/ripgrep#installation"
   exit 1
 fi
-matches="$(rg -n -P '^\s*(?!#)(?:sudo\s+)?git\s+push\b[^\n]*--force(?!-with-lease)' scripts -g '*.sh' || true)"
+matches="$(rg -n -P '^\s*(?!#)(?:sudo\s+)?git\s+push\b[^\n]*--force(?!-with-lease)' scripts .github/workflows -g '*.sh' -g '*.yml' -g '*.yaml' || true)"
 
 if [[ -n "$matches" ]]; then
-  echo "❌ Force push policy violation detected in scripts/:"
+  echo "❌ Force push policy violation detected in scripts/ or .github/workflows/:"
   echo "$matches"
   exit 1
 fi
 
-echo "✅ Force push policy check passed (no git push --force found in scripts/)."
+echo "✅ Force push policy check passed (no git push --force found in scripts/ or .github/workflows/)."
