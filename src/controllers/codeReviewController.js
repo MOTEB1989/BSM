@@ -191,6 +191,18 @@ export const postReviewComment = async (req, res, next) => {
       throw new AppError("Missing required fields: repo, prNumber, body", 400);
     }
 
+    // Validate repo format: "owner/repo" with allowed characters
+    const repoPattern = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+    if (typeof repo !== "string" || !repoPattern.test(repo)) {
+      throw new AppError("Invalid repo format. Expected 'owner/repo' with alphanumeric, '.', '_', or '-' characters.", 400);
+    }
+
+    // Validate PR number: positive integer
+    const pr = typeof prNumber === "number" ? prNumber : Number(prNumber);
+    if (!Number.isInteger(pr) || pr <= 0) {
+      throw new AppError("Invalid prNumber. Expected a positive integer.", 400);
+    }
+
     const token = process.env.GITHUB_BSU_TOKEN;
     if (!token) {
       throw new AppError("GitHub token not configured", 500);
@@ -198,7 +210,7 @@ export const postReviewComment = async (req, res, next) => {
 
     // Post comment to GitHub
     const response = await fetch(
-      `https://api.github.com/repos/${repo}/issues/${prNumber}/comments`,
+      `https://api.github.com/repos/${repo}/issues/${pr}/comments`,
       {
         method: "POST",
         headers: {
