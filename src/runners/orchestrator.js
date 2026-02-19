@@ -11,6 +11,34 @@ import logger from "../utils/logger.js";
 export const agentEvents = new EventEmitter();
 const agentStates = new Map();
 
+// TTL-based cleanup for agentStates
+const STATE_TTL = 3600000; // 1 hour
+const MAX_STATES = 1000; // Maximum states to keep
+
+// Cleanup old states periodically
+setInterval(() => {
+  const now = Date.now();
+  const stateEntries = Array.from(agentStates.entries());
+  
+  for (const [key, state] of stateEntries) {
+    const stateAge = now - new Date(state.timestamp).getTime();
+    if (stateAge > STATE_TTL) {
+      agentStates.delete(key);
+    }
+  }
+  
+  // If still too many, remove oldest
+  if (agentStates.size > MAX_STATES) {
+    const sortedStates = stateEntries.sort((a, b) => 
+      new Date(a[1].timestamp).getTime() - new Date(b[1].timestamp).getTime()
+    );
+    const toRemove = agentStates.size - MAX_STATES;
+    for (let i = 0; i < toRemove; i++) {
+      agentStates.delete(sortedStates[i][0]);
+    }
+  }
+}, 300000); // Clean up every 5 minutes
+
 export const orchestrator = async ({ event, payload, context = {} }) => {
   const jobId = `job_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   logger.info({ jobId, event }, "Orchestrator started workflow");
@@ -143,9 +171,12 @@ async function runSingleAgent(agent, payload, context) {
   const apiKey = models[provider]?.[keyName] || models[provider]?.default;
 
   const knowledge = await loadKnowledgeIndex();
+  const knowledgeString = knowledge.join("\n"); // Compute once
+  
   const enrichedContext = {
     ...context,
     knowledge,
+    knowledgeString, // Add pre-computed string
     primaryLanguage: context.primaryLanguage || "JavaScript",
     framework: context.framework || "Express"
   };
@@ -175,7 +206,18 @@ function buildSystemPrompt(agent, context) {
 }
 
 function buildUserPrompt(payload, context) {
-  return `Analyze this payload and return JSON with keys decision, score, comments.\nPayload:\n${JSON.stringify(payload, null, 2)}\nKnowledge:\n${context.knowledge.join("\n")}`;
+  // Limit payload size for serialization
+  const MAX_PAYLOAD_SIZE = 50000; // 50KB
+  let payloadStr = JSON.stringify(payload, null, 2);
+  
+  if (payloadStr.length > MAX_PAYLOAD_SIZE) {
+    payloadStr = payloadStr.slice(0, MAX_PAYLOAD_SIZE) + "\n... [truncated]";
+  }
+  
+  // Use pre-computed knowledge string if available
+  const knowledgeStr = context.knowledgeString || context.knowledge.join("\n");
+  
+  return `Analyze this payload and return JSON with keys decision, score, comments.\nPayload:\n${payloadStr}\nKnowledge:\n${knowledgeStr}`;
 }
 
 function makeOrchestrationDecision(results) {

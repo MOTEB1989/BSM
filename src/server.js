@@ -5,7 +5,7 @@ import { validateRegistry } from "./utils/registryValidator.js";
 
 // Hard gate: validate registry before starting server
 try {
-  validateRegistry();
+  await validateRegistry();
 } catch (error) {
   logger.fatal({ error: error.message }, "Registry validation failed - server cannot start");
   process.exit(1);

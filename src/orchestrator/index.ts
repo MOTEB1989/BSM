@@ -16,7 +16,7 @@ export async function runPipeline(
   audit('PIPELINE_START', context.actor, { agents, mode: context.mode, ip: context.ip });
 
   for (const agentId of agents) {
-    const agent = getAgentConfig(agentId);
+    const agent = await getAgentConfig(agentId);
 
     enforceMode(agent, context);
     requireApproval(agent, context);

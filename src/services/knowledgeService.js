@@ -5,6 +5,7 @@ import { AppError } from "../utils/errors.js";
 
 // Cache for loaded knowledge with TTL
 let knowledgeCache = null;
+let knowledgeStringCache = null; // Cache for joined string
 let cacheTimestamp = 0;
 const CACHE_TTL = 60000; // 1 minute
 
@@ -53,6 +54,7 @@ export const loadKnowledgeIndex = async () => {
         
         // Update cache
         knowledgeCache = documents;
+        knowledgeStringCache = documents.join("\n"); // Pre-compute joined string
         cacheTimestamp = Date.now();
 
         return documents;
@@ -67,8 +69,15 @@ export const loadKnowledgeIndex = async () => {
   }
 };
 
+// Get pre-joined knowledge string (optimized for prompt rendering)
+export const getKnowledgeString = async () => {
+  await loadKnowledgeIndex(); // Ensure cache is loaded
+  return knowledgeStringCache || "";
+};
+
 // Clear cache (useful for testing or manual cache invalidation)
 export const clearKnowledgeCache = () => {
   knowledgeCache = null;
+  knowledgeStringCache = null;
   cacheTimestamp = 0;
 };

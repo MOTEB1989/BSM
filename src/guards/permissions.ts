@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 import YAML from 'yaml';
 
@@ -25,21 +25,34 @@ type RegistryShape = {
 };
 
 let cachedRegistry: RegistryShape | null = null;
+let loadingPromise: Promise<RegistryShape> | null = null;
 
-function loadRegistry(): RegistryShape {
+async function loadRegistry(): Promise<RegistryShape> {
   if (cachedRegistry) {
     return cachedRegistry;
   }
 
-  const registryPath = path.join(process.cwd(), 'agents', 'registry.yaml');
-  const source = fs.readFileSync(registryPath, 'utf8');
-  cachedRegistry = YAML.parse(source) as RegistryShape;
+  // Prevent cache stampede
+  if (loadingPromise) {
+    return loadingPromise;
+  }
 
-  return cachedRegistry;
+  loadingPromise = (async () => {
+    try {
+      const registryPath = path.join(process.cwd(), 'agents', 'registry.yaml');
+      const source = await fs.readFile(registryPath, 'utf8');
+      cachedRegistry = YAML.parse(source) as RegistryShape;
+      return cachedRegistry;
+    } finally {
+      loadingPromise = null;
+    }
+  })();
+
+  return loadingPromise;
 }
 
-export function getAgentConfig(agentId: string): AgentConfig {
-  const registry = loadRegistry();
+export async function getAgentConfig(agentId: string): Promise<AgentConfig> {
+  const registry = await loadRegistry();
   const agent = registry.agents?.find((a) => a.id === agentId);
 
   if (!agent) {
