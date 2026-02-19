@@ -16,7 +16,8 @@ const STATE_TTL = 3600000; // 1 hour
 const MAX_STATES = 1000; // Maximum states to keep
 
 // Cleanup old states periodically
-setInterval(() => {
+// Using unref() to allow Node.js to exit when tests complete
+const cleanupTimer = setInterval(() => {
   const now = Date.now();
   const stateEntries = Array.from(agentStates.entries());
   
@@ -37,7 +38,7 @@ setInterval(() => {
       agentStates.delete(sortedStates[i][0]);
     }
   }
-}, 300000); // Clean up every 5 minutes
+}, 300000).unref(); // Clean up every 5 minutes, unref to allow tests to exit
 
 export const orchestrator = async ({ event, payload, context = {} }) => {
   const jobId = `job_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
