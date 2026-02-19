@@ -85,6 +85,7 @@ src/
     lanOnly.js       #   LAN-only access enforcement
     mobileMode.js    #   Mobile-specific restrictions
     notFound.js      #   404 handling
+    validateChatInput.js # Chat input validation (message, history, language)
   runners/           # Agent execution logic
     agentRunner.js   #   Agent execution engine (template rendering, intent extraction, action validation)
     orchestrator.js  #   Orchestrator runner for pipelines
@@ -98,6 +99,9 @@ src/
     circuitBreaker.js #  Circuit breaker pattern (CLOSED/OPEN/HALF_OPEN states)
     errors.js        #   Custom error classes
     intent.js        #   Intent extraction and mapping
+    asyncHandler.js  #   Async handler wrapper to eliminate try-catch boilerplate
+    messageFormatter.js # Chat message formatting utilities (buildChatMessages, getSystemPrompt, formatOutput)
+    cachedFileLoader.js # Generic file loader factory with TTL caching and stampede prevention
     httpResponses.js #   Standard HTTP response builders
     auditLogger.js   #   Audit trail logging
     registryValidator.js # Registry validation (called at server startup)
@@ -339,6 +343,35 @@ See `.env.example` for the full list. Key variables:
 - **Multi-model routing**: `src/config/modelRouter.js` selects AI models based on task complexity
 - **Registry validation gate**: server refuses to start if `agents/registry.yaml` validation fails (`src/server.js`)
 - **Standard HTTP responses**: use `src/utils/httpResponses.js` for consistent response formatting
+
+### Refactoring Patterns (Established 2026-02)
+
+To reduce code duplication and improve maintainability, the following patterns should be used:
+
+1. **Async Handler Pattern** (`src/utils/asyncHandler.js`)
+   - Wrap all async route handlers and controllers with `asyncHandler()` to eliminate try-catch boilerplate
+   - Automatically delegates errors to Express error middleware
+   - Example: `router.get('/path', asyncHandler(async (req, res) => { ... }))`
+
+2. **Chat Input Validation** (`src/middleware/validateChatInput.js`)
+   - Use `validateChatInput` middleware for consistent validation of message, history, and language parameters
+   - Ensures security and consistency across all chat endpoints
+   - Example: `router.post('/chat', validateChatInput, asyncHandler(async (req, res) => { ... }))`
+
+3. **Message Formatting Utilities** (`src/utils/messageFormatter.js`)
+   - Use `buildChatMessages()` for constructing message arrays with history
+   - Use `getSystemPrompt(language, platform)` for localized system prompts
+   - Use `formatOutput(result, language)` for consistent output formatting with fallback messages
+
+4. **Cached File Loader Factory** (`src/utils/cachedFileLoader.js`)
+   - Use `createCachedFileLoader()` or `createYAMLLoader()` for loading files with TTL caching and stampede prevention
+   - Centralizes cache management logic
+   - Example: `const { load, clear } = createYAMLLoader({ name, dirPath, indexFile, indexKey, validator, cacheTTL })`
+
+5. **API Client Factory Pattern** (`src/api/client-factory.ts`)
+   - API clients are created dynamically via factory, not individual class files
+   - To add new AI providers, update the `SUPPORTED_PROVIDERS` array in `client-factory.ts`
+   - Do not create separate client class files (e.g., `new-provider-client.ts`)
 
 ## Testing
 
