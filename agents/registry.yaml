@@ -407,3 +407,144 @@ agents:
     healthcheck:
       endpoint: /api/agents/kimi-agent/health
       interval_seconds: 60
+
+  # ========== Google Gemini ==========
+  - id: gemini-agent
+    name: Google Gemini AI
+    category: conversational
+    role: advisor
+    execution:
+      runtime: node
+    safety:
+      mode: safe
+      requires_approval: false
+    contexts:
+      allowed:
+        - chat
+        - api
+        - mobile
+    expose:
+      selectable: true
+      internal_only: false
+    risk:
+      level: low
+      rationale: "Conversational AI with multimodal capabilities, no system modifications"
+    approval:
+      required: false
+      type: none
+      approvers: []
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - development
+        - staging
+        - production
+    healthcheck:
+      endpoint: /api/agents/gemini-agent/health
+      interval_seconds: 60
+
+  # ========== Anthropic Claude ==========
+  - id: claude-agent
+    name: Claude AI (Anthropic)
+    category: conversational
+    role: advisor
+    execution:
+      runtime: node
+    safety:
+      mode: safe
+      requires_approval: false
+    contexts:
+      allowed:
+        - chat
+        - api
+        - ci
+        - github
+    expose:
+      selectable: true
+      internal_only: false
+    risk:
+      level: low
+      rationale: "Analysis and advisory only, no destructive operations"
+    approval:
+      required: false
+      type: none
+      approvers: []
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - development
+        - staging
+        - production
+    healthcheck:
+      endpoint: /api/agents/claude-agent/health
+      interval_seconds: 60
+
+  # ========== Perplexity Search ==========
+  - id: perplexity-agent
+    name: Perplexity Search AI
+    category: conversational
+    role: advisor
+    execution:
+      runtime: node
+    safety:
+      mode: safe
+      requires_approval: false
+    contexts:
+      allowed:
+        - chat
+        - api
+        - mobile
+    expose:
+      selectable: true
+      internal_only: false
+    risk:
+      level: low
+      rationale: "Read-only web search, no system modifications"
+    approval:
+      required: false
+      type: none
+      approvers: []
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - development
+        - staging
+        - production
+    healthcheck:
+      endpoint: /api/agents/perplexity-agent/health
+      interval_seconds: 60
+
+  # ========== Groq LPU ==========
+  - id: groq-agent
+    name: Groq LPU AI
+    category: conversational
+    role: advisor
+    execution:
+      runtime: node
+    safety:
+      mode: safe
+      requires_approval: false
+    contexts:
+      allowed:
+        - chat
+        - api
+        - mobile
+    expose:
+      selectable: true
+      internal_only: false
+    risk:
+      level: low
+      rationale: "Fast conversational AI with no system access"
+    approval:
+      required: false
+      type: none
+      approvers: []
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - development
+        - staging
+        - production
+    healthcheck:
+      endpoint: /api/agents/groq-agent/health
+      interval_seconds: 60
