@@ -66,11 +66,22 @@ class ReviewHistoryService {
       // Get repo slug for filename
       const repoSlug = this.sanitizeRepoName(repo);
       const filePath = path.join(HISTORY_DIR, `${repoSlug}.json`);
+      const resolvedPath = path.resolve(filePath);
+
+      // Ensure the resolved path is within the history directory
+      const historyDirWithSep = HISTORY_DIR.endsWith(path.sep) ? HISTORY_DIR : HISTORY_DIR + path.sep;
+      if (!resolvedPath.startsWith(historyDirWithSep)) {
+        logger.error(
+          { repo, resolvedPath },
+          "Resolved history file path escapes history directory"
+        );
+        throw new Error("Invalid history file path");
+      }
 
       // Load existing history
       let history = [];
       try {
-        const content = await fs.readFile(filePath, "utf-8");
+        const content = await fs.readFile(resolvedPath, "utf-8");
         history = JSON.parse(content);
       } catch (error) {
         // File doesn't exist yet, start with empty array
@@ -88,7 +99,7 @@ class ReviewHistoryService {
       }
 
       // Save back to file
-      await fs.writeFile(filePath, JSON.stringify(history, null, 2), "utf-8");
+      await fs.writeFile(resolvedPath, JSON.stringify(history, null, 2), "utf-8");
 
       // Update cache
       this.historyCache.set(repoSlug, history);
@@ -243,13 +254,31 @@ class ReviewHistoryService {
       logger.error({ error: error.message }, "Failed to list repositories");
       return [];
     }
+   *
+   * Produces a safe, bounded slug suitable for use as a single filename.
   }
 
   /**
    * Sanitize repo name for filename
    */
   sanitizeRepoName(repo) {
-    return repo.replace(/[^a-zA-Z0-9-]/g, "_").toLowerCase();
+    if (typeof repo !== "string") {
+      return "unknown";
+    }
+    // Replace any characters that are not alphanumeric or hyphen with underscore
+    let slug = repo.replace(/[^a-zA-Z0-9-]/g, "_").toLowerCase();
+    // Trim leading/trailing underscores or hyphens
+    slug = slug.replace(/^[_-]+|[_-]+$/g, "");
+    // Enforce a reasonable maximum length to avoid excessively long filenames
+    const MAX_SLUG_LENGTH = 100;
+    if (slug.length > MAX_SLUG_LENGTH) {
+      slug = slug.substring(0, MAX_SLUG_LENGTH);
+    }
+    // Fallback to a safe default if nothing remains after sanitization
+    if (!slug) {
+      slug = "unknown";
+    }
+    return slug;
   }
 
   /**
