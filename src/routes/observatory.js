@@ -24,11 +24,19 @@ import {
 import { generatePDFReport, generateExcelReport } from '../services/reportService.js';
 import { AppError } from '../utils/errors.js';
 import logger from '../utils/logger.js';
+import {
+  validateAgentId,
+  validateTestId,
+  validateAlertId,
+  validateHistoryId,
+  validateTimeRange,
+  validateLimit
+} from '../middleware/observatoryValidation.js';
 
 const router = Router();
 
 // Get real-time metrics for all agents
-router.get('/metrics', async (req, res, next) => {
+router.get('/metrics', validateTimeRange, async (req, res, next) => {
   try {
     const { timeRange = '24h' } = req.query;
     const metrics = await getRealTimeMetrics(timeRange);
@@ -39,7 +47,7 @@ router.get('/metrics', async (req, res, next) => {
 });
 
 // Get metrics for specific agent
-router.get('/metrics/:agentId', async (req, res, next) => {
+router.get('/metrics/:agentId', validateAgentId, validateTimeRange, async (req, res, next) => {
   try {
     const { agentId } = req.params;
     const { timeRange = '24h' } = req.query;
@@ -51,7 +59,7 @@ router.get('/metrics/:agentId', async (req, res, next) => {
 });
 
 // Get time series data for charts
-router.get('/metrics/:agentId/timeseries', async (req, res, next) => {
+router.get('/metrics/:agentId/timeseries', validateAgentId, validateTimeRange, async (req, res, next) => {
   try {
     const { agentId } = req.params;
     const { timeRange = '24h' } = req.query;
@@ -63,7 +71,7 @@ router.get('/metrics/:agentId/timeseries', async (req, res, next) => {
 });
 
 // Get token usage by agent
-router.get('/tokens/agents', async (req, res, next) => {
+router.get('/tokens/agents', validateTimeRange, async (req, res, next) => {
   try {
     const { timeRange = '24h' } = req.query;
     const tokenUsage = await getTokenUsageByAgent(timeRange);
@@ -74,7 +82,7 @@ router.get('/tokens/agents', async (req, res, next) => {
 });
 
 // Get token usage by user
-router.get('/tokens/users', async (req, res, next) => {
+router.get('/tokens/users', validateTimeRange, async (req, res, next) => {
   try {
     const { timeRange = '24h' } = req.query;
     const tokenUsage = await getTokenUsageByUser(timeRange);
@@ -85,7 +93,7 @@ router.get('/tokens/users', async (req, res, next) => {
 });
 
 // Get conversation analytics
-router.get('/analytics/conversations', async (req, res, next) => {
+router.get('/analytics/conversations', validateTimeRange, async (req, res, next) => {
   try {
     const { timeRange = '24h' } = req.query;
     const analytics = await getConversationAnalytics(timeRange);
@@ -120,7 +128,7 @@ router.get('/ab-tests', async (req, res, next) => {
   }
 });
 
-router.get('/ab-tests/:testId', async (req, res, next) => {
+router.get('/ab-tests/:testId', validateTestId, async (req, res, next) => {
   try {
     const { testId } = req.params;
     const test = await getABTest(parseInt(testId));
@@ -135,7 +143,7 @@ router.get('/ab-tests/:testId', async (req, res, next) => {
   }
 });
 
-router.get('/ab-tests/:testId/results', async (req, res, next) => {
+router.get('/ab-tests/:testId/results', validateTestId, async (req, res, next) => {
   try {
     const { testId } = req.params;
     const results = await getABTestResults(parseInt(testId));
@@ -145,7 +153,7 @@ router.get('/ab-tests/:testId/results', async (req, res, next) => {
   }
 });
 
-router.patch('/ab-tests/:testId', async (req, res, next) => {
+router.patch('/ab-tests/:testId', validateTestId, async (req, res, next) => {
   try {
     const { testId } = req.params;
     const { active } = req.body;
@@ -194,7 +202,7 @@ router.get('/alerts', async (req, res, next) => {
   }
 });
 
-router.get('/alerts/history', async (req, res, next) => {
+router.get('/alerts/history', validateLimit, async (req, res, next) => {
   try {
     const { limit = 100 } = req.query;
     const history = await getAlertHistory(parseInt(limit));
@@ -204,7 +212,7 @@ router.get('/alerts/history', async (req, res, next) => {
   }
 });
 
-router.patch('/alerts/:alertId', async (req, res, next) => {
+router.patch('/alerts/:alertId', validateAlertId, async (req, res, next) => {
   try {
     const { alertId } = req.params;
     await updateAlert(parseInt(alertId), req.body);
@@ -214,7 +222,7 @@ router.patch('/alerts/:alertId', async (req, res, next) => {
   }
 });
 
-router.post('/alerts/history/:historyId/resolve', async (req, res, next) => {
+router.post('/alerts/history/:historyId/resolve', validateHistoryId, async (req, res, next) => {
   try {
     const { historyId } = req.params;
     await resolveAlert(parseInt(historyId));
@@ -225,7 +233,7 @@ router.post('/alerts/history/:historyId/resolve', async (req, res, next) => {
 });
 
 // Report generation endpoints
-router.get('/reports/pdf', async (req, res, next) => {
+router.get('/reports/pdf', validateTimeRange, async (req, res, next) => {
   try {
     const { timeRange = '24h' } = req.query;
     const pdfBuffer = await generatePDFReport(timeRange);
@@ -239,7 +247,7 @@ router.get('/reports/pdf', async (req, res, next) => {
   }
 });
 
-router.get('/reports/excel', async (req, res, next) => {
+router.get('/reports/excel', validateTimeRange, async (req, res, next) => {
   try {
     const { timeRange = '24h' } = req.query;
     const excelBuffer = await generateExcelReport(timeRange);

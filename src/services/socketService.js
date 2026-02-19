@@ -1,9 +1,20 @@
 import { Server } from 'socket.io';
+import crypto from 'crypto';
 import { getRealTimeMetrics, getAgentMetrics, getTokenUsageByAgent } from './observatoryService.js';
 import { checkAlerts } from './alertService.js';
+import { env } from '../config/env.js';
 import logger from '../utils/logger.js';
 
 let io = null;
+
+// Timing-safe string comparison to prevent timing attacks
+const timingSafeEqual = (a, b) => {
+  if (!a || !b) return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+};
 
 // Initialize Socket.io
 export function initializeSocketIO(httpServer) {
@@ -12,6 +23,22 @@ export function initializeSocketIO(httpServer) {
       origin: process.env.CORS_ORIGINS?.split(',') || '*',
       methods: ['GET', 'POST']
     }
+  });
+  
+  // Authentication middleware for Socket.io
+  io.use((socket, next) => {
+    const token = socket.handshake.auth.token || socket.handshake.query.token;
+    
+    // If admin token is configured, require authentication
+    if (env.adminToken) {
+      if (!token || !timingSafeEqual(token, env.adminToken)) {
+        logger.warn({ socketId: socket.id }, 'Unauthorized Socket.io connection attempt');
+        return next(new Error('Authentication required'));
+      }
+    }
+    
+    // Authentication successful
+    next();
   });
   
   io.on('connection', (socket) => {
@@ -23,6 +50,13 @@ export function initializeSocketIO(httpServer) {
     // Handle client requests for specific agent metrics
     socket.on('subscribe:agent', async (agentId) => {
       try {
+        // Validate agentId format to prevent injection
+        if (!agentId || typeof agentId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(agentId)) {
+          logger.warn({ socketId: socket.id, agentId }, 'Invalid agentId in subscribe:agent');
+          socket.emit('error', { message: 'Invalid agent ID format' });
+          return;
+        }
+        
         socket.join(`agent:${agentId}`);
         const metrics = await getAgentMetrics(agentId, '1h');
         socket.emit('agent:metrics', { agentId, metrics });
