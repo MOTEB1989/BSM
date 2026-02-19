@@ -22,6 +22,14 @@ export const reviewPullRequest = async (req, res, next) => {
       throw new AppError("Missing required fields: repo, prNumber", 400);
     }
 
+    if (!isValidGitHubRepo(repo)) {
+      throw new AppError("Invalid repo format. Expected 'owner/repo' with allowed characters.", 400);
+    }
+
+    if (!isValidPullRequestNumber(prNumber)) {
+      throw new AppError("Invalid pull request number. Expected a positive integer.", 400);
+    }
+
     logger.info({ repo, prNumber, forceRefresh }, "Code review requested");
 
     // Check cache first (unless force refresh)
@@ -300,6 +308,38 @@ async function fetchPullRequestDiff(diffUrl) {
         Accept: "application/vnd.github.v3.diff"
       }
     });
+
+/**
+ * Helper: Validate GitHub repository identifier ("owner/repo").
+ * Allows alphanumeric characters, hyphens, underscores, and dots in each segment.
+ */
+function isValidGitHubRepo(repo) {
+  if (typeof repo !== "string") {
+    return false;
+  }
+
+  const parts = repo.split("/");
+  if (parts.length !== 2) {
+    return false;
+  }
+
+  const segmentPattern = /^[A-Za-z0-9._-]+$/;
+  const [owner, name] = parts;
+
+  if (!owner || !name) {
+    return false;
+  }
+
+  return segmentPattern.test(owner) && segmentPattern.test(name);
+}
+
+/**
+ * Helper: Validate pull request number (positive integer).
+ */
+function isValidPullRequestNumber(prNumber) {
+  const num = typeof prNumber === "string" ? Number(prNumber) : prNumber;
+  return Number.isInteger(num) && num > 0;
+}
 
     if (!response.ok) {
       logger.error({ diffUrl, status: response.status }, "Failed to fetch diff");
