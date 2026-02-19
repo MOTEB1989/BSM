@@ -1,4 +1,5 @@
-import fs from "fs";
+import fs from "fs/promises";
+import fsSync from "fs";
 import path from "path";
 import YAML from "yaml";
 import logger from "./logger.js";
@@ -26,17 +27,17 @@ export class RegistryValidationError extends Error {
  * Validates the agents registry at startup
  * @throws {RegistryValidationError} if validation fails
  */
-export const validateRegistry = () => {
+export const validateRegistry = async () => {
   const registryPath = path.join(process.cwd(), "agents", "registry.yaml");
   
-  if (!fs.existsSync(registryPath)) {
+  if (!fsSync.existsSync(registryPath)) {
     logger.warn("No registry.yaml found - skipping registry validation");
     return;
   }
 
   logger.info("Validating agents registry (hard gate)...");
 
-  const registryContent = fs.readFileSync(registryPath, "utf8");
+  const registryContent = await fs.readFile(registryPath, "utf8");
   const registry = YAML.parse(registryContent);
 
   if (!registry || !registry.agents || !Array.isArray(registry.agents)) {

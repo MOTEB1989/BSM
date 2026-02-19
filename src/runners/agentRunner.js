@@ -67,6 +67,7 @@ export const runAgent = async ({ agentId, input, payload = {} }) => {
     if (!agent) throw new AppError(`Agent not found: ${agentId}`, 404, "AGENT_NOT_FOUND");
 
     const knowledge = await loadKnowledgeIndex();
+    const knowledgeString = knowledge.join("\n"); // Compute once
 
     const providers = buildAgentProviders(agent);
 
@@ -75,11 +76,11 @@ export const runAgent = async ({ agentId, input, payload = {} }) => {
     }
 
     const defaultSystemPrompt = `You are ${agent.name}. Role: ${agent.role}. Use the knowledge responsibly.`;
-    const defaultUserPrompt = `Knowledge:\n${knowledge.join("\n")}\n\nUser Input:\n${input}`;
+    const defaultUserPrompt = `Knowledge:\n${knowledgeString}\n\nUser Input:\n${input}`;
 
     const promptContext = {
       input,
-      knowledge: knowledge.join("\n"),
+      knowledge: knowledgeString, // Use pre-computed string
       payload,
       agentName: agent.name,
       agentRole: agent.role,
