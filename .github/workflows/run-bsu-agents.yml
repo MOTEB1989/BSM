@@ -34,7 +34,13 @@ jobs:
         run: chmod +x scripts/run_agents.sh
 
       - name: Run agents pipeline
-        run: ./scripts/run_agents.sh reports false
+        run: |
+          # Mask secrets from logs
+          echo "::add-mask::$KM_ENDPOINT"
+          echo "::add-mask::$KM_TOKEN"
+          echo "::add-mask::$SNYK_TOKEN"
+          
+          ./scripts/run_agents.sh reports false
 
       - name: Upload JSON report
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
