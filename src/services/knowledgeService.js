@@ -11,6 +11,10 @@ const CACHE_TTL = 60000; // 1 minute
 // In-flight promise to prevent cache stampede
 let loadingPromise = null;
 
+/**
+ * Load knowledge documents with caching
+ * Note: Uses custom file access logic, not using generic loader due to access() checks
+ */
 export const loadKnowledgeIndex = async () => {
   try {
     // Return cached knowledge if still valid

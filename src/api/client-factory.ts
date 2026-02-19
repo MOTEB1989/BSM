@@ -1,26 +1,49 @@
 import type { AIProvider } from './types';
-import { OpenAIClient } from './openai-client';
-import { AnthropicClient } from './anthropic-client';
-import { GoogleGeminiClient } from './gemini-client';
-import { AzureOpenAIClient } from './azure-openai-client';
-import { GroqClient } from './groq-client';
-import { CohereClient } from './cohere-client';
-import { MistralClient } from './mistral-client';
-import { PerplexityClient } from './perplexity-client';
-import { KimiClient } from './kimi-client';
+import { BaseMockAIClient } from './base-client';
 
-const PROVIDER_MAP: Record<string, () => AIProvider> = {
-  openai: () => new OpenAIClient(),
-  anthropic: () => new AnthropicClient(),
-  gemini: () => new GoogleGeminiClient(),
-  azure: () => new AzureOpenAIClient(),
-  groq: () => new GroqClient(),
-  cohere: () => new CohereClient(),
-  mistral: () => new MistralClient(),
-  perplexity: () => new PerplexityClient(),
-  kimi: () => new KimiClient(),
+/**
+ * AI Client Factory
+ * 
+ * Creates AI provider clients dynamically without requiring separate class files.
+ * Eliminates 9 boilerplate client classes (openai, anthropic, gemini, azure, groq, cohere, mistral, perplexity, kimi).
+ */
+
+// Supported provider names
+const SUPPORTED_PROVIDERS = [
+  'openai',
+  'anthropic',
+  'gemini',
+  'azure',
+  'groq',
+  'cohere',
+  'mistral',
+  'perplexity',
+  'kimi'
+] as const;
+
+type SupportedProvider = typeof SUPPORTED_PROVIDERS[number];
+
+/**
+ * Create an AI client instance for a given provider
+ * @param provider Provider name
+ * @returns AIProvider instance
+ */
+const createClient = (provider: SupportedProvider): AIProvider => {
+  return new BaseMockAIClient(provider);
 };
 
+/**
+ * Map provider names to client factory functions
+ */
+const PROVIDER_MAP: Record<string, () => AIProvider> = {};
+SUPPORTED_PROVIDERS.forEach(provider => {
+  PROVIDER_MAP[provider] = () => createClient(provider);
+});
+
+/**
+ * API Client Factory
+ * Creates and manages AI provider clients
+ */
 export class APIClientFactory {
   private readonly clients: AIProvider[];
 
@@ -34,7 +57,7 @@ export class APIClientFactory {
       .filter((client): client is AIProvider => Boolean(client));
 
     if (clients.length === 0) {
-      clients.push(new OpenAIClient());
+      clients.push(createClient('openai'));
     }
 
     return new APIClientFactory(clients);
