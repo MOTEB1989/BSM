@@ -30,10 +30,25 @@ USAGE
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --remote)
+      if [[ $# < 2 || -z "${2:-}" ]]; then
+        echo "❌ Missing value for --remote." >&2
+        usage
+        exit 1
+      fi
       REMOTE="$2"; shift 2 ;;
     --branch)
+      if [[ $# < 2 || -z "${2:-}" ]]; then
+        echo "❌ Missing value for --branch." >&2
+        usage
+        exit 1
+      fi
       BRANCH="$2"; shift 2 ;;
     --reason)
+      if [[ $# < 2 || -z "${2:-}" ]]; then
+        echo "❌ Missing value for --reason." >&2
+        usage
+        exit 1
+      fi
       REASON="$2"; shift 2 ;;
     --force)
       echo "❌ Policy violation: --force is not allowed." >&2
