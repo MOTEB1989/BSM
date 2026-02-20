@@ -1,0 +1,51 @@
+{
+  "name": "CoreHub Nexus - تطبيق iOS",
+  "short_name": "CoreHub",
+  "description": "تطبيق CoreHub Nexus المحسن لأجهزة iPhone - واجهة محادثة ذكية مع وكلاء الذكاء الاصطناعي",
+  "start_url": "/ios-app/",
+  "scope": "/ios-app/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#030712",
+  "theme_color": "#4c6ef5",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/src/chat/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "محادثة جديدة",
+      "short_name": "جديد",
+      "description": "ابدأ محادثة جديدة",
+      "url": "/ios-app/?action=new",
+      "icons": []
+    },
+    {
+      "name": "الوكيل القانوني",
+      "short_name": "قانوني",
+      "description": "استشارة قانونية",
+      "url": "/ios-app/?mode=legal-agent",
+      "icons": []
+    }
+  ],
+  "share_target": {
+    "action": "/ios-app/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}
