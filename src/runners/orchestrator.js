@@ -15,6 +15,14 @@ const agentStates = new Map();
 const STATE_TTL = 3600000; // 1 hour
 const MAX_STATES = 1000; // Maximum states to keep
 
+/**
+ * Helper function to serialize output once and reuse
+ * Avoids repeated JSON.stringify calls for the same data
+ */
+function serializeOutput(output) {
+  return typeof output === "string" ? output : JSON.stringify(output);
+}
+
 // Cleanup old states periodically
 // Using unref() to allow Node.js to exit when tests complete
 const cleanupTimer = setInterval(() => {
@@ -61,6 +69,12 @@ export const orchestrator = async ({ event, payload, context = {} }) => {
     logger.error({ jobId, error }, "Orchestrator failed");
     notifyWebSocket({ jobId, status: "failed", event, error: error.message });
     throw new AppError(`Orchestration failed: ${error.message}`, 500, "ORCHESTRATION_FAILED");
+  } finally {
+    // Clean up job-specific state after a delay to allow final event processing
+    setTimeout(() => {
+      const keysToRemove = Array.from(agentStates.keys()).filter(key => key.endsWith(`_${jobId}`));
+      keysToRemove.forEach(key => agentStates.delete(key));
+    }, 60000); // Cleanup after 1 minute
   }
 };
 
@@ -98,7 +112,7 @@ async function executeAgentsParallel(agents, payload, context, jobId) {
     try {
       updateAgentState(agent.id, jobId, "running");
       const result = await runSingleAgent(agent, payload, context);
-      const outputText = typeof result.output === "string" ? result.output : JSON.stringify(result.output);
+      const outputText = serializeOutput(result.output); // Use helper to avoid repeated serialization
       updateAgentState(agent.id, jobId, "completed", outputText);
 
       return {
@@ -137,7 +151,7 @@ async function executeAgentsSequential(agents, payload, context, jobId) {
     try {
       updateAgentState(agent.id, jobId, "running");
       const result = await runSingleAgent(agent, payload, context);
-      const outputText = typeof result.output === "string" ? result.output : JSON.stringify(result.output);
+      const outputText = serializeOutput(result.output); // Use helper to avoid repeated serialization
       updateAgentState(agent.id, jobId, "completed", outputText);
       
       results.push({
@@ -207,18 +221,17 @@ function buildSystemPrompt(agent, context) {
 }
 
 function buildUserPrompt(payload, context) {
-  // Limit payload size for serialization
+  // Limit payload size for serialization (serialize once and reuse)
   const MAX_PAYLOAD_SIZE = 50000; // 50KB
-  let payloadStr = JSON.stringify(payload, null, 2);
-  
-  if (payloadStr.length > MAX_PAYLOAD_SIZE) {
-    payloadStr = payloadStr.slice(0, MAX_PAYLOAD_SIZE) + "\n... [truncated]";
-  }
+  const payloadStr = JSON.stringify(payload, null, 2);
+  const truncatedPayload = payloadStr.length > MAX_PAYLOAD_SIZE
+    ? payloadStr.slice(0, MAX_PAYLOAD_SIZE) + "\n... [truncated]"
+    : payloadStr;
   
   // Use pre-computed knowledge string if available
   const knowledgeStr = context.knowledgeString || context.knowledge.join("\n");
   
-  return `Analyze this payload and return JSON with keys decision, score, comments.\nPayload:\n${payloadStr}\nKnowledge:\n${knowledgeStr}`;
+  return `Analyze this payload and return JSON with keys decision, score, comments.\nPayload:\n${truncatedPayload}\nKnowledge:\n${knowledgeStr}`;
 }
 
 function makeOrchestrationDecision(results) {

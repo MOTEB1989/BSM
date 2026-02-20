@@ -1,5 +1,5 @@
 import { loadAgents } from "../services/agentsService.js";
-import { loadKnowledgeIndex } from "../services/knowledgeService.js";
+import { getKnowledgeString } from "../services/knowledgeService.js";
 import { models } from "../config/models.js";
 import { runChat } from "../services/gptService.js";
 import { AppError } from "../utils/errors.js";
@@ -66,8 +66,8 @@ export const runAgent = async ({ agentId, input, payload = {} }) => {
     const agent = agents.find(a => a.id === agentId);
     if (!agent) throw new AppError(`Agent not found: ${agentId}`, 404, "AGENT_NOT_FOUND");
 
-    const knowledge = await loadKnowledgeIndex();
-    const knowledgeString = knowledge.join("\n"); // Compute once
+    // Use optimized pre-joined knowledge string from cache
+    const knowledgeString = await getKnowledgeString();
 
     const providers = buildAgentProviders(agent);
 

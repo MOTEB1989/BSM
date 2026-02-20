@@ -27,19 +27,19 @@ export const getHealthDetailed = async (req, res) => {
   };
 
   try {
-    // Check 1: File System Access
-    checks.checks.filesystem = await checkFileSystem();
+    // Run async checks in parallel for better performance
+    const [filesystemCheck, agentRegistryCheck, requiredFilesCheck] = await Promise.all([
+      checkFileSystem(),
+      checkAgentRegistry(),
+      checkRequiredFiles()
+    ]);
 
-    // Check 2: Agent Registry
-    checks.checks.agentRegistry = await checkAgentRegistry();
+    checks.checks.filesystem = filesystemCheck;
+    checks.checks.agentRegistry = agentRegistryCheck;
+    checks.checks.requiredFiles = requiredFilesCheck;
 
-    // Check 3: Environment Configuration
+    // Synchronous checks (no await needed)
     checks.checks.environment = checkEnvironment();
-
-    // Check 4: Required Files
-    checks.checks.requiredFiles = await checkRequiredFiles();
-
-    // Check 5: Circuit Breakers
     checks.checks.circuitBreakers = checkCircuitBreakers();
 
     // Determine overall status

@@ -62,19 +62,20 @@ export class IntegrityAgent {
       ".env.example"
     ];
 
-    const results = [];
-    let missingCount = 0;
+    // Parallel file access checks for better performance
+    const results = await Promise.all(
+      requiredPaths.map(async (relativePath) => {
+        const fullPath = path.join(this.rootDir, relativePath);
+        try {
+          await fs.access(fullPath);
+          return { path: relativePath, status: "OK" };
+        } catch (error) {
+          return { path: relativePath, status: "MISSING" };
+        }
+      })
+    );
 
-    for (const relativePath of requiredPaths) {
-      const fullPath = path.join(this.rootDir, relativePath);
-      try {
-        await fs.access(fullPath);
-        results.push({ path: relativePath, status: "OK" });
-      } catch (error) {
-        results.push({ path: relativePath, status: "MISSING" });
-        missingCount++;
-      }
-    }
+    const missingCount = results.filter(r => r.status === "MISSING").length;
 
     const agentIndexPath = path.join(this.rootDir, "data/agents/index.json");
     let agentValidation = { valid: true, errors: [] };
@@ -87,14 +88,25 @@ export class IntegrityAgent {
         agentValidation.valid = false;
         agentValidation.errors.push("index.json missing 'agents' array");
       } else {
-        for (const agentFile of agentIndex.agents) {
-          const agentPath = path.join(this.rootDir, "data/agents", agentFile);
-          try {
-            await fs.access(agentPath);
-          } catch {
-            agentValidation.valid = false;
-            agentValidation.errors.push(`Referenced agent file not found: ${agentFile}`);
-          }
+        // Parallel agent file validation for better performance
+        const agentChecks = await Promise.all(
+          agentIndex.agents.map(async (agentFile) => {
+            const agentPath = path.join(this.rootDir, "data/agents", agentFile);
+            try {
+              await fs.access(agentPath);
+              return { file: agentFile, exists: true };
+            } catch {
+              return { file: agentFile, exists: false };
+            }
+          })
+        );
+
+        const missingAgents = agentChecks.filter(check => !check.exists);
+        if (missingAgents.length > 0) {
+          agentValidation.valid = false;
+          missingAgents.forEach(agent => {
+            agentValidation.errors.push(`Referenced agent file not found: ${agent.file}`);
+          });
         }
       }
     } catch (error) {
