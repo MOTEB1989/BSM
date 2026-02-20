@@ -13,6 +13,7 @@
     "validate:registry": "node scripts/validate-registry.js",
     "validate:agent-sync": "node scripts/validate-agent-sync.js",
     "test": "node scripts/validate.js",
+    "test:agent-auto": "node scripts/test-agent-auto-activation.js",
     "check:tools": "node scripts/check-required-tools.js",
     "check:duplicates": "node scripts/prevent-duplicate-agents.js",
     "merge:agents": "node scripts/merge-agents.js",
