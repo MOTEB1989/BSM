@@ -3,8 +3,8 @@ import { runChat } from "../services/gptService.js";
 import { models } from "../config/models.js";
 import { AppError } from "../utils/errors.js";
 import logger from "../utils/logger.js";
-import { hasUsableApiKey } from "../utils/apiKey.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { buildChatProviders } from "../utils/providerUtils.js";
 import { validateChatInput } from "../middleware/validateChatInput.js";
 import {
   buildChatMessages,
@@ -17,15 +17,15 @@ const router = Router();
 
 // AI key status for chat UI
 router.get("/key-status", asyncHandler(async (_req, res) => {
+  const providers = buildChatProviders(models);
   const status = {
-    openai: hasUsableApiKey(models.openai?.bsm || models.openai?.default),
-    kimi: hasUsableApiKey(models.kimi?.default),
-    perplexity: hasUsableApiKey(models.perplexity?.default),
-    anthropic: hasUsableApiKey(models.anthropic?.default),
+    openai: providers.some((p) => p.type === "openai"),
+    kimi: providers.some((p) => p.type === "kimi"),
+    perplexity: providers.some((p) => p.type === "perplexity"),
+    anthropic: providers.some((p) => p.type === "anthropic"),
     google: false
   };
-
-  const anyAvailable = status.openai || status.kimi || status.perplexity || status.anthropic;
+  const anyAvailable = providers.length > 0;
 
   const ui = {
     openai: status.openai ? "✅ GPT-4 Ready" : "🔴 GPT-4 Offline",
@@ -49,18 +49,7 @@ router.get("/key-status", asyncHandler(async (_req, res) => {
 router.post("/", validateChatInput, asyncHandler(async (req, res) => {
   const { agentId, message, history = [], language = "ar" } = req.body;
 
-  // Build provider list based on available keys (priority order)
-  const providers = [];
-  const openaiKey = models.openai?.bsm || models.openai?.default;
-  const kimiKey = models.kimi?.default;
-  const perplexityKey = models.perplexity?.default;
-  const anthropicKey = models.anthropic?.default;
-
-  if (hasUsableApiKey(openaiKey)) providers.push({ type: "openai", apiKey: openaiKey });
-  if (hasUsableApiKey(kimiKey)) providers.push({ type: "kimi", apiKey: kimiKey });
-  if (hasUsableApiKey(perplexityKey)) providers.push({ type: "perplexity", apiKey: perplexityKey });
-  if (hasUsableApiKey(anthropicKey)) providers.push({ type: "anthropic", apiKey: anthropicKey });
-
+  const providers = buildChatProviders(models);
   if (providers.length === 0) {
     throw new AppError("No AI service is configured", 503, "MISSING_API_KEY");
   }
@@ -90,18 +79,7 @@ router.post("/", validateChatInput, asyncHandler(async (req, res) => {
 router.post("/direct", validateChatInput, asyncHandler(async (req, res) => {
   const { message, history = [], language = "ar" } = req.body;
 
-  // Build provider list based on available keys (priority order)
-  const providers = [];
-  const openaiKey = models.openai?.bsm || models.openai?.default;
-  const kimiKey = models.kimi?.default;
-  const perplexityKey = models.perplexity?.default;
-  const anthropicKey = models.anthropic?.default;
-
-  if (hasUsableApiKey(openaiKey)) providers.push({ type: "openai", apiKey: openaiKey });
-  if (hasUsableApiKey(kimiKey)) providers.push({ type: "kimi", apiKey: kimiKey });
-  if (hasUsableApiKey(perplexityKey)) providers.push({ type: "perplexity", apiKey: perplexityKey });
-  if (hasUsableApiKey(anthropicKey)) providers.push({ type: "anthropic", apiKey: anthropicKey });
-
+  const providers = buildChatProviders(models);
   if (providers.length === 0) {
     throw new AppError("No AI service is configured", 503, "MISSING_API_KEY");
   }

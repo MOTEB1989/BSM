@@ -3,6 +3,8 @@ import { exec as rawExec } from "child_process";
 import { promisify } from "util";
 import path from "path";
 import { env } from "../config/env.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { AppError } from "../utils/errors.js";
 
 const exec = promisify(rawExec);
 const router = Router();
@@ -38,32 +40,31 @@ function isAdminTokenValid(adminToken) {
 }
 
 // Execute terminal command
-router.post("/execute", async (req, res) => {
+router.post("/execute", asyncHandler(async (req, res) => {
+  const { command, cwd = "." } = req.body ?? {};
+  const adminToken = req.headers["x-admin-token"];
+
+  if (!isAdminTokenValid(adminToken)) {
+    throw new AppError("Unauthorized", 401, "UNAUTHORIZED");
+  }
+
+  if (!isCommandAllowed(command)) {
+    const err = new AppError("Command not allowed", 403, "COMMAND_NOT_ALLOWED");
+    err.allowed = Array.from(ALLOWED_COMMANDS);
+    throw err;
+  }
+
+  const resolvedCwd = resolveCwd(cwd);
+  console.log(`🤖 Agent executing: ${command} (cwd=${resolvedCwd})`);
+
   try {
-    const { command, cwd = "." } = req.body ?? {};
-    const adminToken = req.headers["x-admin-token"];
-
-    if (!isAdminTokenValid(adminToken)) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    if (!isCommandAllowed(command)) {
-      return res.status(403).json({
-        error: "Command not allowed",
-        allowed: Array.from(ALLOWED_COMMANDS)
-      });
-    }
-
-    const resolvedCwd = resolveCwd(cwd);
-    console.log(`🤖 Agent executing: ${command} (cwd=${resolvedCwd})`);
-
     const { stdout, stderr } = await exec(command, {
       cwd: resolvedCwd,
       timeout: 30_000,
       maxBuffer: 1024 * 1024
     });
 
-    return res.json({
+    res.json({
       success: true,
       command,
       stdout,
@@ -71,35 +72,33 @@ router.post("/execute", async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: error.message,
-      stderr: error.stderr
-    });
+    const err = new AppError(
+      error.message || "Command execution failed",
+      500,
+      "EXEC_FAILED"
+    );
+    err.stderr = error.stderr;
+    throw err;
   }
-});
+}));
 
 // Get system status
-router.get("/status", async (_req, res) => {
-  try {
-    const { stdout: nodeVersion } = await exec("node --version");
-    const { stdout: npmVersion } = await exec("npm --version");
-    const { stdout: gitStatus } = await exec("git status --short").catch(() => ({ stdout: "Clean" }));
-    const { stdout: diskSpace } = await exec("df -h .");
+router.get("/status", asyncHandler(async (_req, res) => {
+  const { stdout: nodeVersion } = await exec("node --version");
+  const { stdout: npmVersion } = await exec("npm --version");
+  const { stdout: gitStatus } = await exec("git status --short").catch(() => ({ stdout: "Clean" }));
+  const { stdout: diskSpace } = await exec("df -h .");
 
-    return res.json({
-      system: {
-        node: nodeVersion.trim(),
-        npm: npmVersion.trim(),
-        platform: process.platform
-      },
-      git: gitStatus.trim() || "No changes",
-      disk: diskSpace.split("\n")[1],
-      uptime: process.uptime()
-    });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-});
+  res.json({
+    system: {
+      node: nodeVersion.trim(),
+      npm: npmVersion.trim(),
+      platform: process.platform
+    },
+    git: gitStatus.trim() || "No changes",
+    disk: diskSpace.split("\n")[1],
+    uptime: process.uptime()
+  });
+}));
 
 export default router;

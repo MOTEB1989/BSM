@@ -29,9 +29,12 @@ export const errorHandler = (err, req, res, next) => {
     clientMessage = "Internal Server Error";
   }
 
-  res.status(status).json({
+  const payload = {
     error: clientMessage,
     code: err.code || "INTERNAL_ERROR",
     correlationId: req.correlationId
-  });
+  };
+  if (err.stderr !== undefined) payload.stderr = err.stderr;
+  if (err.allowed !== undefined) payload.allowed = err.allowed;
+  res.status(status).json(payload);
 };

@@ -2,12 +2,12 @@ import { loadAgents } from "../services/agentsService.js";
 import { loadKnowledgeIndex } from "../services/knowledgeService.js";
 import { models } from "../config/models.js";
 import { runChat } from "../services/gptService.js";
+import { buildAgentProviders as buildAgentProvidersFromUtils } from "../utils/providerUtils.js";
 import { AppError } from "../utils/errors.js";
 import { createFile } from "../actions/githubActions.js";
 import { extractIntent, intentToAction } from "../utils/intent.js";
 import { parseCommandBlocks, executeCommands } from "../utils/commandExecutor.js";
 import logger from "../utils/logger.js";
-import { hasUsableApiKey } from "../utils/apiKey.js";
 
 const resolveTemplateValue = (context, keyPath) => {
   return keyPath
@@ -24,50 +24,15 @@ const renderPromptTemplate = (template, context) => {
   });
 };
 
-const providerCandidates = ["openai", "kimi", "perplexity", "anthropic"];
-
-const resolveProviderKey = (provider, keyName) => {
-  const selectedKey = models[provider]?.[keyName];
-  if (hasUsableApiKey(selectedKey)) return selectedKey;
-
-  const fallbackKey = models[provider]?.default;
-  return hasUsableApiKey(fallbackKey) ? fallbackKey : null;
-};
-
-export const buildAgentProviders = (agent) => {
-  const providers = [];
-  const seen = new Set();
-
-  const preferredProvider = agent.modelProvider || "openai";
-  const preferredKeyName = agent.modelKey || "default";
-
-  const preferredKey = resolveProviderKey(preferredProvider, preferredKeyName);
-  if (preferredKey) {
-    providers.push({ type: preferredProvider, apiKey: preferredKey });
-    seen.add(preferredProvider);
-  }
-
-  for (const provider of providerCandidates) {
-    if (seen.has(provider)) continue;
-
-    const apiKey = resolveProviderKey(provider, "default");
-    if (apiKey) {
-      providers.push({ type: provider, apiKey });
-      seen.add(provider);
-    }
-  }
-
-  return providers;
-};
+export const buildAgentProviders = (agent) => buildAgentProvidersFromUtils(models, agent);
 
 export const runAgent = async ({ agentId, input, payload = {} }) => {
   try {
-    const agents = await loadAgents();
-    const agent = agents.find(a => a.id === agentId);
+    const [agents, knowledge] = await Promise.all([loadAgents(), loadKnowledgeIndex()]);
+    const agent = agents.find((a) => a.id === agentId);
     if (!agent) throw new AppError(`Agent not found: ${agentId}`, 404, "AGENT_NOT_FOUND");
 
-    const knowledge = await loadKnowledgeIndex();
-    const knowledgeString = knowledge.join("\n"); // Compute once
+    const knowledgeString = knowledge.filter(Boolean).join("\n");
 
     const providers = buildAgentProviders(agent);
 
@@ -167,6 +132,11 @@ export const runAgent = async ({ agentId, input, payload = {} }) => {
     return { output };
   } catch (err) {
     logger.error({ err, agentId }, "Agent execution failed");
-    return { output: "حدث خطأ أثناء تشغيل الوكيل." };
+    if (err instanceof AppError) throw err;
+    throw new AppError(
+      err.message || "Agent execution failed",
+      err.status || 500,
+      err.code || "AGENT_EXECUTION_FAILED"
+    );
   }
 };

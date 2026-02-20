@@ -1,87 +1,41 @@
-import { readFile, access } from "fs/promises";
-import path from "path";
-import { mustExistDir } from "../utils/fsSafe.js";
+import { createCachedFileLoader } from "../utils/cachedFileLoader.js";
 import { AppError } from "../utils/errors.js";
 
-// Cache for loaded knowledge with TTL
-let knowledgeCache = null;
-let knowledgeStringCache = null; // Cache for joined string
-let cacheTimestamp = 0;
-const CACHE_TTL = 60000; // 1 minute
-
-// In-flight promise to prevent cache stampede
-let loadingPromise = null;
+const { load: loadDocuments, clear: clearCache } = createCachedFileLoader({
+  name: "knowledge",
+  dirPath: "data/knowledge",
+  indexFile: "index.json",
+  indexKey: "documents",
+  parser: (content) => content,
+  validator: () => true,
+  cacheTTL: 60000,
+  skipMissingFiles: true
+});
 
 /**
  * Load knowledge documents with caching
- * Note: Uses custom file access logic, not using generic loader due to access() checks
  */
 export const loadKnowledgeIndex = async () => {
   try {
-    // Return cached knowledge if still valid
-    const now = Date.now();
-    if (knowledgeCache && (now - cacheTimestamp) < CACHE_TTL) {
-      return knowledgeCache;
-    }
-
-    // If already loading, return the existing promise (prevents cache stampede)
-    if (loadingPromise) {
-      return loadingPromise;
-    }
-
-    // Create loading promise
-    loadingPromise = (async () => {
-      try {
-        const dir = path.join(process.cwd(), "data", "knowledge");
-        mustExistDir(dir);
-
-        const indexPath = path.join(dir, "index.json");
-        const indexContent = await readFile(indexPath, "utf8");
-        const index = JSON.parse(indexContent);
-
-        if (!Array.isArray(index.documents)) {
-          throw new AppError("Invalid knowledge index.json", 500, "KNOWLEDGE_INDEX_INVALID");
-        }
-
-        // Read all knowledge documents in parallel
-        const documentPromises = index.documents.map(async (f) => {
-          const p = path.join(dir, f);
-          try {
-            await access(p);
-            return await readFile(p, "utf8");
-          } catch {
-            return "";
-          }
-        });
-
-        const documents = await Promise.all(documentPromises);
-        
-        // Update cache
-        knowledgeCache = documents;
-        knowledgeStringCache = documents.join("\n"); // Pre-compute joined string
-        cacheTimestamp = Date.now();
-
-        return documents;
-      } finally {
-        loadingPromise = null;
-      }
-    })();
-
-    return loadingPromise;
+    return await loadDocuments();
   } catch (err) {
-    throw new AppError(`Failed to load knowledge: ${err.message}`, 500, err.code || "KNOWLEDGE_LOAD_FAILED");
+    throw new AppError(
+      `Failed to load knowledge: ${err.message}`,
+      500,
+      err.code || "KNOWLEDGE_LOAD_FAILED"
+    );
   }
 };
 
-// Get pre-joined knowledge string (optimized for prompt rendering)
+/**
+ * Get pre-joined knowledge string (optimized for prompt rendering)
+ */
 export const getKnowledgeString = async () => {
-  await loadKnowledgeIndex(); // Ensure cache is loaded
-  return knowledgeStringCache || "";
+  const documents = await loadKnowledgeIndex();
+  return documents.filter(Boolean).join("\n");
 };
 
-// Clear cache (useful for testing or manual cache invalidation)
-export const clearKnowledgeCache = () => {
-  knowledgeCache = null;
-  knowledgeStringCache = null;
-  cacheTimestamp = 0;
-};
+/**
+ * Clear cache (useful for testing or manual cache invalidation)
+ */
+export const clearKnowledgeCache = () => clearCache();

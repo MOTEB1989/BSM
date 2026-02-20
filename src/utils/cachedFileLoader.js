@@ -18,6 +18,7 @@ import { AppError } from "./errors.js";
  * @param {Function} options.parser - File content parser function
  * @param {Function} options.validator - Validation function for parsed content
  * @param {number} options.cacheTTL - Cache TTL in milliseconds (default: 60000)
+ * @param {boolean} options.skipMissingFiles - If true, missing files yield empty string (default: false)
  * @returns {Object} Loader functions { load, clear }
  */
 export const createCachedFileLoader = (options) => {
@@ -28,7 +29,8 @@ export const createCachedFileLoader = (options) => {
     indexKey,
     parser = (content) => content,
     validator = () => true,
-    cacheTTL = 60000 // 1 minute default
+    cacheTTL = 60000, // 1 minute default
+    skipMissingFiles = false
   } = options;
 
   // Cache variables
@@ -73,7 +75,13 @@ export const createCachedFileLoader = (options) => {
           // Read all files in parallel
           const filePromises = index[indexKey].map(async (file) => {
             const filePath = path.join(dir, file);
-            const content = await readFile(filePath, "utf8");
+            let content;
+            try {
+              content = await readFile(filePath, "utf8");
+            } catch (readErr) {
+              if (skipMissingFiles) return "";
+              throw readErr;
+            }
             const parsed = parser(content);
             
             if (!validator(parsed, file)) {
