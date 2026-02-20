@@ -307,6 +307,11 @@ export async function handleDeploymentStatusEvent(payload) {
  */
 export async function processGitHubWebhook(event, payload) {
   try {
+    if (!payload?.repository?.full_name) {
+      logger.warn({ event }, "Skipping GitHub webhook: missing repository metadata");
+      return;
+    }
+
     switch (event) {
       case "push":
         await handlePushEvent(payload);
