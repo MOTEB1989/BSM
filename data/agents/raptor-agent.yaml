@@ -66,11 +66,9 @@ actions:
   - suggest_improvements
 contexts:
   allowed:
-    - chat
-    - api
-    - ci
-    - mobile
-safety:
+  - api
+  - ci
+  safety:
   mode: restricted
   requires_approval: true
 expose:
