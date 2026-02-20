@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { orchestrator } from "../runners/orchestrator.js";
 import { executeDecision } from "../actions/githubActions.js";
+import { processGitHubWebhook } from "../services/githubWebhookIntegration.js";
 import logger from "../utils/logger.js";
 
 export const handleGitHubWebhook = async (req, res, next) => {
@@ -23,6 +24,14 @@ export const handleGitHubWebhook = async (req, res, next) => {
     const data = req.body;
 
     logger.info({ event, action: data?.action }, "Webhook received");
+
+    // Process webhook through team notification system
+    try {
+      await processGitHubWebhook(event, data);
+    } catch (error) {
+      logger.error({ error: error.message }, "Failed to process webhook through notification system");
+      // Continue with normal processing even if notification fails
+    }
 
     if (data?.pull_request?.draft) {
       logger.info({ prNumber: data.number }, "Skipping draft PR");

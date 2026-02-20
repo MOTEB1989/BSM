@@ -13,6 +13,7 @@ import control from "./control.js";
 import pr from "./pr.js";
 import agentExecutor from "./agent-executor.js";
 import joke from "./joke.js";
+import notifications from "./notifications.js";
 
 const router = Router();
 
@@ -30,5 +31,6 @@ router.use("/emergency", emergency);
 router.use("/pr", pr);
 router.use("/agent", agentExecutor);
 router.use("/random-joke", joke);
+router.use("/notifications", notifications);
 
 export default router;
