@@ -1,0 +1,75 @@
+name: 🔄 Sync MOTEB1989/BSM ↔ LexBANK/BSM
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      direction:
+        description: 'اتجاه المزامنة'
+        required: true
+        type: choice
+        options:
+          - moteb-to-lexbank
+          - lexbank-to-moteb
+          - bidirectional
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Primary
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          
+      - name: Add Secondary Remote
+        run: |
+          git config user.name "Saffio Sync Bot"
+          git config user.email "bot@lexbank.bsm"
+          git remote add secondary https://github.com/LexBANK/BSM.git || true
+          git fetch secondary
+          
+      - name: Install Dependencies
+        run: npm ci
+          
+      - name: Smart Merge (Anti-Duplicate)
+        run: |
+          # Backup current registry
+          cp agents/registry.yaml agents/registry-backup.yaml
+          
+          # Attempt merge
+          git merge secondary/main --no-commit --allow-unrelated-histories || true
+          
+          # Restore registry and run intelligent merge
+          cp agents/registry-backup.yaml agents/registry.yaml
+          
+          # Check if secondary has different agents
+          if [ -f agents/registry-secondary.yaml ]; then
+            node scripts/merge-agents.js
+          fi
+          
+      - name: Validate After Merge
+        run: node scripts/prevent-duplicate-agents.js
+        
+      - name: Commit Sync
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "لا توجد تغييرات للمزامنة"
+          else
+            git commit -m "chore: sync repos (anti-duplicate) [skip ci]"
+            git push origin main
+          fi

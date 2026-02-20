@@ -1,0 +1,18 @@
+#!/bin/bash
+# نظام صافيو: Git Hook للتحقق قبل Commit
+
+echo "🔍 صافيو: فحص التكرارات..."
+
+# Check if registry was modified
+if git diff --cached --name-only | grep -q "agents/registry.yaml"; then
+  if ! node scripts/prevent-duplicate-agents.js; then
+    echo ""
+    echo "❌ تم اكتشاف تكرارات في Registry"
+    echo "💡 راجع الوكلاء المكررة وقم بحذف أحدها"
+    echo ""
+    exit 1
+  fi
+fi
+
+echo "✅ صافيو: الفحص نجح - يمكن المتابعة"
+exit 0
