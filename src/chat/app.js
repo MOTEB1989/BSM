@@ -148,11 +148,13 @@ createApp({
             history: historyBeforeNewMessage
           };
         } else {
-          // Agent-based chat
+          // Destination-aware chat with history and language support
           url = `${API_BASE}/api/chat`;
           body = {
             agentId: mode.value,
-            input: text
+            message: text,
+            language: lang.value,
+            history: historyBeforeNewMessage
           };
         }
 
