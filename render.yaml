@@ -3,7 +3,7 @@ services:
   - type: web
     name: SR.BSM
     runtime: node
-    repo: https://github.com/LexBANK/BSM
+    repo: https://github.com/MOTEB1989/BSM
     region: virginia
     buildCommand: npm ci
     startCommand: npm start

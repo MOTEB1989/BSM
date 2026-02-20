@@ -6,16 +6,34 @@ Guide for connecting iPhone, Cursor (Windows), remote control, and AI chat inter
 
 ---
 
+## 🔗 الواجهات والروابط | Interfaces & URLs
+
+| الواجهة | الرابط | الوصف |
+|--------|--------|-------|
+| **CoreHub** | https://corehub.nexus | واجهة إدارة الوكلاء (نفس Backend) |
+| **CoreHub WWW** | https://www.corehub.nexus | نفس الواجهة |
+| **LexPrim** | https://lexprim.com | دردشة Nuxt 3 الرئيسية |
+| **LexPrim WWW** | https://www.lexprim.com | نفس الواجهة |
+| **Backend API** | https://sr-bsm.onrender.com | خادم BSM على Render |
+| **GitHub Pages** | https://moteb1989.github.io/BSM | الواجهة الأمامية |
+| **Lexdo Docs** | https://lexdo.uk | التوثيق والموقع |
+| **Cloudflare** | https://9e71cbf3.lexbank.pages.dev | نشر بديل |
+| **المستودع** | https://github.com/MOTEB1989/BSM | كود المصدر |
+
+> **ملاحظة**: corehub.nexus و lexprim.com و sr-bsm.onrender.com تشير إلى نفس الخادم (domains في Render).
+> corehub.nexus قد يكون خلف Cloudflare (فحص أمان). استخدم sr-bsm.onrender.com أو lexprim.com للوصول المباشر.
+
+---
+
 ## 📱 iPhone / الجوال
 
 ### PWA على الآيفون | PWA on iPhone
 
-1. افتح المتصفح (Safari) وانتقل إلى:
+1. افتح المتصفح (Safari) وانتقل إلى أحد الروابط:
    ```
+   https://corehub.nexus/chat
+   https://lexprim.com
    https://sr-bsm.onrender.com/chat
-   ```
-   أو من GitHub Pages:
-   ```
    https://moteb1989.github.io/BSM
    ```
 
