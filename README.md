@@ -488,13 +488,41 @@ After upgrading our subscription to **GitHub Copilot Pro**, the platform now lev
 
 ## Development Workflow
 
+### VS Code Setup (Recommended)
+
+The project includes VS Code workspace configuration for an optimal development experience.
+
+**Recommended Extensions:**
+- **[GitHub Pull Requests and Issues](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-pull-request-github)** - Manage pull requests and issues directly from VS Code
+- **[GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)** - AI-powered code completion
+- **[GitHub Copilot Chat](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot-chat)** - Conversational AI assistance
+- **ESLint** - JavaScript/TypeScript linting
+- **YAML** - YAML language support with schema validation
+- **Docker** - Docker container management
+
+When you open the project in VS Code, you'll be prompted to install the recommended extensions automatically.
+
+**Quick Start:**
+```bash
+# Open project in VS Code
+code .
+
+# Install recommended extensions when prompted
+# Or manually: Ctrl+Shift+P > "Extensions: Show Recommended Extensions"
+```
+
+📖 **For detailed VS Code setup instructions**, see [docs/VSCODE-SETUP.md](./docs/VSCODE-SETUP.md)
+
+### Development Workflow with GitHub Copilot Pro
+
 With GitHub Copilot Pro integration, our development workflow includes:
 
 1. **AI-Assisted Coding**: Use Copilot suggestions for rapid development
-2. **Automated Testing**: AI-generated test cases and scenarios
-3. **Code Review**: Intelligent code analysis and recommendations
-4. **Documentation**: Automated documentation generation
-5. **Continuous Integration**: Automated build and deployment pipelines
+2. **Pull Request Management**: Review and manage PRs directly in VS Code using the GitHub PR extension
+3. **Automated Testing**: AI-generated test cases and scenarios
+4. **Code Review**: Intelligent code analysis and recommendations
+5. **Documentation**: Automated documentation generation
+6. **Continuous Integration**: Automated build and deployment pipelines
 
 ## CI/CD
 
@@ -528,6 +556,9 @@ The project includes GitHub Actions workflows:
 - [GOVERNANCE.md](./GOVERNANCE.md) - Governance policies and approval rules
 - [SECURITY.md](./SECURITY.md) - Security policies and requirements
 - [MOBILE_MODE.md](./MOBILE_MODE.md) - Mobile mode restrictions
+
+### Development & Setup
+- [VS Code Setup Guide](docs/VSCODE-SETUP.md) - Comprehensive VS Code development setup with GitHub PR extension
 
 ### Architecture and Design
 - [System Architecture](docs/ARCHITECTURE.md) - Comprehensive architectural overview
