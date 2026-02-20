@@ -7,7 +7,7 @@
 
 import { hasUsableApiKey } from "./apiKey.js";
 
-const PROVIDER_ORDER = ["openai", "kimi", "perplexity", "anthropic"];
+const PROVIDER_ORDER = ["openai", "kimi", "perplexity", "anthropic", "gemini", "groq"];
 
 /**
  * Resolve API key for a provider/key combination

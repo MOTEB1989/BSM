@@ -168,12 +168,26 @@ BSM/
 # Backend URL (للـ MCP والواجهات)
 BSM_API_URL=https://sr-bsm.onrender.com/api
 
-# مفاتيح AI (اختياري للـ MCP)
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-GOOGLE_API_KEY=...
-PERPLEXITY_API_KEY=...
+# مفاتيح AI - ترتيب الأولوية في الدردشة
+OPENAI_BSM_KEY=sk-...      # أو OPENAI_BSU_KEY أو OPENAI_API_KEY
+KIMI_API_KEY=...           # Moonshot Kimi
+PERPLEXITY_KEY=...         # Perplexity (بحث مباشر)
+ANTHROPIC_API_KEY=...      # Claude
+GEMINI_API_KEY=...         # أو GOOGLE_API_KEY - Gemini
+GROQ_API_KEY=...           # Groq (سريع)
 ```
+
+### النماذج المفعّلة في الواجهة | Models Shown in UI
+
+شريط الحالة يعرض الحالة الفعلية حسب المفاتيح المُعدّة:
+- **GPT-4** ← OPENAI_BSM_KEY / OPENAI_BSU_KEY / OPENAI_API_KEY
+- **Kimi** ← KIMI_API_KEY
+- **Perplexity** ← PERPLEXITY_KEY
+- **Claude** ← ANTHROPIC_API_KEY
+- **Gemini** ← GEMINI_API_KEY أو GOOGLE_API_KEY
+- **Groq** ← GROQ_API_KEY
+
+الدردشة تجرب النماذج بالترتيب أعلاه حتى ينجح أحدها.
 
 ---
 
