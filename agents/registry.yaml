@@ -571,10 +571,8 @@ agents:
       requires_approval: true
     contexts:
       allowed:
-        - chat
         - api
         - ci
-        - mobile
     expose:
       selectable: true
       internal_only: false
