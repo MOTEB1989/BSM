@@ -69,12 +69,55 @@ createApp({
       });
     }
 
+    function sanitizeHtml(html) {
+      const template = document.createElement('template');
+      template.innerHTML = html;
+
+      const blockedTags = new Set(['SCRIPT', 'IFRAME', 'OBJECT', 'EMBED', 'STYLE', 'LINK', 'META']);
+      const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_ELEMENT);
+      const nodesToRemove = [];
+
+      while (walker.nextNode()) {
+        const element = walker.currentNode;
+        if (blockedTags.has(element.tagName)) {
+          nodesToRemove.push(element);
+          continue;
+        }
+
+        for (const attribute of [...element.attributes]) {
+          const name = attribute.name.toLowerCase();
+          const value = String(attribute.value || '').trim().toLowerCase();
+          if (name.startsWith('on') || value.startsWith('javascript:')) {
+            element.removeAttribute(attribute.name);
+          }
+        }
+
+        if (element.tagName === 'A') {
+          const href = String(element.getAttribute('href') || '').trim().toLowerCase();
+          if (href.startsWith('javascript:')) {
+            element.removeAttribute('href');
+          }
+          element.setAttribute('rel', 'noopener noreferrer');
+          if (!element.getAttribute('target')) {
+            element.setAttribute('target', '_blank');
+          }
+        }
+      }
+
+      nodesToRemove.forEach((node) => node.remove());
+      return template.innerHTML;
+    }
+
     function renderMarkdown(text) {
       if (!text) return '';
       try {
-        return marked.parse(text, { breaks: true, gfm: true });
+        const rendered = marked.parse(text, { breaks: true, gfm: true });
+        return sanitizeHtml(rendered);
       } catch {
-        return text;
+        return String(text)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
       }
     }
 
