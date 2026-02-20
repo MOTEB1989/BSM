@@ -1,4 +1,15 @@
-version: "1.0"
+# BSM/LexBANK Agent Registry
+# Version: 2.0 (Saffio Unified System)
+# Last Updated: 2026-02-20
+
+version: "2.0"
+
+metadata:
+  validator_version: "1.2.0"
+  last_audit: "2026-02-20T00:00:00Z"
+  governance:
+    duplicate_prevention: enabled
+    auto_validation: true
 
 agents:
   - id: governance-agent
@@ -548,3 +559,19 @@ agents:
     healthcheck:
       endpoint: /api/agents/groq-agent/health
       interval_seconds: 60
+
+# Validation Rules
+validation:
+  duplicate_check: true
+  schema_version: "2.0"
+  required_fields:
+    - id
+    - name
+    - category
+    - contexts
+    - risk.level
+  
+  blocked_patterns:
+    - duplicate_id
+    - missing_approval_for_high_risk
+    - unsafe_permissions
