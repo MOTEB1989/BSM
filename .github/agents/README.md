@@ -6,6 +6,7 @@ This directory contains custom agent definitions and configurations for the BSU 
 
 Each `.agent.md` file defines a custom agent with its role, instructions, and capabilities:
 
+- **agent-auto.agent.md** - Smart query router with intent classification
 - **bsu-audit.agent.md** - Configuration audit and validation agent
 - **bsu-autonomous-architect.agent.md** - Architecture analysis and recommendations
 - **code-review.agent.md** - Code quality and standards review
