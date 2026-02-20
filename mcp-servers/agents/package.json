@@ -1,0 +1,8 @@
+{
+  "type": "module",
+  "name": "@bsm/supreme-unrestricted-agent",
+  "version": "1.0.0",
+  "description": "Supreme Unrestricted Master Agent - FOR TESTING ONLY",
+  "private": true,
+  "main": "supreme-unrestricted-agent.js"
+}
