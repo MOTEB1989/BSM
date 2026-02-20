@@ -25,6 +25,7 @@ export const adminAuth = (req, res, next) => {
   if (!token || !env.adminToken || !timingSafeEqual(token, env.adminToken)) {
     return res.status(401).json({ error: "Unauthorized" });
   }
+  req.adminToken = token;
   next();
 };
 
@@ -48,5 +49,9 @@ export const adminUiAuth = (req, res, next) => {
     return res.status(401).send("Unauthorized");
   }
 
+  req.adminToken = token;
   return next();
 };
+
+// Backward-compatible alias used by some legacy routes.
+export const auth = adminAuth;

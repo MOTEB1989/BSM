@@ -23,12 +23,12 @@ class GoServiceClient {
    */
   async request(endpoint, options = {}) {
     const url = `${this.baseUrl}${endpoint}`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-
     let lastError;
 
     for (let attempt = 1; attempt <= this.retries; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
       try {
         const response = await fetch(url, {
           ...options,
@@ -191,7 +191,8 @@ class SearchServiceClient extends GoServiceClient {
    * Get autocomplete suggestions
    */
   async suggest(prefix, options = {}) {
-    return await this.request("/api/v1/search/suggest", {
+    const encodedPrefix = encodeURIComponent(prefix || "");
+    return await this.request(`/api/v1/search/suggest?prefix=${encodedPrefix}`, {
       method: "GET",
       headers: {
         ...options.headers,

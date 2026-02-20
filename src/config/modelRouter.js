@@ -2,11 +2,17 @@ import fetch from "node-fetch";
 import logger from "../utils/logger.js";
 import { AppError } from "../utils/errors.js";
 import { env } from "./env.js";
+import { getCircuitBreaker } from "../utils/circuitBreaker.js";
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 const PERPLEXITY_URL = "https://api.perplexity.ai/chat/completions";
 const KIMI_URL = "https://api.moonshot.cn/v1/chat/completions";
 const REQUEST_TIMEOUT_MS = 45000;
+const modelApiCircuitBreakers = {
+  openai: getCircuitBreaker("model-router-openai", { failureThreshold: 5, resetTimeout: 30000 }),
+  perplexity: getCircuitBreaker("model-router-perplexity", { failureThreshold: 5, resetTimeout: 30000 }),
+  kimi: getCircuitBreaker("model-router-kimi", { failureThreshold: 5, resetTimeout: 30000 })
+};
 
 export class MultiModelRouter {
   constructor() {
@@ -119,7 +125,7 @@ export class MultiModelRouter {
       messages: this.buildMessages(prompt),
       temperature: options.temperature,
       max_tokens: options.maxTokens
-    });
+    }, "openai");
 
     return {
       output: response.choices?.[0]?.message?.content || "",
@@ -154,7 +160,7 @@ export class MultiModelRouter {
       return_citations: env.perplexityCitations,
       return_images: false,
       return_related_questions: false
-    });
+    }, "perplexity");
 
     const choice = response.choices?.[0] || {};
 
@@ -179,7 +185,7 @@ export class MultiModelRouter {
       messages: this.buildMessages(prompt),
       temperature: options.temperature,
       max_tokens: options.maxTokens
-    });
+    }, "kimi");
 
     return {
       output: response.choices?.[0]?.message?.content || "",
@@ -214,35 +220,39 @@ export class MultiModelRouter {
     throw new AppError("All model fallbacks failed", 500, "ALL_MODELS_FAILED");
   }
 
-  async postChat(url, apiKey, payload) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  async postChat(url, apiKey, payload, provider = "openai") {
+    const breaker = modelApiCircuitBreakers[provider] || modelApiCircuitBreakers.openai;
 
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal
-      });
+    return breaker.execute(async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new AppError(`Model request failed: ${errorText}`, 500, "MODEL_REQUEST_FAILED");
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new AppError(`Model request failed: ${errorText}`, 500, "MODEL_REQUEST_FAILED");
+        }
+
+        return await res.json();
+      } catch (err) {
+        if (err.name === "AbortError") {
+          throw new AppError("Model request timeout", 500, "MODEL_TIMEOUT");
+        }
+        throw err;
+      } finally {
+        clearTimeout(timeoutId);
       }
-
-      return await res.json();
-    } catch (err) {
-      if (err.name === "AbortError") {
-        throw new AppError("Model request timeout", 500, "MODEL_TIMEOUT");
-      }
-      throw err;
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    });
   }
 
   buildMessages(prompt) {

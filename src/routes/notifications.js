@@ -16,7 +16,7 @@ router.get("/", asyncHandler(async (req, res) => {
   const { limit, type, priority, since } = req.query;
 
   const notifications = notificationService.getNotifications({
-    limit: limit ? parseInt(limit) : 50,
+    limit: limit ? parseInt(limit, 10) : 50,
     type,
     priority,
     since
@@ -143,6 +143,24 @@ router.get("/coordination", asyncHandler(async (req, res) => {
     success: true,
     count: collaborations.length,
     collaborations
+  });
+}));
+
+/**
+ * GET /api/notifications/coordination/history - Get coordination history
+ */
+router.get("/coordination/history", asyncHandler(async (req, res) => {
+  const { limit, initiator } = req.query;
+
+  const history = agentCoordinationService.getHistory({
+    limit: limit ? parseInt(limit, 10) : 10,
+    initiator
+  });
+
+  res.json({
+    success: true,
+    count: history.length,
+    history
   });
 }));
 
@@ -284,24 +302,6 @@ router.post("/coordination/:sessionId/cancel", asyncHandler(async (req, res) => 
 }));
 
 /**
- * GET /api/notifications/coordination/history - Get coordination history
- */
-router.get("/coordination/history", asyncHandler(async (req, res) => {
-  const { limit, initiator } = req.query;
-
-  const history = agentCoordinationService.getHistory({
-    limit: limit ? parseInt(limit) : 10,
-    initiator
-  });
-
-  res.json({
-    success: true,
-    count: history.length,
-    history
-  });
-}));
-
-/**
  * GET /api/notifications/security/status - Get security shield status
  */
 router.get("/security/status", asyncHandler(async (req, res) => {
@@ -332,7 +332,7 @@ router.get("/security/threats", asyncHandler(async (req, res) => {
   const { limit, severity, type } = req.query;
 
   const threats = securityShieldService.getThreatHistory({
-    limit: limit ? parseInt(limit) : 20,
+    limit: limit ? parseInt(limit, 10) : 20,
     severity,
     type
   });

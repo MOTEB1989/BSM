@@ -1,8 +1,14 @@
 import fetch from "node-fetch";
 import { AppError } from "../utils/errors.js";
 import logger from "../utils/logger.js";
+import { getCircuitBreaker } from "../utils/circuitBreaker.js";
 
 const repo = process.env.GITHUB_REPO || "LexBANK/BSM";
+const GITHUB_REQUEST_TIMEOUT_MS = 20000;
+const githubApiCircuitBreaker = getCircuitBreaker("github-api", {
+  failureThreshold: 5,
+  resetTimeout: 30000
+});
 
 const getToken = () => {
   const token = process.env.GITHUB_BSU_TOKEN;
@@ -23,7 +29,8 @@ const githubAPI = async (endpoint, method = "GET", body = null) => {
     headers: {
       "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json",
-      "Accept": "application/vnd.github+json"
+      "Accept": "application/vnd.github+json",
+      "User-Agent": "BSU-Agent-Orchestrator"
     }
   };
 
@@ -31,15 +38,35 @@ const githubAPI = async (endpoint, method = "GET", body = null) => {
     options.body = JSON.stringify(body);
   }
 
-  const res = await fetch(url, options);
+  return githubApiCircuitBreaker.execute(async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), GITHUB_REQUEST_TIMEOUT_MS);
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new AppError(`GitHub API ${method} ${endpoint} failed: ${text}`, res.status, "GITHUB_API_FAILED");
-  }
+    try {
+      const res = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
 
-  if (res.status === 204) return null;
-  return res.json();
+      if (!res.ok) {
+        const text = await res.text();
+        throw new AppError(`GitHub API ${method} ${endpoint} failed: ${text}`, res.status, "GITHUB_API_FAILED");
+      }
+
+      if (res.status === 204) {
+        return null;
+      }
+
+      return res.json();
+    } catch (error) {
+      if (error.name === "AbortError") {
+        throw new AppError("GitHub API request timed out", 504, "GITHUB_TIMEOUT");
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  });
 };
 
 export const createFile = async (path, content) => {
