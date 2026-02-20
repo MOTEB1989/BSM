@@ -99,7 +99,7 @@ agents:
       internal_only: false
     risk:
       level: low
-      rationale: "Intent routing agent with no system modifications"
+      rationale: "Intent routing and conversational delegation without direct system modifications"
     approval:
       required: false
       type: none
