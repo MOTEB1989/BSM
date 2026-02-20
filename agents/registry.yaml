@@ -574,7 +574,6 @@ agents:
         - chat
         - api
         - ci
-        - mobile
     expose:
       selectable: true
       internal_only: false
