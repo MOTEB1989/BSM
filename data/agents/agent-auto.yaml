@@ -31,3 +31,17 @@ instructions: |
   - إذا لم تتمكن من تحديد التخصص، أجب بشكل عام ثم اقترح الوكيل المناسب
 actions:
   - create_file
+contexts:
+  allowed:
+    - chat
+    - api
+    - mobile
+safety:
+  mode: safe
+  requires_approval: false
+expose:
+  selectable: true
+  internal_only: false
+risk:
+  level: low
+  rationale: "Intent-based routing and advisory responses with no system modifications"
