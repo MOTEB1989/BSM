@@ -534,6 +534,7 @@ The project includes GitHub Actions workflows:
 - [Agent Orchestration Patterns](docs/AGENT-ORCHESTRATION.md) - Multi-agent design patterns and workflows
 - [CI/CD Recommendations](docs/CICD-RECOMMENDATIONS.md) - Pipeline enhancements and automation strategies
 - [Security & Deployment Guide](docs/SECURITY-DEPLOYMENT.md) - Security best practices and deployment procedures
+- [Render CLI Deployment](docs/RENDER-CLI-DEPLOYMENT.md) - Automated Render.com deployment using CLI
 - [Documentation Deployment Policy](docs/DOCS-DEPLOYMENT.md) - Official docs CI/CD, build source, and versioning policy
 
 ### API Documentation
