@@ -16,6 +16,7 @@
     "gemini-agent.yaml",
     "claude-agent.yaml",
     "perplexity-agent.yaml",
-    "groq-agent.yaml"
+    "groq-agent.yaml",
+    "raptor-agent.yaml"
   ]
 }

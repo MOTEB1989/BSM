@@ -66,6 +66,12 @@
               <button @click="setMode('governance-agent')" class="w-full text-right px-4 py-2 text-sm hover:bg-gray-700 transition-colors" :class="{ 'bg-lex-600/20 text-lex-400': mode === 'governance-agent' }">
                 {{ lang === 'ar' ? 'وكيل الحوكمة' : 'Governance Agent' }}
               </button>
+              <button @click="setMode('raptor-agent')" class="w-full text-right px-4 py-2 text-sm hover:bg-gray-700 transition-colors" :class="{ 'bg-lex-600/20 text-lex-400': mode === 'raptor-agent' }">
+                {{ lang === 'ar' ? 'رابتور (النائب)' : 'Raptor (Deputy)' }}
+              </button>
+              <button @click="setMode('kimi-agent')" class="w-full text-right px-4 py-2 text-sm hover:bg-gray-700 transition-colors" :class="{ 'bg-lex-600/20 text-lex-400': mode === 'kimi-agent' }">
+                KIMI AI
+              </button>
             </div>
           </div>
 
