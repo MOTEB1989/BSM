@@ -28,6 +28,9 @@ export const adminAuth = (req, res, next) => {
   next();
 };
 
+// Backward-compatible alias used by legacy routes.
+export const auth = adminAuth;
+
 export const adminUiAuth = (req, res, next) => {
   if (!env.adminToken) {
     return res.status(500).send("Admin token not configured");
