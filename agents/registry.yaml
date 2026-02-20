@@ -559,6 +559,43 @@ agents:
       endpoint: /api/agents/perplexity-agent/health
       interval_seconds: 60
 
+  # ========== Raptor - Deputy & Repository Leader ==========
+  - id: raptor-agent
+    name: Raptor - Deputy & Repository Leader
+    category: system
+    role: executor
+    execution:
+      runtime: node
+    safety:
+      mode: restricted
+      requires_approval: true
+    contexts:
+      allowed:
+        - chat
+        - api
+        - ci
+        - mobile
+    expose:
+      selectable: true
+      internal_only: false
+    risk:
+      level: medium
+      rationale: "Designated deputy for repository leadership and agent orchestration"
+    approval:
+      required: true
+      type: manual
+      approvers:
+        - admin
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - development
+        - staging
+        - production
+    healthcheck:
+      endpoint: /api/agents/raptor-agent/health
+      interval_seconds: 90
+
   # ========== Groq LPU ==========
   - id: groq-agent
     name: Groq LPU AI

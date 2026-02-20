@@ -313,6 +313,22 @@ const config = {
       endpoint: '/api/chat/direct',
       category: 'basic'
     },
+    'raptor-agent': {
+      id: 'raptor-agent',
+      name: {
+        ar: 'رابتور - النائب',
+        en: 'Raptor - Deputy'
+      },
+      description: {
+        ar: 'نائب المالك وقائد المستودع والوكالة',
+        en: 'Designated deputy and repository leader'
+      },
+      icon: '🦅',
+      color: '#e11d48',
+      endpoint: '/api/control/run',
+      category: 'router',
+      recommended: true
+    },
     'integrity-agent': {
       id: 'integrity-agent',
       name: {

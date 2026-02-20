@@ -49,15 +49,18 @@ router.get("/key-status", asyncHandler(async (_req, res) => {
 router.post("/", validateChatInput, asyncHandler(async (req, res) => {
   const { agentId, message, history = [], language = "ar" } = req.body;
 
-  // Build provider list based on available keys (priority order)
+  // Build provider list - when agentId is kimi-agent, prefer Kimi first
   const providers = [];
   const openaiKey = models.openai?.bsm || models.openai?.default;
   const kimiKey = models.kimi?.default;
   const perplexityKey = models.perplexity?.default;
   const anthropicKey = models.anthropic?.default;
 
+  if (agentId === "kimi-agent" && hasUsableApiKey(kimiKey)) {
+    providers.push({ type: "kimi", apiKey: kimiKey });
+  }
   if (hasUsableApiKey(openaiKey)) providers.push({ type: "openai", apiKey: openaiKey });
-  if (hasUsableApiKey(kimiKey)) providers.push({ type: "kimi", apiKey: kimiKey });
+  if (hasUsableApiKey(kimiKey) && agentId !== "kimi-agent") providers.push({ type: "kimi", apiKey: kimiKey });
   if (hasUsableApiKey(perplexityKey)) providers.push({ type: "perplexity", apiKey: perplexityKey });
   if (hasUsableApiKey(anthropicKey)) providers.push({ type: "anthropic", apiKey: anthropicKey });
 
