@@ -116,6 +116,8 @@ app.get("/kimi-chat",
 
 // serve admin UI static
 app.use("/admin", adminUiAuth, express.static(path.join(process.cwd(), "src/admin")));
+// serve shared config for unified interface
+app.use("/shared", express.static(path.join(process.cwd(), "shared")));
 app.use(
   "/chat",
   helmet({

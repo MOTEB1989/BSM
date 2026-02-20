@@ -1,206 +1,205 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>LexBANK - المساعد الذكي</title>
-  <meta name="description" content="واجهة المساعد الذكي من منصة LexBANK - دردشة GPT مهنية" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>" />
-
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#4c6ef5" />
-
-  <!-- iOS PWA -->
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="LexBANK" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <meta name="format-detection" content="telephone=no" />
-
-  <script src="tailwind.config.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSM - المنصة الموحدة</title>
+    <meta name="description" content="المنصة الموحدة لـ BSM/LexBANK - 9 نماذج AI و13 وكيل ذكي">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏦</text></svg>">
+    <script src="/shared/config.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body{font-family:'Tajawal',sans-serif;background:linear-gradient(135deg,#0a0e27 0%,#1a1f3a 50%,#0a0e27 100%)}
+        .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1)}
+        .agent-card{transition:all 0.3s;cursor:pointer}
+        .agent-card:hover{transform:translateY(-4px);box-shadow:0 20px 40px -10px rgba(59,130,246,0.5)}
+        .agent-card.selected{background:rgba(59,130,246,0.2);border-color:#3b82f6}
+        .message-bubble{animation:slideIn 0.3s}
+        @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .typing-indicator span{animation:blink 1.4s infinite}
+        @keyframes blink{0%,60%,100%{opacity:1}30%{opacity:0.3}}
+    </style>
 </head>
-<body class="dark bg-gray-950 text-white font-arabic min-h-screen flex flex-col safe-area-inset" dir="rtl">
-
-  <div id="app" class="flex flex-col min-h-screen">
-
-    <!-- Header -->
-    <header class="bg-gray-900/80 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50">
-      <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-lex-600 rounded-xl flex items-center justify-center text-lg font-bold shadow-lg shadow-lex-600/20">
-            L
-          </div>
-          <div>
-            <h1 class="text-lg font-bold text-white">LexBANK</h1>
-            <p class="text-xs text-gray-400">{{ lang === 'ar' ? 'المساعد الذكي' : 'Smart Assistant' }}</p>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <!-- Language Toggle -->
-          <button @click="toggleLang" class="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors border border-gray-700">
-            {{ lang === 'ar' ? 'EN' : 'عربي' }}
-          </button>
-
-          <!-- Mode Toggle -->
-          <div class="relative">
-            <button @click="showModeMenu = !showModeMenu" class="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors border border-gray-700 flex items-center gap-1">
-              <span>{{ currentModeLabel }}</span>
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div v-if="showModeMenu" class="absolute left-0 mt-1 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden">
-              <button @click="setMode('agent-auto')" class="w-full text-right px-4 py-2 text-sm hover:bg-gray-700 transition-colors" :class="{ 'bg-lex-600/20 text-lex-400': mode === 'agent-auto' }">
-                {{ lang === 'ar' ? 'ذكي (تلقائي)' : 'Smart (Auto)' }}
-              </button>
-              <button @click="setMode('direct')" class="w-full text-right px-4 py-2 text-sm hover:bg-gray-700 transition-colors" :class="{ 'bg-lex-600/20 text-lex-400': mode === 'direct' }">
-                {{ lang === 'ar' ? 'دردشة مباشرة' : 'Direct Chat' }}
-              </button>
-              <button @click="setMode('legal-agent')" class="w-full text-right px-4 py-2 text-sm hover:bg-gray-700 transition-colors" :class="{ 'bg-lex-600/20 text-lex-400': mode === 'legal-agent' }">
-                {{ lang === 'ar' ? 'الوكيل القانوني' : 'Legal Agent' }}
-              </button>
-              <button @click="setMode('governance-agent')" class="w-full text-right px-4 py-2 text-sm hover:bg-gray-700 transition-colors" :class="{ 'bg-lex-600/20 text-lex-400': mode === 'governance-agent' }">
-                {{ lang === 'ar' ? 'وكيل الحوكمة' : 'Governance Agent' }}
-              </button>
+<body class="min-h-screen text-white">
+    <div id="app" class="flex flex-col h-screen">
+        <header class="glass border-b border-white/10">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">🏦</div>
+                    <div>
+                        <h1 class="text-lg font-bold" id="app-title">BSM - البنك الذكي</h1>
+                        <p class="text-xs text-gray-400">المنصة الموحدة</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 px-3 py-1 bg-black/20 rounded-lg">
+                        <div id="status-dot" class="w-2 h-2 rounded-full bg-red-500"></div>
+                        <span id="status-text" class="text-xs">غير متصل</span>
+                    </div>
+                    <button onclick="app.toggleLang()" class="px-3 py-1 bg-black/20 rounded-lg text-xs">EN</button>
+                    <button onclick="app.clear()" class="px-3 py-1 bg-black/20 rounded-lg">🗑️</button>
+                </div>
             </div>
-          </div>
+        </header>
 
-          <!-- New Chat -->
-          <button @click="clearChat" class="px-3 py-1.5 text-xs bg-lex-600 hover:bg-lex-700 rounded-lg transition-colors shadow-sm">
-            {{ lang === 'ar' ? 'محادثة جديدة' : 'New Chat' }}
-          </button>
-        </div>
-      </div>
-    </header>
+        <main class="flex-1 overflow-hidden">
+            <div class="max-w-7xl mx-auto h-full flex gap-4 p-4">
+                <aside class="w-80 glass rounded-2xl p-4 overflow-y-auto">
+                    <h2 class="text-sm font-bold mb-4">اختر الوكيل</h2>
+                    <div id="agents-list" class="space-y-2"></div>
+                </aside>
 
-    <!-- Chat Area -->
-    <main class="flex-1 overflow-hidden flex flex-col max-w-4xl w-full mx-auto">
+                <div class="flex-1 flex flex-col">
+                    <div id="messages" class="flex-1 overflow-y-auto space-y-4 mb-4">
+                        <div class="text-center py-12">
+                            <div class="text-6xl mb-4">🤖</div>
+                            <h2 class="text-2xl font-bold mb-2">مرحباً بك</h2>
+                            <p class="text-gray-400">اختر وكيلاً وابدأ المحادثة</p>
+                        </div>
+                    </div>
 
-      <!-- Messages -->
-      <div ref="messagesContainer" class="flex-1 overflow-y-auto px-4 py-6 space-y-4 scroll-smooth" @scroll="handleScroll">
-
-        <!-- Welcome Screen -->
-        <div v-if="messages.length === 0" class="flex flex-col items-center justify-center h-full text-center py-16">
-          <div class="w-20 h-20 bg-lex-600/20 rounded-2xl flex items-center justify-center mb-6">
-            <svg class="w-10 h-10 text-lex-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-            </svg>
-          </div>
-          <h2 class="text-2xl font-bold mb-2">{{ lang === 'ar' ? 'مرحبًا بك في LexBANK' : 'Welcome to LexBANK' }}</h2>
-          <p class="text-gray-400 mb-8 max-w-md">{{ lang === 'ar' ? 'المساعد الذكي جاهز لمساعدتك في الأسئلة القانونية والتقنية والإدارية' : 'Smart assistant ready to help with legal, technical, and administrative questions' }}</p>
-
-          <!-- Quick Actions -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
-            <button v-for="q in quickActions" :key="q.text" @click="sendQuickAction(q.text)" class="text-right p-4 bg-gray-900/50 hover:bg-gray-800/80 border border-gray-800 hover:border-lex-600/50 rounded-xl transition-all group">
-              <span class="text-lg mb-1 block">{{ q.icon }}</span>
-              <span class="text-sm text-gray-300 group-hover:text-white transition-colors">{{ q.text }}</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Message Bubbles -->
-        <div v-for="(msg, i) in messages" :key="i" class="flex" :class="msg.role === 'user' ? 'justify-start' : 'justify-end'">
-          <div class="max-w-[85%] sm:max-w-[75%]" :class="msg.role === 'user' ? '' : ''">
-            <!-- Avatar + Name -->
-            <div class="flex items-center gap-2 mb-1" :class="msg.role === 'user' ? '' : 'flex-row-reverse'">
-              <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs"
-                :class="msg.role === 'user' ? 'bg-lex-600' : 'bg-emerald-600'">
-                {{ msg.role === 'user' ? (lang === 'ar' ? 'أ' : 'U') : 'L' }}
-              </div>
-              <span class="text-xs text-gray-500">{{ msg.role === 'user' ? (lang === 'ar' ? 'أنت' : 'You') : 'LexBANK' }}</span>
-              <span class="text-xs text-gray-600">{{ formatTime(msg.time) }}</span>
+                    <div class="glass rounded-2xl p-4">
+                        <div class="flex gap-3">
+                            <input type="text" id="input" placeholder="اكتب رسالتك..." class="flex-1 bg-black/30 border border-white/10 rounded-xl px-4 py-3" onkeypress="if(event.key==='Enter')app.send()"/>
+                            <button id="btn" onclick="app.send()" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-bold">إرسال</button>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-400" id="selected">لم يتم اختيار وكيل</div>
+                    </div>
+                </div>
             </div>
-            <!-- Bubble -->
-            <div class="rounded-2xl px-4 py-3 leading-relaxed"
-              :class="msg.role === 'user'
-                ? 'bg-lex-600/20 border border-lex-600/30 text-gray-100'
-                : 'bg-gray-800/80 border border-gray-700/50 text-gray-200'">
-              <div v-if="msg.role === 'assistant'" class="prose prose-invert prose-sm max-w-none" v-html="renderMarkdown(msg.content)"></div>
-              <div v-else class="whitespace-pre-wrap">{{ msg.content }}</div>
-            </div>
-          </div>
-        </div>
+        </main>
+    </div>
 
-        <!-- Typing Indicator -->
-        <div v-if="loading" class="flex justify-end">
-          <div class="max-w-[75%]">
-            <div class="flex items-center gap-2 mb-1 flex-row-reverse">
-              <div class="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center text-xs">L</div>
-              <span class="text-xs text-gray-500">LexBANK</span>
-            </div>
-            <div class="bg-gray-800/80 border border-gray-700/50 rounded-2xl px-4 py-3">
-              <div class="typing-dots flex gap-1 items-center">
-                <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
-                <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
-                <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
-              </div>
-            </div>
-          </div>
-        </div>
+    <script>
+        const app={
+            cfg:window.BSM_CONFIG,
+            api:window.API_BASE||'https://sr-bsm.onrender.com',
+            lang:'ar',
+            agent:null,
+            history:[],
 
-        <!-- Error Message -->
-        <div v-if="error" class="flex justify-center">
-          <div class="bg-red-900/30 border border-red-800/50 rounded-xl px-4 py-3 text-red-300 text-sm flex items-center gap-2">
-            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span>{{ error }}</span>
-            <button @click="error = ''" class="text-red-400 hover:text-red-200 mr-2">&times;</button>
-          </div>
-        </div>
-      </div>
+            init(){
+                console.log('🚀 BSM Unified Platform');
+                console.log('📡 API:',this.api);
+                this.loadAgents();
+                this.checkHealth();
+            },
 
-      <!-- Input Area -->
-      <div class="border-t border-gray-800 bg-gray-900/50 backdrop-blur-md p-4">
-        <div class="max-w-4xl mx-auto">
-          <div class="flex gap-3 items-end">
-            <div class="flex-1 relative">
-              <textarea
-                ref="inputField"
-                v-model="input"
-                @keydown.enter.exact="handleEnter"
-                :placeholder="lang === 'ar' ? 'اكتب رسالتك هنا...' : 'Type your message...'"
-                :disabled="loading"
-                rows="1"
-                class="w-full bg-gray-800 border border-gray-700 focus:border-lex-500 focus:ring-1 focus:ring-lex-500/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 resize-none transition-all outline-none text-sm leading-relaxed max-h-32 overflow-y-auto"
-                :dir="lang === 'ar' ? 'rtl' : 'ltr'"
-              ></textarea>
-            </div>
-            <button
-              @click="sendMessage"
-              :disabled="loading || !input.trim()"
-              class="h-11 w-11 flex-shrink-0 bg-lex-600 hover:bg-lex-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-xl flex items-center justify-center transition-all shadow-lg shadow-lex-600/20 disabled:shadow-none"
-            >
-              <svg v-if="!loading" class="w-5 h-5 text-white rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-              </svg>
-              <svg v-else class="w-5 h-5 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-              </svg>
-            </button>
-          </div>
-          <p class="text-xs text-gray-600 mt-2 text-center">
-            {{ lang === 'ar' ? 'LexBANK مدعوم بتقنية GPT | جميع المحادثات سرية' : 'LexBANK powered by GPT | All conversations are confidential' }}
-          </p>
-        </div>
-      </div>
-    </main>
-  </div>
+            loadAgents(){
+                const list=document.getElementById('agents-list');
+                Object.values(this.cfg.agents).forEach(a=>{
+                    const div=document.createElement('div');
+                    div.className='agent-card glass rounded-xl p-3';
+                    div.innerHTML=`<div class="flex gap-3"><div class="text-2xl">${a.icon}</div><div class="flex-1"><h3 class="font-bold text-sm">${a.name[this.lang]}</h3><p class="text-xs text-gray-400">${a.description[this.lang]}</p></div></div>`;
+                    div.onclick=()=>this.selectAgent(a);
+                    list.appendChild(div);
+                });
+            },
 
-  <script src="app.js"></script>
-  <script src="key-status-display.js"></script>
-  <script>
-    // Service Worker Registration
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/chat/sw.js', { scope: '/chat' })
-          .then(reg => console.log('SW registered:', reg.scope))
-          .catch(err => console.log('SW registration skipped:', err.message));
-      });
-    }
-  </script>
+            selectAgent(a){
+                this.agent=a;
+                document.querySelectorAll('.agent-card').forEach(c=>c.classList.remove('selected'));
+                event.target.closest('.agent-card').classList.add('selected');
+                document.getElementById('selected').textContent=`الوكيل: ${a.name[this.lang]}`;
+            },
+
+            async send(){
+                const input=document.getElementById('input');
+                const msg=input.value.trim();
+                if(!msg||!this.agent){alert('اختر وكيلاً أولاً');return;}
+                input.value='';
+                this.addMsg(msg,'user');
+                this.showTyping();
+                document.getElementById('btn').disabled=true;
+
+                try{
+                    const history=this.history
+                        .filter(h=>h.type==='user'||h.type==='assistant')
+                        .map(h=>({role:h.type==='user'?'user':'assistant',content:h.content}));
+                    const res=await fetch(`${this.api}${this.agent.endpoint}`,{
+                        method:'POST',
+                        headers:{'Content-Type':'application/json'},
+                        body:JSON.stringify({agentId:this.agent.id,message:msg,language:this.lang,history})
+                    });
+                    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+                    const data=await res.json();
+                    const reply=data?.reply||data?.response||data?.message||'خطأ';
+                    this.hideTyping();
+                    this.addMsg(reply,'assistant');
+                }catch(e){
+                    this.hideTyping();
+                    this.addMsg(`خطأ: ${e.message}`,'error');
+                }finally{
+                    document.getElementById('btn').disabled=false;
+                }
+            },
+
+            addMsg(content,type){
+                const div=document.createElement('div');
+                div.className='message-bubble';
+                if(type==='user'){
+                    div.innerHTML=`<div class="flex justify-end"><div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl px-4 py-3 max-w-2xl"><p>${this.esc(content)}</p></div></div>`;
+                }else if(type==='error'){
+                    div.innerHTML=`<div class="flex justify-start"><div class="bg-red-500/20 rounded-2xl px-4 py-3 max-w-2xl"><p class="text-red-300">${this.esc(content)}</p></div></div>`;
+                }else{
+                    const html=marked.parse(content);
+                    div.innerHTML=`<div class="flex justify-start"><div class="glass rounded-2xl px-4 py-3 max-w-2xl">${html}</div></div>`;
+                }
+                document.getElementById('messages').appendChild(div);
+                div.scrollIntoView({behavior:'smooth'});
+                this.history.push({content,type,ts:Date.now()});
+                localStorage.setItem('bsm_history',JSON.stringify(this.history));
+            },
+
+            showTyping(){
+                const div=document.createElement('div');
+                div.id='typing';
+                div.innerHTML='<div class="flex justify-start"><div class="glass rounded-2xl px-4 py-3"><div class="typing-indicator flex gap-1"><span class="w-2 h-2 bg-gray-400 rounded-full"></span><span class="w-2 h-2 bg-gray-400 rounded-full"></span><span class="w-2 h-2 bg-gray-400 rounded-full"></span></div></div></div>';
+                document.getElementById('messages').appendChild(div);
+            },
+
+            hideTyping(){
+                const t=document.getElementById('typing');
+                if(t)t.remove();
+            },
+
+            async checkHealth(){
+                try{
+                    const res=await fetch(`${this.api}/health`,{signal:AbortSignal.timeout(5000)});
+                    if(res.ok){
+                        document.getElementById('status-dot').className='w-2 h-2 rounded-full bg-green-500';
+                        document.getElementById('status-text').textContent='متصل';
+                    }
+                }catch(e){
+                    document.getElementById('status-dot').className='w-2 h-2 rounded-full bg-red-500';
+                    document.getElementById('status-text').textContent='غير متصل';
+                }
+                setTimeout(()=>this.checkHealth(),30000);
+            },
+
+            toggleLang(){
+                this.lang=this.lang==='ar'?'en':'ar';
+                const dir=this.lang==='ar'?'rtl':'ltr';
+                document.documentElement.setAttribute('lang',this.lang);
+                document.documentElement.setAttribute('dir',dir);
+                document.getElementById('app-title').textContent=this.cfg.getText(this.lang).appName;
+                document.getElementById('agents-list').innerHTML='';
+                this.loadAgents();
+            },
+
+            clear(){
+                if(confirm('مسح المحادثة؟')){
+                    this.history=[];
+                    localStorage.removeItem('bsm_history');
+                    document.getElementById('messages').innerHTML='<div class="text-center py-12"><div class="text-6xl mb-4">🤖</div><h2 class="text-2xl font-bold mb-2">مرحباً بك</h2><p class="text-gray-400">اختر وكيلاً وابدأ المحادثة</p></div>';
+                }
+            },
+
+            esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+        };
+
+        document.addEventListener('DOMContentLoaded',()=>app.init());
+    </script>
 </body>
 </html>

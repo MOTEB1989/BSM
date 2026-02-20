@@ -157,7 +157,7 @@ const config = {
       },
       icon: '🔄',
       color: '#3b82f6',
-      endpoint: '/api/control/run',
+      endpoint: '/api/chat',
       category: 'router',
       recommended: true
     },
@@ -173,7 +173,7 @@ const config = {
       },
       icon: '⚖️',
       color: '#10b981',
-      endpoint: '/api/control/run',
+      endpoint: '/api/chat',
       category: 'expert',
       recommended: true
     },
@@ -189,7 +189,7 @@ const config = {
       },
       icon: '🏛️',
       color: '#8b5cf6',
-      endpoint: '/api/control/run',
+      endpoint: '/api/chat',
       category: 'expert'
     },
     'security-agent': {
@@ -204,7 +204,7 @@ const config = {
       },
       icon: '🔒',
       color: '#ef4444',
-      endpoint: '/api/control/run',
+      endpoint: '/api/chat',
       category: 'tools'
     },
     'code-review-agent': {
@@ -219,7 +219,7 @@ const config = {
       },
       icon: '💻',
       color: '#f59e0b',
-      endpoint: '/api/control/run',
+      endpoint: '/api/chat',
       category: 'tools'
     },
     'gemini-agent': {
@@ -234,7 +234,7 @@ const config = {
       },
       icon: '🧠',
       color: '#4285f4',
-      endpoint: '/api/control/run',
+      endpoint: '/api/chat',
       category: 'ai-model',
       recommended: true
     },
@@ -250,7 +250,7 @@ const config = {
       },
       icon: '🎓',
       color: '#d97757',
-      endpoint: '/api/control/run',
+      endpoint: '/api/chat',
       category: 'ai-model'
     },
     'perplexity-agent': {
@@ -265,7 +265,7 @@ const config = {
       },
       icon: '🔍',
       color: '#20808d',
-      endpoint: '/api/control/run',
+      endpoint: '/api/chat',
       category: 'ai-model'
     },
     'groq-agent': {
@@ -280,7 +280,7 @@ const config = {
       },
       icon: '⚡',
       color: '#f55036',
-      endpoint: '/api/control/run',
+      endpoint: '/api/chat',
       category: 'ai-model'
     },
     'kimi-agent': {
@@ -295,7 +295,7 @@ const config = {
       },
       icon: '🌙',
       color: '#7c3aed',
-      endpoint: '/api/control/run',
+      endpoint: '/api/chat',
       category: 'ai-model'
     },
     'direct': {
@@ -325,7 +325,7 @@ const config = {
       },
       icon: '🛡️',
       color: '#14b8a6',
-      endpoint: '/api/control/run',
+      endpoint: '/api/chat',
       category: 'tools'
     },
     'pr-merge-agent': {
@@ -340,7 +340,7 @@ const config = {
       },
       icon: '🔀',
       color: '#06b6d4',
-      endpoint: '/api/control/run',
+      endpoint: '/api/chat',
       category: 'tools'
     }
   },
