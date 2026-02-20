@@ -129,15 +129,20 @@ export const recordAuditEvent = ({
   return entry;
 };
 
-// Ensure queue is flushed on process exit using async
-process.on('beforeExit', async () => {
+// Ensure queue is flushed on process exit
+// Note: SIGTERM/SIGINT handlers for graceful shutdown
+const gracefulShutdown = async () => {
   if (auditQueue.length > 0) {
     try {
       await flushAuditQueue();
+      logger.info("Audit queue flushed on shutdown");
     } catch (err) {
-      logger.error({ error: err.message }, "Failed to flush audit queue on exit");
+      logger.error({ error: err.message }, "Failed to flush audit queue on shutdown");
     }
   }
-});
+};
+
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
 
 export const getAuditLogPath = () => AUDIT_LOG_PATH;

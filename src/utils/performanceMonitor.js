@@ -57,10 +57,7 @@ class PerformanceMonitor {
       }
 
       // Clean up old metrics (keep last 100)
-      if (this.metrics.size > 100) {
-        const oldestKey = this.metrics.keys().next().value;
-        this.metrics.delete(oldestKey);
-      }
+      this._cleanupOldMetrics();
 
       return metric;
     };
@@ -165,6 +162,20 @@ class PerformanceMonitor {
    */
   setThreshold(type, threshold) {
     this.thresholds[type] = threshold;
+  }
+
+  /**
+   * Internal: Clean up old metrics
+   * Note: Assumes metrics are added in chronological order and never deleted individually.
+   * If metrics can be deleted out of order, use explicit timestamp tracking instead.
+   */
+  _cleanupOldMetrics() {
+    if (this.metrics.size > 100) {
+      // Maps maintain insertion order, so first key is oldest
+      // This is safe because we only delete here or in clear()
+      const oldestKey = this.metrics.keys().next().value;
+      this.metrics.delete(oldestKey);
+    }
   }
 }
 

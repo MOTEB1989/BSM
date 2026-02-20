@@ -71,10 +71,13 @@ export const orchestrator = async ({ event, payload, context = {} }) => {
     throw new AppError(`Orchestration failed: ${error.message}`, 500, "ORCHESTRATION_FAILED");
   } finally {
     // Clean up job-specific state after a delay to allow final event processing
-    setTimeout(() => {
+    // Using unref() to prevent blocking process exit
+    const cleanupTimer = setTimeout(() => {
       const keysToRemove = Array.from(agentStates.keys()).filter(key => key.endsWith(`_${jobId}`));
       keysToRemove.forEach(key => agentStates.delete(key));
+      logger.debug({ jobId, cleanedKeys: keysToRemove.length }, "Cleaned up job state");
     }, 60000); // Cleanup after 1 minute
+    cleanupTimer.unref();
   }
 };
 

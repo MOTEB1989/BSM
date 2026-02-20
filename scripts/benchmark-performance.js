@@ -106,8 +106,10 @@ async function benchmarkJsonSerialization() {
   for (let i = 0; i < ITERATIONS; i++) {
     const start = performance.now();
     const cached = JSON.stringify(largeObject);
+    let checksum = 0;
     for (let j = 0; j < 5; j++) {
-      const reused = cached; // Reuse cached value
+      // Use cached value in a meaningful way to prevent optimization
+      checksum += cached.length;
     }
     withCacheTimes.push(performance.now() - start);
   }
