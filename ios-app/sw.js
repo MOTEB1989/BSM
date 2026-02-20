@@ -8,7 +8,7 @@ const CACHE_URLS = [
   '/ios-app/index.html',
   '/ios-app/app.js',
   '/ios-app/manifest.json',
-  '../src/chat/icons/icon.svg',
+  '/src/chat/icons/icon.svg',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/vue@3/dist/vue.global.prod.js',
   'https://cdn.jsdelivr.net/npm/marked/marked.min.js'
@@ -184,8 +184,12 @@ if (self.registration.sync) {
   self.addEventListener('sync', (event) => {
     if (event.tag === 'sync-messages') {
       event.waitUntil(
-        // Sync offline messages
-        console.log('[SW] Syncing offline messages...')
+        // Sync offline messages when back online
+        Promise.resolve().then(() => {
+          console.log('[SW] Syncing offline messages...');
+          // TODO: Implement actual sync logic here
+          // e.g., fetch pending messages from IndexedDB and POST to API
+        })
       );
     }
   });

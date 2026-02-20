@@ -13,7 +13,7 @@
   "categories": ["business", "productivity", "utilities"],
   "icons": [
     {
-      "src": "../src/chat/icons/icon.svg",
+      "src": "/src/chat/icons/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
