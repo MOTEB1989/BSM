@@ -80,6 +80,40 @@ agents:
       endpoint: /api/agents/legal-agent/health
       interval_seconds: 60
 
+  - id: agent-auto
+    name: Smart Router Agent
+    category: conversational
+    role: advisor
+    execution:
+      runtime: node
+    safety:
+      mode: safe
+      requires_approval: false
+    contexts:
+      allowed:
+        - chat
+        - api
+        - mobile
+    expose:
+      selectable: true
+      internal_only: false
+    risk:
+      level: low
+      rationale: "Intent routing agent with no system modifications"
+    approval:
+      required: false
+      type: none
+      approvers: []
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - development
+        - staging
+        - production
+    healthcheck:
+      endpoint: /api/agents/agent-auto/health
+      interval_seconds: 60
+
 
 
   - id: ios-chat-integration-agent
@@ -439,7 +473,7 @@ agents:
       internal_only: false
     risk:
       level: low
-      rationale: "Conversational AI with multimodal capabilities, no system modifications"
+      rationale: "Conversational AI with no system modifications"
     approval:
       required: false
       type: none

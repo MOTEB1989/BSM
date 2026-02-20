@@ -31,3 +31,21 @@ instructions: |
   - إذا لم تتمكن من تحديد التخصص، أجب بشكل عام ثم اقترح الوكيل المناسب
 actions:
   - create_file
+contexts:
+  allowed:
+    - chat
+    - api
+    - mobile
+safety:
+  mode: safe
+  requires_approval: false
+risk:
+  level: low
+  rationale: "Intent routing agent with no system modifications"
+approval:
+  required: false
+  type: none
+  approvers: []
+expose:
+  selectable: true
+  internal_only: false
