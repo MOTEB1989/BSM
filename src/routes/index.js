@@ -14,6 +14,7 @@ import pr from "./pr.js";
 import agentExecutor from "./agent-executor.js";
 import joke from "./joke.js";
 import notifications from "./notifications.js";
+import mcp from "./mcp.js";
 
 const router = Router();
 
@@ -32,5 +33,6 @@ router.use("/pr", pr);
 router.use("/agent", agentExecutor);
 router.use("/random-joke", joke);
 router.use("/notifications", notifications);
+router.use("/mcp", mcp);
 
 export default router;
