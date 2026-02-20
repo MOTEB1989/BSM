@@ -8,30 +8,37 @@ import { auditLogger } from "../utils/auditLogger.js";
  * GitHub Webhook Integration for Team Notifications
  * Automatically broadcasts notifications on GitHub events
  */
+const safeRepoName = (repository) => repository?.full_name || "unknown-repository";
+const safeSenderLogin = (sender) => sender?.login || "unknown-user";
+const safePusherName = (pusher) => pusher?.name || "unknown-pusher";
+const asArray = (value) => (Array.isArray(value) ? value : []);
 
 /**
  * Handle push events
  */
 export async function handlePushEvent(payload) {
   const { repository, pusher, commits, ref } = payload;
+  const repositoryName = safeRepoName(repository);
+  const pusherName = safePusherName(pusher);
+  const commitList = asArray(commits);
 
   logger.info({
-    repository: repository.full_name,
-    pusher: pusher.name,
-    commitCount: commits.length,
+    repository: repositoryName,
+    pusher: pusherName,
+    commitCount: commitList.length,
     ref
   }, "GitHub push event received");
 
   // Broadcast repository change notification
   await notificationService.repositoryChange("push", {
-    description: `${pusher.name} pushed ${commits.length} commit(s) to ${ref}`,
-    repository: repository.full_name,
-    pusher: pusher.name,
-    commitCount: commits.length,
-    commits: commits.slice(0, 5).map(c => ({
-      sha: c.id.substring(0, 7),
-      message: c.message,
-      author: c.author.name
+    description: `${pusherName} pushed ${commitList.length} commit(s) to ${ref || "unknown-ref"}`,
+    repository: repositoryName,
+    pusher: pusherName,
+    commitCount: commitList.length,
+    commits: commitList.slice(0, 5).map(c => ({
+      sha: String(c?.id || "").substring(0, 7),
+      message: c?.message || "",
+      author: c?.author?.name || "unknown-author"
     }))
   });
 
@@ -39,9 +46,9 @@ export async function handlePushEvent(payload) {
   auditLogger.writeDeferred({
     event: "github_webhook",
     action: "push",
-    repository: repository.full_name,
-    pusher: pusher.name,
-    commitCount: commits.length
+    repository: repositoryName,
+    pusher: pusherName,
+    commitCount: commitList.length
   });
 }
 
@@ -50,22 +57,28 @@ export async function handlePushEvent(payload) {
  */
 export async function handlePullRequestEvent(payload) {
   const { action, pull_request, repository, sender } = payload;
+  if (!pull_request) {
+    logger.warn({ action }, "Skipping pull_request webhook without pull_request payload");
+    return;
+  }
+  const repositoryName = safeRepoName(repository);
+  const senderLogin = safeSenderLogin(sender);
 
   logger.info({
     action,
-    repository: repository.full_name,
-    prNumber: pull_request.number,
-    sender: sender.login
+    repository: repositoryName,
+    prNumber: pull_request.number || payload?.number,
+    sender: senderLogin
   }, "GitHub pull request event received");
 
   // Broadcast for important PR events
   if (["opened", "closed", "merged", "reopened"].includes(action)) {
     await notificationService.repositoryChange("pull_request", {
-      description: `PR #${pull_request.number} ${action} by ${sender.login}: ${pull_request.title}`,
-      repository: repository.full_name,
+      description: `PR #${pull_request.number || payload?.number || "unknown"} ${action} by ${senderLogin}: ${pull_request.title || "Untitled PR"}`,
+      repository: repositoryName,
       prNumber: pull_request.number,
       action,
-      sender: sender.login,
+      sender: senderLogin,
       title: pull_request.title,
       url: pull_request.html_url
     });
@@ -79,7 +92,7 @@ export async function handlePullRequestEvent(payload) {
         priority: "normal",
         approvalRequired: false,
         userContext: {
-          repository: repository.full_name,
+          repository: repositoryName,
           prNumber: pull_request.number,
           prUrl: pull_request.html_url
         }
@@ -91,7 +104,7 @@ export async function handlePullRequestEvent(payload) {
   auditLogger.writeDeferred({
     event: "github_webhook",
     action: `pr_${action}`,
-    repository: repository.full_name,
+    repository: repositoryName,
     prNumber: pull_request.number
   });
 }
@@ -101,10 +114,15 @@ export async function handlePullRequestEvent(payload) {
  */
 export async function handleSecurityAdvisoryEvent(payload) {
   const { action, security_advisory, repository } = payload;
+  if (!security_advisory) {
+    logger.warn({ action }, "Skipping security_advisory webhook without advisory payload");
+    return;
+  }
+  const repositoryName = safeRepoName(repository);
 
   logger.warn({
     action,
-    repository: repository?.full_name,
+    repository: repositoryName,
     severity: security_advisory.severity
   }, "GitHub security advisory received");
 
@@ -139,19 +157,26 @@ export async function handleSecurityAdvisoryEvent(payload) {
  */
 export async function handleIssueEvent(payload) {
   const { action, issue, repository, sender } = payload;
+  if (!issue) {
+    logger.warn({ action }, "Skipping issues webhook without issue payload");
+    return;
+  }
+  const repositoryName = safeRepoName(repository);
+  const senderLogin = safeSenderLogin(sender);
+  const labels = asArray(issue.labels);
 
   logger.info({
     action,
-    repository: repository.full_name,
+    repository: repositoryName,
     issueNumber: issue.number,
-    sender: sender.login
+    sender: senderLogin
   }, "GitHub issue event received");
 
   // Broadcast for important issue events
   if (["opened", "closed", "reopened"].includes(action)) {
     // Check if issue is labeled as security or bug
-    const isSecurityIssue = issue.labels.some(l => 
-      ["security", "vulnerability", "bug"].includes(l.name.toLowerCase())
+    const isSecurityIssue = labels.some(l =>
+      ["security", "vulnerability", "bug"].includes(String(l?.name || "").toLowerCase())
     );
 
     if (isSecurityIssue && action === "opened") {
@@ -164,17 +189,17 @@ export async function handleIssueEvent(payload) {
           issueNumber: issue.number,
           title: issue.title,
           url: issue.html_url,
-          labels: issue.labels.map(l => l.name)
+          labels: labels.map(l => l?.name).filter(Boolean)
         }
       });
     }
 
     await notificationService.repositoryChange("issue", {
-      description: `Issue #${issue.number} ${action} by ${sender.login}: ${issue.title}`,
-      repository: repository.full_name,
+      description: `Issue #${issue.number} ${action} by ${senderLogin}: ${issue.title}`,
+      repository: repositoryName,
       issueNumber: issue.number,
       action,
-      sender: sender.login,
+      sender: senderLogin,
       title: issue.title,
       url: issue.html_url,
       isSecurityIssue
@@ -185,7 +210,7 @@ export async function handleIssueEvent(payload) {
   auditLogger.writeDeferred({
     event: "github_webhook",
     action: `issue_${action}`,
-    repository: repository.full_name,
+    repository: repositoryName,
     issueNumber: issue.number
   });
 }
@@ -195,10 +220,15 @@ export async function handleIssueEvent(payload) {
  */
 export async function handleWorkflowRunEvent(payload) {
   const { action, workflow_run, repository } = payload;
+  if (!workflow_run) {
+    logger.warn({ action }, "Skipping workflow_run webhook without workflow_run payload");
+    return;
+  }
+  const repositoryName = safeRepoName(repository);
 
   logger.info({
     action,
-    repository: repository.full_name,
+    repository: repositoryName,
     workflow: workflow_run.name,
     status: workflow_run.status,
     conclusion: workflow_run.conclusion
@@ -209,7 +239,7 @@ export async function handleWorkflowRunEvent(payload) {
     await notificationService.integrationIssue(
       `CI/CD Workflow: ${workflow_run.name}`,
       {
-        message: `Workflow failed in ${repository.full_name}`,
+        message: `Workflow failed in ${repositoryName}`,
         workflowName: workflow_run.name,
         runNumber: workflow_run.run_number,
         url: workflow_run.html_url,
@@ -232,7 +262,7 @@ export async function handleWorkflowRunEvent(payload) {
   auditLogger.writeDeferred({
     event: "github_webhook",
     action: `workflow_${action}`,
-    repository: repository.full_name,
+    repository: repositoryName,
     workflow: workflow_run.name,
     conclusion: workflow_run.conclusion
   });
@@ -243,16 +273,21 @@ export async function handleWorkflowRunEvent(payload) {
  */
 export async function handleDeploymentEvent(payload) {
   const { deployment, repository } = payload;
+  if (!deployment) {
+    logger.warn("Skipping deployment webhook without deployment payload");
+    return;
+  }
+  const repositoryName = safeRepoName(repository);
 
   logger.info({
-    repository: repository.full_name,
+    repository: repositoryName,
     environment: deployment.environment,
     ref: deployment.ref
   }, "GitHub deployment event received");
 
   await notificationService.repositoryChange("deployment", {
     description: `Deployment to ${deployment.environment} initiated`,
-    repository: repository.full_name,
+    repository: repositoryName,
     environment: deployment.environment,
     ref: deployment.ref,
     url: deployment.url
@@ -262,7 +297,7 @@ export async function handleDeploymentEvent(payload) {
   auditLogger.writeDeferred({
     event: "github_webhook",
     action: "deployment",
-    repository: repository.full_name,
+    repository: repositoryName,
     environment: deployment.environment
   });
 }
@@ -272,9 +307,14 @@ export async function handleDeploymentEvent(payload) {
  */
 export async function handleDeploymentStatusEvent(payload) {
   const { deployment_status, deployment, repository } = payload;
+  if (!deployment_status || !deployment) {
+    logger.warn("Skipping deployment_status webhook with incomplete payload");
+    return;
+  }
+  const repositoryName = safeRepoName(repository);
 
   logger.info({
-    repository: repository.full_name,
+    repository: repositoryName,
     environment: deployment.environment,
     state: deployment_status.state
   }, "GitHub deployment status event received");
@@ -284,7 +324,7 @@ export async function handleDeploymentStatusEvent(payload) {
     await notificationService.integrationIssue(
       `Deployment to ${deployment.environment}`,
       {
-        message: `Deployment failed in ${repository.full_name}`,
+        message: `Deployment failed in ${repositoryName}`,
         environment: deployment.environment,
         state: deployment_status.state,
         url: deployment_status.target_url
@@ -296,7 +336,7 @@ export async function handleDeploymentStatusEvent(payload) {
   auditLogger.writeDeferred({
     event: "github_webhook",
     action: "deployment_status",
-    repository: repository.full_name,
+    repository: repositoryName,
     environment: deployment.environment,
     state: deployment_status.state
   });

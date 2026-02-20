@@ -63,6 +63,7 @@ The requested `crusosr` CLI is not installed in this environment, so equivalent 
 - Added radix-safe `parseInt(..., 10)` in notification query parsing.
 - Fixed per-attempt timeout/controller lifecycle in `GoServiceClient` retries.
 - Fixed autocomplete endpoint to include encoded `prefix` query param.
+- Hardened GitHub webhook integration handlers to tolerate partial payloads without throwing.
 
 ### AI/External Resilience
 - Added **circuit breaker + timeout** to:
@@ -106,5 +107,5 @@ The requested `crusosr` CLI is not installed in this environment, so equivalent 
    - notification route precedence (`/coordination/history`)
    - Go service retry timeout behavior
    - markdown sanitization safety cases
+   - webhook payload edge-cases (missing repository/sender arrays)
 2. Consider schema-based API contracts (OpenAPI/JSON Schema) for `/api/*` endpoints.
-3. Expand graceful handling in GitHub webhook integration for minimal payload variants to reduce noisy logs.
