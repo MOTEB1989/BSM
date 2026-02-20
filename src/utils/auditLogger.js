@@ -34,6 +34,8 @@ class AuditLogger {
    * @param {Object} entry - Audit entry to log
    */
   async write(entry) {
+    await this.ensureLogDirectory();
+
     const auditEntry = {
       timestamp: new Date().toISOString(),
       ...entry
