@@ -114,6 +114,10 @@ Direct GPT-4o-mini chat endpoint with bilingual support (Arabic/English) and con
 
 📖 See [GitHub Webhook Setup Guide](docs/GITHUB-WEBHOOK-SETUP.md) for configuration details.
 
+### MCP Tool Endpoints
+- `GET /api/mcp/tools` - List MCP-style banking tools for clients (iPhone, web, Cursor integrations)
+- `POST /api/mcp/tools/call` - Execute supported MCP tools (`route_banking_query`, `check_agent_status`)
+
 ### User Interfaces
 
 BSM provides **4 professional user interfaces** ready for immediate use:
@@ -122,7 +126,7 @@ BSM provides **4 professional user interfaces** ready for immediate use:
 |-----------|------|----------|--------|
 | **Chat UI** | `/chat` | Vue 3 + Tailwind, PWA, Bilingual (AR/EN) | ✅ Active |
 | **Admin Dashboard** | `/admin` | Agent management, System monitoring | ✅ Active |
-| **iOS App** | `/ios-app` | CoreHub Nexus, iPhone optimized, PWA | ✅ Active |
+| **iOS App** | `/ios-app` | CoreHub Nexus, iPhone optimized, PWA + Remote Control + MCP tools | ✅ Active |
 | **Lexprim Chat** | `lexprim-chat/` | Nuxt 3, Pinia state management | ✅ Active |
 
 **Quick Access Links:**

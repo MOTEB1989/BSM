@@ -74,13 +74,18 @@ npm run start:banking
 الواجهات الجاهزة في المشروع:
 
 - `/chat` واجهة دردشة رئيسية (AR/EN)
-- `/ios-app` واجهة iPhone محسنة
+- `/ios-app` واجهة iPhone محسنة + تبويب تحكم عن بُعد (Remote)
 - `frontend/` واجهة ثابتة قابلة للنشر (GitHub Pages)
 
 محادثات النماذج تمر عبر:
 
 - `POST /api/chat/direct`
 - ووكلاء النظام عبر `POST /api/control/run`
+
+تمت إضافة مسار MCP HTTP للواجهة:
+
+- `GET /api/mcp/tools`
+- `POST /api/mcp/tools/call`
 
 ## 6) ملاحظات أمان سريعة
 

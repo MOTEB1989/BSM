@@ -66,17 +66,35 @@
           </div>
           <div>
             <h1 class="text-base font-bold text-white leading-tight">CoreHub Nexus</h1>
-            <p class="text-[10px] text-gray-400">{{ lang === 'ar' ? 'المساعد الذكي' : 'Smart Assistant' }}</p>
+            <p class="text-[10px] text-gray-400">{{ lang === 'ar' ? 'iPhone Remote + AI Chat' : 'iPhone Remote + AI Chat' }}</p>
           </div>
         </div>
         
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap justify-end">
+          <div class="flex items-center bg-gray-800/80 rounded-lg p-1 border border-gray-700/60">
+            <button
+              @click="setView('chat')"
+              class="px-2.5 py-1 text-xs rounded-md transition-all touch-manipulation"
+              :class="activeView === 'chat' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:text-white'"
+            >
+              {{ lang === 'ar' ? 'دردشة' : 'Chat' }}
+            </button>
+            <button
+              @click="setView('remote')"
+              class="px-2.5 py-1 text-xs rounded-md transition-all touch-manipulation"
+              :class="activeView === 'remote' ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white'"
+            >
+              {{ lang === 'ar' ? 'تحكم' : 'Remote' }}
+            </button>
+          </div>
+
           <button @click="toggleLang" 
                   class="px-3 py-1.5 text-xs font-medium bg-gray-800/80 hover:bg-gray-700 active:bg-gray-600 rounded-lg transition-all border border-gray-700/50 touch-manipulation">
             {{ lang === 'ar' ? 'EN' : 'ع' }}
           </button>
           
-          <button @click="clearChat" 
+          <button @click="clearChat"
+                  v-if="activeView === 'chat'"
                   class="px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg transition-all shadow-sm touch-manipulation">
             {{ lang === 'ar' ? '+ جديد' : '+ New' }}
           </button>
@@ -91,145 +109,260 @@
     </header>
     
     <main class="flex-1 overflow-hidden flex flex-col bg-gray-950">
-      
-      <div ref="messagesContainer" 
-           class="flex-1 overflow-y-auto px-4 py-4 space-y-4 overscroll-contain"
-           @scroll="handleScroll">
-        
-        <div v-if="messages.length === 0" class="flex flex-col items-center justify-center h-full text-center px-6">
-          <div class="w-20 h-20 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-3xl flex items-center justify-center mb-6 shadow-2xl">
-            <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
-                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-            </svg>
+
+      <template v-if="activeView === 'chat'">
+        <div ref="messagesContainer" class="flex-1 overflow-y-auto px-4 py-4 space-y-4 overscroll-contain">
+          <div v-if="messages.length === 0" class="flex flex-col items-center justify-center h-full text-center px-6">
+            <div class="w-20 h-20 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-3xl flex items-center justify-center mb-6 shadow-2xl">
+              <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+            </div>
+
+            <h2 class="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+              {{ lang === 'ar' ? 'مرحباً بك في CoreHub' : 'Welcome to CoreHub' }}
+            </h2>
+            <p class="text-sm text-gray-400 mb-8 max-w-sm leading-relaxed">
+              {{ lang === 'ar'
+                ? 'واجهة دردشة ذكية مع اختيار الوكيل + لوحة تحكم عن بُعد من نفس التطبيق.'
+                : 'Smart chat with agent selection + remote control dashboard in one app.' }}
+            </p>
+
+            <div class="grid grid-cols-1 gap-2.5 w-full max-w-sm">
+              <button v-for="action in quickActions"
+                :key="action.text"
+                @click="sendQuickAction(action.text)"
+                class="text-right p-4 bg-gray-900/50 hover:bg-gray-800/80 active:bg-gray-800 border border-gray-800 hover:border-blue-600/50 rounded-2xl transition-all touch-manipulation group">
+                <div class="flex items-center gap-3">
+                  <span class="text-2xl">{{ action.icon }}</span>
+                  <span class="text-sm text-gray-300 group-hover:text-white transition-colors flex-1">{{ action.text }}</span>
+                  <svg class="w-4 h-4 text-gray-600 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
+            </div>
           </div>
-          
-          <h2 class="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-            {{ lang === 'ar' ? 'مرحباً بك في CoreHub' : 'Welcome to CoreHub' }}
-          </h2>
-          <p class="text-sm text-gray-400 mb-8 max-w-sm leading-relaxed">
-            {{ lang === 'ar' 
-               ? 'تطبيق محادثة ذكي محسّن لأجهزة iPhone. ابدأ محادثة الآن!' 
-               : 'Smart chat app optimized for iPhone. Start chatting now!' }}
-          </p>
-          
-          <div class="grid grid-cols-1 gap-2.5 w-full max-w-sm">
-            <button v-for="action in quickActions" 
-                    :key="action.text"
-                    @click="sendQuickAction(action.text)" 
-                    class="text-right p-4 bg-gray-900/50 hover:bg-gray-800/80 active:bg-gray-800 border border-gray-800 hover:border-blue-600/50 rounded-2xl transition-all touch-manipulation group">
-              <div class="flex items-center gap-3">
-                <span class="text-2xl">{{ action.icon }}</span>
-                <span class="text-sm text-gray-300 group-hover:text-white transition-colors flex-1">{{ action.text }}</span>
-                <svg class="w-4 h-4 text-gray-600 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+
+          <div v-for="(msg, i) in messages" :key="i"
+            class="flex animate-fadeIn"
+            :class="msg.role === 'user' ? 'justify-start' : 'justify-end'">
+            <div class="max-w-[85%]">
+              <div class="flex items-center gap-2 mb-1 px-1"
+                :class="msg.role === 'user' ? '' : 'flex-row-reverse'">
+                <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shadow-sm"
+                  :class="msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white'">
+                  {{ msg.role === 'user' ? (lang === 'ar' ? 'أ' : 'U') : 'C' }}
+                </div>
+                <span class="text-[10px] text-gray-500 font-medium">
+                  {{ msg.role === 'user' ? (lang === 'ar' ? 'أنت' : 'You') : 'CoreHub' }}
+                </span>
+                <span class="text-[10px] text-gray-600">{{ formatTime(msg.time) }}</span>
+              </div>
+
+              <div class="rounded-2xl px-4 py-3 shadow-lg backdrop-blur-sm"
+                :class="msg.role === 'user'
+                  ? 'bg-blue-600/20 border border-blue-500/30 text-gray-100'
+                  : 'bg-gray-800/80 border border-gray-700/50 text-gray-200'">
+                <div v-if="msg.role === 'assistant'"
+                  class="prose prose-invert prose-sm max-w-none"
+                  v-html="renderMarkdown(msg.content)"></div>
+                <div v-else class="whitespace-pre-wrap text-sm leading-relaxed">{{ msg.content }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="loading" class="flex justify-end animate-fadeIn">
+            <div class="max-w-[75%]">
+              <div class="flex items-center gap-2 mb-1 px-1 flex-row-reverse">
+                <div class="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-xs font-medium shadow-sm text-white">C</div>
+                <span class="text-[10px] text-gray-500 font-medium">CoreHub</span>
+              </div>
+              <div class="bg-gray-800/80 border border-gray-700/50 rounded-2xl px-4 py-3 shadow-lg">
+                <div class="flex gap-1.5 items-center">
+                  <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
+                  <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
+                  <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="error" class="flex justify-center animate-fadeIn">
+            <div class="bg-red-900/30 border border-red-800/50 rounded-2xl px-4 py-3 text-red-300 text-sm flex items-center gap-3 max-w-md shadow-lg">
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="flex-1">{{ error }}</span>
+              <button @click="error = ''" class="text-red-400 hover:text-red-200 text-xl leading-none touch-manipulation">&times;</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-gray-800 bg-gray-900/95 backdrop-blur-xl px-4 py-3 safe-area-bottom flex-shrink-0">
+          <div class="max-w-4xl mx-auto space-y-2">
+            <div class="flex items-center gap-2">
+              <label class="text-[11px] text-gray-400">{{ lang === 'ar' ? 'وضع الدردشة' : 'Chat Mode' }}</label>
+              <select
+                v-model="mode"
+                class="bg-gray-800 border border-gray-700 rounded-lg text-xs px-2 py-1.5 focus:border-blue-500 focus:outline-none"
+              >
+                <option v-for="item in modeOptions" :key="item.id" :value="item.id">{{ item.label }}</option>
+              </select>
+              <span class="text-[10px] text-gray-500">{{ currentModeLabel }}</span>
+            </div>
+
+            <div class="flex gap-2 items-end">
+              <div class="flex-1 relative">
+                <textarea
+                  ref="inputField"
+                  v-model="input"
+                  @keydown="handleKeyDown"
+                  :placeholder="lang === 'ar' ? 'اكتب رسالتك...' : 'Type your message...'"
+                  :disabled="loading"
+                  rows="1"
+                  class="w-full bg-gray-800 border border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-2xl px-4 py-3 text-white placeholder-gray-500 resize-none transition-all outline-none text-sm leading-relaxed max-h-32 overflow-y-auto touch-manipulation"
+                  :dir="lang === 'ar' ? 'rtl' : 'ltr'"
+                ></textarea>
+              </div>
+
+              <button
+                @click="sendMessage"
+                :disabled="loading || !input.trim()"
+                class="h-12 w-12 flex-shrink-0 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 active:from-blue-800 active:to-purple-800 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed rounded-2xl flex items-center justify-center transition-all shadow-lg disabled:shadow-none touch-manipulation"
+              >
+                <svg v-if="!loading" class="w-5 h-5 text-white" :class="lang === 'ar' ? 'rotate-180' : ''"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
+                <svg v-else class="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+              </button>
+            </div>
+
+            <p class="text-[10px] text-gray-600 text-center leading-relaxed">
+              {{ lang === 'ar'
+                ? 'CoreHub Nexus · دردشة متعددة الوكلاء · محسّن لـ iPhone'
+                : 'CoreHub Nexus · Multi-agent chat · Optimized for iPhone' }}
+            </p>
+          </div>
+        </div>
+      </template>
+
+      <template v-else>
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 overscroll-contain">
+          <div class="grid grid-cols-2 gap-2 text-center">
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-3">
+              <p class="text-[10px] text-gray-500">{{ lang === 'ar' ? 'حالة النظام' : 'System' }}</p>
+              <p class="text-sm font-semibold mt-1">{{ dashboard.status?.status || '-' }}</p>
+            </div>
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-3">
+              <p class="text-[10px] text-gray-500">{{ lang === 'ar' ? 'الصحة' : 'Health' }}</p>
+              <p class="text-sm font-semibold mt-1">{{ dashboard.health?.status || '-' }}</p>
+            </div>
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-3">
+              <p class="text-[10px] text-gray-500">{{ lang === 'ar' ? 'Mobile Agents' : 'Mobile Agents' }}</p>
+              <p class="text-sm font-semibold mt-1">{{ mobileAgentCount }}</p>
+            </div>
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-3">
+              <p class="text-[10px] text-gray-500">{{ lang === 'ar' ? 'آخر مزامنة' : 'Last Sync' }}</p>
+              <p class="text-sm font-semibold mt-1">{{ dashboard.lastSync ? formatTime(dashboard.lastSync) : '-' }}</p>
+            </div>
+          </div>
+
+          <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+            <h3 class="text-sm font-semibold mb-3">{{ lang === 'ar' ? 'إجراءات سريعة' : 'Quick Actions' }}</h3>
+            <div class="grid grid-cols-2 gap-2">
+              <button @click="runRemoteAction('refresh')" class="bg-blue-600/20 border border-blue-500/40 rounded-lg py-2 text-xs hover:bg-blue-600/30">
+                {{ lang === 'ar' ? 'تحديث اللوحة' : 'Refresh' }}
+              </button>
+              <button @click="runRemoteAction('healthDetailed')" class="bg-emerald-600/20 border border-emerald-500/40 rounded-lg py-2 text-xs hover:bg-emerald-600/30">
+                {{ lang === 'ar' ? 'Health مفصل' : 'Health Detailed' }}
+              </button>
+              <button @click="runRemoteAction('listMobileAgents')" class="bg-purple-600/20 border border-purple-500/40 rounded-lg py-2 text-xs hover:bg-purple-600/30">
+                {{ lang === 'ar' ? 'وكلاء الجوال' : 'Mobile Agents' }}
+              </button>
+              <button @click="runRemoteAction('orchestratorRun')" class="bg-amber-600/20 border border-amber-500/40 rounded-lg py-2 text-xs hover:bg-amber-600/30">
+                {{ lang === 'ar' ? 'تشغيل Orchestrator' : 'Run Orchestrator' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+            <h3 class="text-sm font-semibold mb-3">{{ lang === 'ar' ? 'تشغيل أدوات MCP' : 'Run MCP Tools' }}</h3>
+
+            <div class="space-y-2 mb-3">
+              <textarea
+                v-model="mcpForm.query"
+                rows="2"
+                :placeholder="lang === 'ar' ? 'اكتب استفسارًا بنكيًا...' : 'Type a banking query...'"
+                class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500"
+              ></textarea>
+              <div class="grid grid-cols-3 gap-2">
+                <select v-model="mcpForm.language" class="bg-gray-800 border border-gray-700 rounded-lg px-2 py-2 text-xs">
+                  <option value="ar">Arabic</option>
+                  <option value="en">English</option>
+                </select>
+                <select v-model="mcpForm.category" class="bg-gray-800 border border-gray-700 rounded-lg px-2 py-2 text-xs">
+                  <option value="general">general</option>
+                  <option value="technical">technical</option>
+                  <option value="legal">legal</option>
+                  <option value="creative">creative</option>
+                </select>
+                <button @click="runRouteBankingQuery" class="bg-indigo-600 hover:bg-indigo-700 rounded-lg text-xs py-2">
+                  route_banking_query
+                </button>
               </div>
-            </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <select v-model="mcpForm.agent" class="bg-gray-800 border border-gray-700 rounded-lg px-2 py-2 text-xs">
+                <option value="gemini">gemini</option>
+                <option value="claude">claude</option>
+                <option value="gpt4">gpt4</option>
+                <option value="perplexity">perplexity</option>
+              </select>
+              <button @click="runCheckAgentStatus" class="bg-teal-600 hover:bg-teal-700 rounded-lg text-xs py-2">
+                check_agent_status
+              </button>
+            </div>
           </div>
-        </div>
-        
-        <div v-for="(msg, i) in messages" :key="i" 
-             class="flex animate-fadeIn"
-             :class="msg.role === 'user' ? 'justify-start' : 'justify-end'">
-          <div class="max-w-[85%]">
-            
-            <div class="flex items-center gap-2 mb-1 px-1"
-                 :class="msg.role === 'user' ? '' : 'flex-row-reverse'">
-              <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shadow-sm"
-                   :class="msg.role === 'user' 
-                     ? 'bg-blue-600 text-white' 
-                     : 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white'">
-                {{ msg.role === 'user' ? (lang === 'ar' ? 'أ' : 'U') : 'C' }}
+
+          <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+            <h3 class="text-sm font-semibold mb-2">{{ lang === 'ar' ? 'أدوات MCP المتاحة' : 'Available MCP Tools' }}</h3>
+            <ul class="space-y-2 text-xs">
+              <li v-for="tool in dashboard.mcpTools" :key="tool.name" class="bg-gray-800/80 border border-gray-700 rounded-lg p-2">
+                <div class="font-semibold text-blue-300">{{ tool.name }}</div>
+                <div class="text-gray-400 mt-1">{{ tool.description }}</div>
+              </li>
+              <li v-if="!dashboard.mcpTools.length" class="text-gray-500">
+                {{ lang === 'ar' ? 'لا توجد أدوات حالياً.' : 'No tools loaded yet.' }}
+              </li>
+            </ul>
+          </div>
+
+          <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+            <h3 class="text-sm font-semibold mb-2">{{ lang === 'ar' ? 'سجل التحكم' : 'Remote Logs' }}</h3>
+            <div class="space-y-2 max-h-72 overflow-y-auto">
+              <div v-for="(log, index) in remoteLogs" :key="index" class="rounded-lg border p-2 text-xs"
+                   :class="log.isError ? 'border-red-800 bg-red-950/40' : 'border-gray-700 bg-gray-800/70'">
+                <div class="flex items-center justify-between">
+                  <span class="font-semibold">{{ log.title }}</span>
+                  <span class="text-gray-500">{{ formatTime(log.time) }}</span>
+                </div>
+                <pre class="mt-2 whitespace-pre-wrap text-[11px] text-gray-300">{{ log.payload }}</pre>
               </div>
-              <span class="text-[10px] text-gray-500 font-medium">
-                {{ msg.role === 'user' ? (lang === 'ar' ? 'أنت' : 'You') : 'CoreHub' }}
-              </span>
-              <span class="text-[10px] text-gray-600">{{ formatTime(msg.time) }}</span>
-            </div>
-            
-            <div class="rounded-2xl px-4 py-3 shadow-lg backdrop-blur-sm"
-                 :class="msg.role === 'user'
-                   ? 'bg-blue-600/20 border border-blue-500/30 text-gray-100'
-                   : 'bg-gray-800/80 border border-gray-700/50 text-gray-200'">
-              <div v-if="msg.role === 'assistant'" 
-                   class="prose prose-invert prose-sm max-w-none"
-                   v-html="renderMarkdown(msg.content)"></div>
-              <div v-else class="whitespace-pre-wrap text-sm leading-relaxed">{{ msg.content }}</div>
-            </div>
-            
-          </div>
-        </div>
-        
-        <div v-if="loading" class="flex justify-end animate-fadeIn">
-          <div class="max-w-[75%]">
-            <div class="flex items-center gap-2 mb-1 px-1 flex-row-reverse">
-              <div class="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-xs font-medium shadow-sm text-white">C</div>
-              <span class="text-[10px] text-gray-500 font-medium">CoreHub</span>
-            </div>
-            <div class="bg-gray-800/80 border border-gray-700/50 rounded-2xl px-4 py-3 shadow-lg">
-              <div class="flex gap-1.5 items-center">
-                <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
-                <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
-                <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
-              </div>
+              <p v-if="!remoteLogs.length" class="text-xs text-gray-500">
+                {{ lang === 'ar' ? 'لا يوجد سجل حتى الآن.' : 'No logs yet.' }}
+              </p>
             </div>
           </div>
         </div>
-        
-        <div v-if="error" class="flex justify-center animate-fadeIn">
-          <div class="bg-red-900/30 border border-red-800/50 rounded-2xl px-4 py-3 text-red-300 text-sm flex items-center gap-3 max-w-md shadow-lg">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <span class="flex-1">{{ error }}</span>
-            <button @click="error = ''" class="text-red-400 hover:text-red-200 text-xl leading-none touch-manipulation">&times;</button>
-          </div>
-        </div>
-        
-      </div>
-      
-      <div class="border-t border-gray-800 bg-gray-900/95 backdrop-blur-xl px-4 py-3 safe-area-bottom flex-shrink-0">
-        <div class="flex gap-2 items-end max-w-4xl mx-auto">
-          
-          <div class="flex-1 relative">
-            <textarea
-              ref="inputField"
-              v-model="input"
-              @keydown="handleKeyDown"
-              :placeholder="lang === 'ar' ? 'اكتب رسالتك...' : 'Type your message...'"
-              :disabled="loading"
-              rows="1"
-              class="w-full bg-gray-800 border border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-2xl px-4 py-3 text-white placeholder-gray-500 resize-none transition-all outline-none text-sm leading-relaxed max-h-32 overflow-y-auto touch-manipulation"
-              :dir="lang === 'ar' ? 'rtl' : 'ltr'"
-            ></textarea>
-          </div>
-          
-          <button
-            @click="sendMessage"
-            :disabled="loading || !input.trim()"
-            class="h-12 w-12 flex-shrink-0 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 active:from-blue-800 active:to-purple-800 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed rounded-2xl flex items-center justify-center transition-all shadow-lg disabled:shadow-none touch-manipulation"
-          >
-            <svg v-if="!loading" class="w-5 h-5 text-white" :class="lang === 'ar' ? 'rotate-180' : ''" 
-                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-            </svg>
-            <svg v-else class="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-            </svg>
-          </button>
-          
-        </div>
-        
-        <p class="text-[10px] text-gray-600 mt-2 text-center leading-relaxed">
-          {{ lang === 'ar' 
-             ? 'CoreHub Nexus · مدعوم بالذكاء الاصطناعي · محسّن لـ iPhone' 
-             : 'CoreHub Nexus · AI-Powered · Optimized for iPhone' }}
-        </p>
-      </div>
-      
+      </template>
     </main>
     
     <div class="safe-area-bottom bg-gray-900"></div>
