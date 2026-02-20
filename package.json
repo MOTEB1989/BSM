@@ -20,6 +20,7 @@
     "pr-check": "node scripts/pr-review-checklist.js --local",
     "pr-check:verbose": "node scripts/pr-review-checklist.js --local --verbose",
     "test:unit": "node --test tests/*.test.js",
+    "benchmark": "node scripts/benchmark-performance.js",
     "prepare": "node scripts/install-git-hooks.js",
     "mcp:install": "cd mcp-servers && npm install",
     "mcp:start": "node mcp-servers/bsu-agent-server.js",

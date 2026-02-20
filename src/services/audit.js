@@ -1,7 +1,8 @@
-import fs from "fs";
 import { writeFile, appendFile } from "fs/promises";
+import { existsSync, mkdirSync } from "fs";
 import path from "path";
 import { AppError } from "../utils/errors.js";
+import logger from "../utils/logger.js";
 
 const AUDIT_DIR = path.join(process.cwd(), "data", "audit");
 const AUDIT_LOG_PATH = path.join(AUDIT_DIR, "audit.log");
@@ -12,14 +13,16 @@ const auditQueue = [];
 let flushTimer = null;
 const FLUSH_INTERVAL = 1000; // Flush every 1 second
 const MAX_QUEUE_SIZE = 100; // Flush immediately if queue exceeds this
+const MAX_RETRY_ATTEMPTS = 3;
+let retryCount = 0;
 
 const ensureAuditDir = () => {
-  if (!fs.existsSync(AUDIT_DIR)) {
-    fs.mkdirSync(AUDIT_DIR, { recursive: true });
+  if (!existsSync(AUDIT_DIR)) {
+    mkdirSync(AUDIT_DIR, { recursive: true });
   }
 };
 
-// Async batch flush of audit entries
+// Async batch flush of audit entries with retry
 const flushAuditQueue = async () => {
   if (auditQueue.length === 0) return;
 
@@ -28,10 +31,25 @@ const flushAuditQueue = async () => {
 
   try {
     await appendFile(AUDIT_LOG_PATH, content, "utf8");
+    retryCount = 0; // Reset retry count on success
   } catch (err) {
-    // Fallback to sync write on error to ensure audit integrity
-    console.error("Async audit write failed, using sync fallback:", err.message);
-    fs.appendFileSync(AUDIT_LOG_PATH, content, "utf8");
+    // Instead of sync fallback, prepend entries back to queue for retry
+    logger.error({ error: err.message, retryCount }, "Audit write failed, requeuing entries");
+    auditQueue.unshift(...entries);
+    
+    // Retry with exponential backoff
+    if (retryCount < MAX_RETRY_ATTEMPTS) {
+      retryCount++;
+      const backoffMs = Math.min(1000 * Math.pow(2, retryCount), 10000);
+      setTimeout(() => {
+        flushAuditQueue().catch(retryErr => {
+          logger.error({ error: retryErr.message }, "Audit retry failed");
+        });
+      }, backoffMs);
+    } else {
+      logger.error("Max audit retry attempts reached, entries may be lost");
+      retryCount = 0;
+    }
   }
 
   if (flushTimer) {
@@ -111,11 +129,14 @@ export const recordAuditEvent = ({
   return entry;
 };
 
-// Ensure queue is flushed on process exit
-process.on('beforeExit', () => {
+// Ensure queue is flushed on process exit using async
+process.on('beforeExit', async () => {
   if (auditQueue.length > 0) {
-    const content = auditQueue.map(e => JSON.stringify(e)).join('\n') + '\n';
-    fs.appendFileSync(AUDIT_LOG_PATH, content, "utf8");
+    try {
+      await flushAuditQueue();
+    } catch (err) {
+      logger.error({ error: err.message }, "Failed to flush audit queue on exit");
+    }
   }
 });
 
