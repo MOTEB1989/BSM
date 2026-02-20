@@ -511,6 +511,9 @@ The project includes GitHub Actions workflows:
 - [Cloudflare API Names (Arabic)](docs/CLOUDFLARE-API-NAMES.md) - Complete Cloudflare API reference
 - [Cloudflare Quick Reference (Arabic)](docs/CLOUDFLARE-QUICK-REFERENCE-AR.md) - Quick guide to Cloudflare API variables
 
+### Deployment
+- [Render.com Deployment Guide](RENDER-DEPLOYMENT-GUIDE.md) - Production deployment configuration and guide
+
 ## Contributing
 
 Contributions are welcome! Please ensure that:

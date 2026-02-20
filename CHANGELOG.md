@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.0] - 2026-02-20
 
+### Added - Render.com Production Configuration
+- **Render.yaml Update**
+  - Updated service name to `SR.BSM`
+  - Added explicit repository URL: `https://github.com/LexBANK/BSM`
+  - Configured Virginia region for deployment
+  - Added pre-deploy command for dependency installation
+  - Added 10 environment variables with sync: false for security
+  - Configured 4 custom domains: corehub.nexus, lexprim.com (with www)
+  - Disabled auto-deploy for manual deployment control
+
+- **Documentation**
+  - `RENDER-DEPLOYMENT-GUIDE.md`: Comprehensive Render.com deployment guide
+  - Updated README.md with deployment documentation reference
+
 ### Added - Saffio Anti-Duplication System
 - **Duplication Detection System** (`scripts/prevent-duplicate-agents.js`)
   - SHA-256 fingerprint calculation for each agent
