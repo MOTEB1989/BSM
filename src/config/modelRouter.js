@@ -1,6 +1,6 @@
-import fetch from "node-fetch";
 import logger from "../utils/logger.js";
 import { AppError } from "../utils/errors.js";
+import { postJson } from "../utils/httpClient.js";
 import { env } from "./env.js";
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
@@ -215,34 +215,12 @@ export class MultiModelRouter {
   }
 
   async postChat(url, apiKey, payload) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new AppError(`Model request failed: ${errorText}`, 500, "MODEL_REQUEST_FAILED");
-      }
-
-      return await res.json();
-    } catch (err) {
-      if (err.name === "AbortError") {
-        throw new AppError("Model request timeout", 500, "MODEL_TIMEOUT");
-      }
-      throw err;
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    return postJson(url, {
+      authHeader: `Bearer ${apiKey}`,
+      body: payload,
+      timeoutMs: REQUEST_TIMEOUT_MS,
+      providerName: "Model"
+    });
   }
 
   buildMessages(prompt) {
