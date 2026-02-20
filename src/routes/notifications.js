@@ -121,7 +121,7 @@ router.post("/broadcast", auth, asyncHandler(async (req, res) => {
   auditLogger.writeDeferred({
     event: "notification",
     action: "manual_broadcast",
-    user: req.adminToken ? "admin" : "system",
+    user: req.isAdmin ? "admin" : "system",
     type,
     priority,
     correlationId: req.correlationId
@@ -199,7 +199,7 @@ router.post("/coordination/start", asyncHandler(async (req, res) => {
  */
 router.post("/coordination/:sessionId/approve", auth, asyncHandler(async (req, res) => {
   const { sessionId } = req.params;
-  const approver = req.adminToken ? "admin" : "system";
+  const approver = req.isAdmin ? "admin" : "system";
 
   const session = await agentCoordinationService.approveCollaboration(sessionId, approver);
 
@@ -395,7 +395,7 @@ router.post("/security/activate-shield", auth, asyncHandler(async (req, res) => 
 
   logger.warn({
     activationId: activation.activationId,
-    user: req.adminToken ? "admin" : "system"
+    user: req.isAdmin ? "admin" : "system"
   }, "Manual shield activation");
 
   res.json({

@@ -25,7 +25,7 @@ export const adminAuth = (req, res, next) => {
   if (!token || !env.adminToken || !timingSafeEqual(token, env.adminToken)) {
     return res.status(401).json({ error: "Unauthorized" });
   }
-  req.adminToken = token;
+  req.isAdmin = true;
   next();
 };
 
