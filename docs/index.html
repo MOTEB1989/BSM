@@ -122,12 +122,13 @@
                   <p class="text-[9px] text-blue-400 italic text-center">BSU Nexus يعمل بالتكامل مع GitHub Actions وCloudflare.</p>
               </div>
           </div>
-          <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-6 shadow-xl shadow-blue-900/20">
+          <div id="api-status-card" class="bg-gradient-to-br from-gray-700 to-gray-800 rounded-3xl p-6 shadow-xl shadow-gray-900/20 transition-all duration-500">
               <div class="flex justify-between items-center mb-2">
                   <span class="text-[9px] text-white/60 font-nexus uppercase">API Status</span>
-                  <span class="text-[9px] bg-white/20 px-2 py-0.5 rounded text-white">ONLINE</span>
+                  <span id="api-status-badge" class="text-[9px] bg-white/20 px-2 py-0.5 rounded text-white">جاري الفحص...</span>
               </div>
-              <h4 class="text-xl font-bold text-white font-nexus italic">CONNECTED</h4>
+              <h4 id="api-status-text" class="text-xl font-bold text-white font-nexus italic">--</h4>
+              <p id="api-status-detail" class="text-[9px] text-white/50 mt-1"></p>
           </div>
       </aside>
   </main>
@@ -195,6 +196,51 @@
       document.getElementById('input').addEventListener('keypress', function(event) {
         if (event.key === 'Enter') send();
       });
+
+      // --- Real API health check ---
+      async function checkApiStatus() {
+        const card   = document.getElementById('api-status-card');
+        const badge  = document.getElementById('api-status-badge');
+        const text   = document.getElementById('api-status-text');
+        const detail = document.getElementById('api-status-detail');
+
+        badge.textContent = 'جاري الفحص...';
+        text.textContent  = '--';
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 6000);
+
+        try {
+          const t0  = Date.now();
+          const res = await fetch(`${API_URL}/health`, { signal: controller.signal });
+          const ms  = Date.now() - t0;
+          clearTimeout(timeout);
+
+          if (res.ok) {
+            card.className  = card.className.replace(/from-\S+ to-\S+/, 'from-blue-600 to-indigo-700');
+            badge.textContent = 'ONLINE';
+            badge.className = 'text-[9px] bg-emerald-500/30 px-2 py-0.5 rounded text-emerald-300';
+            text.textContent  = 'CONNECTED';
+            detail.textContent = `استجاب في ${ms}ms`;
+          } else {
+            throw new Error(`HTTP ${res.status}`);
+          }
+        } catch (err) {
+          clearTimeout(timeout);
+          const isTimeout = err.name === 'AbortError';
+          card.className  = card.className.replace(/from-\S+ to-\S+/, 'from-red-900 to-red-800');
+          badge.textContent = isTimeout ? 'TIMEOUT' : 'OFFLINE';
+          badge.className = 'text-[9px] bg-red-500/30 px-2 py-0.5 rounded text-red-300';
+          text.textContent  = isTimeout ? 'نائم / بطيء' : 'غير متصل';
+          detail.textContent = isTimeout
+            ? 'الخادم نائم — قد يستغرق 30-60 ثانية للاستيقاظ'
+            : `خطأ: ${err.message}`;
+        }
+      }
+
+      // Check on load then every 30 seconds
+      checkApiStatus();
+      setInterval(checkApiStatus, 30000);
   </script>
 </body>
 </html>
