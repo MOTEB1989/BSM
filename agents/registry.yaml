@@ -385,6 +385,41 @@ agents:
       endpoint: /api/agents/my-agent/health
       interval_seconds: 90
 
+  - id: raptor-agent
+    name: Raptor - Deputy & Repository Leader
+    category: system
+    role: executor
+    execution:
+      runtime: node
+    safety:
+      mode: restricted
+      requires_approval: true
+    contexts:
+      allowed:
+        - chat
+        - api
+        - ci
+    expose:
+      selectable: true
+      internal_only: false
+    risk:
+      level: medium
+      rationale: "Repository deputy with system oversight and command execution"
+    approval:
+      required: true
+      type: manual
+      approvers:
+        - admin
+    startup:
+      auto_start: false
+      allowed_profiles:
+        - development
+        - staging
+        - production
+    healthcheck:
+      endpoint: /api/agents/raptor-agent/health
+      interval_seconds: 90
+
   - id: repository-review-agent
     name: Repository Review Agent
     category: audit
@@ -560,41 +595,6 @@ agents:
       interval_seconds: 60
 
   # ========== Groq LPU ==========
-  - id: raptor-agent
-    name: Raptor - Deputy & Repository Leader
-    category: system
-    role: executor
-    execution:
-      runtime: node
-    safety:
-      mode: restricted
-      requires_approval: true
-    contexts:
-      allowed:
-        - chat
-        - api
-        - ci
-    expose:
-      selectable: true
-      internal_only: false
-    risk:
-      level: medium
-      rationale: "Repository deputy with system oversight and command execution"
-    approval:
-      required: true
-      type: manual
-      approvers:
-        - admin
-    startup:
-      auto_start: false
-      allowed_profiles:
-        - development
-        - staging
-        - production
-    healthcheck:
-      endpoint: /api/agents/raptor-agent/health
-      interval_seconds: 90
-
   - id: groq-agent
     name: Groq LPU AI
     category: conversational
