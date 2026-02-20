@@ -1,0 +1,60 @@
+name: 🔍 Registry Validation (Anti-Duplication)
+
+on:
+  pull_request:
+    paths:
+      - 'agents/registry.yaml'
+      - 'agents/**/*.yaml'
+  push:
+    branches: [main]
+    paths:
+      - 'agents/**'
+
+jobs:
+  validate:
+    name: Validate Agent Registry
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          
+      - name: Install Dependencies
+        run: npm ci
+        
+      - name: 🔍 Check Duplicates
+        id: duplicates
+        run: |
+          node scripts/prevent-duplicate-agents.js > report.txt 2>&1 || true
+          if grep -q "❌" report.txt; then
+            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "## ❌ تكرارات مكتشفة" >> $GITHUB_STEP_SUMMARY
+            cat report.txt >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "status=passed" >> $GITHUB_OUTPUT
+            echo "## ✅ Registry نظيف" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+      - name: Validate Schema
+        run: npm run validate:registry || true
+        
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && steps.duplicates.outputs.status == 'failed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('report.txt', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🚫 نظام صافيو: تكرارات مكتشفة\n\n\`\`\`\n${report}\n\`\`\``
+            });
