@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  
+  <!-- Primary Meta Tags -->
+  <title>CoreHub Nexus - تطبيق iOS</title>
+  <meta name="title" content="CoreHub Nexus - تطبيق iOS" />
+  <meta name="description" content="تطبيق CoreHub Nexus المحسن لأجهزة iPhone - واجهة محادثة ذكية مع وكلاء الذكاء الاصطناعي" />
+  
+  <!-- Theme & Colors -->
+  <meta name="theme-color" content="#4c6ef5" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  
+  <!-- PWA & iOS Specific -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="CoreHub" />
+  <link rel="apple-touch-icon" href="../src/chat/icons/icon.svg" />
+  <link rel="icon" type="image/svg+xml" href="../src/chat/icons/icon.svg" />
+  
+  <!-- Disable automatic detection -->
+  <meta name="format-detection" content="telephone=no" />
+  
+  <!-- Styles -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* iOS-specific styles */
+    .safe-area-top { height: env(safe-area-inset-top); }
+    .safe-area-bottom { height: env(safe-area-inset-bottom); }
+    .overscroll-contain { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+    .touch-manipulation { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+    
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.3); border-radius: 2px; }
+    
+    .prose { color: #e5e7eb; }
+    .prose p { margin-top: 0.5rem; margin-bottom: 0.5rem; }
+    .prose ul, .prose ol { margin-top: 0.5rem; margin-bottom: 0.5rem; padding-right: 1.25rem; }
+    .prose li { margin-top: 0.25rem; margin-bottom: 0.25rem; }
+    .prose code { background: rgba(55, 65, 81, 0.5); padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.875em; }
+    .prose pre { background: rgba(31, 41, 55, 0.5); padding: 0.75rem; border-radius: 0.5rem; overflow-x: auto; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+    .prose strong { color: #f3f4f6; font-weight: 600; }
+    .prose a { color: #60a5fa; text-decoration: underline; }
+  </style>
+  
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+
+<body class="bg-gray-950 text-white antialiased overscroll-none" dir="rtl">
+  
+  <div id="app" class="flex flex-col h-screen overflow-hidden">
+    
+    <div class="safe-area-top bg-gray-900"></div>
+    
+    <header class="bg-gray-900/95 backdrop-blur-xl border-b border-gray-800 z-50 flex-shrink-0">
+      <div class="px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <span class="text-white font-bold text-xl">C</span>
+          </div>
+          <div>
+            <h1 class="text-base font-bold text-white leading-tight">CoreHub Nexus</h1>
+            <p class="text-[10px] text-gray-400">{{ lang === 'ar' ? 'المساعد الذكي' : 'Smart Assistant' }}</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <button @click="toggleLang" 
+                  class="px-3 py-1.5 text-xs font-medium bg-gray-800/80 hover:bg-gray-700 active:bg-gray-600 rounded-lg transition-all border border-gray-700/50 touch-manipulation">
+            {{ lang === 'ar' ? 'EN' : 'ع' }}
+          </button>
+          
+          <button @click="clearChat" 
+                  class="px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg transition-all shadow-sm touch-manipulation">
+            {{ lang === 'ar' ? '+ جديد' : '+ New' }}
+          </button>
+        </div>
+      </div>
+      
+      <div v-if="!isOnline" class="bg-red-900/30 border-t border-red-800/50 px-4 py-1.5">
+        <p class="text-xs text-red-300 text-center">
+          {{ lang === 'ar' ? '⚠️ غير متصل - يعمل بوضع دون اتصال' : '⚠️ Offline - Working in offline mode' }}
+        </p>
+      </div>
+    </header>
+    
+    <main class="flex-1 overflow-hidden flex flex-col bg-gray-950">
+      
+      <div ref="messagesContainer" 
+           class="flex-1 overflow-y-auto px-4 py-4 space-y-4 overscroll-contain"
+           @scroll="handleScroll">
+        
+        <div v-if="messages.length === 0" class="flex flex-col items-center justify-center h-full text-center px-6">
+          <div class="w-20 h-20 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-3xl flex items-center justify-center mb-6 shadow-2xl">
+            <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+            </svg>
+          </div>
+          
+          <h2 class="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+            {{ lang === 'ar' ? 'مرحباً بك في CoreHub' : 'Welcome to CoreHub' }}
+          </h2>
+          <p class="text-sm text-gray-400 mb-8 max-w-sm leading-relaxed">
+            {{ lang === 'ar' 
+               ? 'تطبيق محادثة ذكي محسّن لأجهزة iPhone. ابدأ محادثة الآن!' 
+               : 'Smart chat app optimized for iPhone. Start chatting now!' }}
+          </p>
+          
+          <div class="grid grid-cols-1 gap-2.5 w-full max-w-sm">
+            <button v-for="action in quickActions" 
+                    :key="action.text"
+                    @click="sendQuickAction(action.text)" 
+                    class="text-right p-4 bg-gray-900/50 hover:bg-gray-800/80 active:bg-gray-800 border border-gray-800 hover:border-blue-600/50 rounded-2xl transition-all touch-manipulation group">
+              <div class="flex items-center gap-3">
+                <span class="text-2xl">{{ action.icon }}</span>
+                <span class="text-sm text-gray-300 group-hover:text-white transition-colors flex-1">{{ action.text }}</span>
+                <svg class="w-4 h-4 text-gray-600 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </button>
+          </div>
+        </div>
+        
+        <div v-for="(msg, i) in messages" :key="i" 
+             class="flex animate-fadeIn"
+             :class="msg.role === 'user' ? 'justify-start' : 'justify-end'">
+          <div class="max-w-[85%]">
+            
+            <div class="flex items-center gap-2 mb-1 px-1"
+                 :class="msg.role === 'user' ? '' : 'flex-row-reverse'">
+              <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shadow-sm"
+                   :class="msg.role === 'user' 
+                     ? 'bg-blue-600 text-white' 
+                     : 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white'">
+                {{ msg.role === 'user' ? (lang === 'ar' ? 'أ' : 'U') : 'C' }}
+              </div>
+              <span class="text-[10px] text-gray-500 font-medium">
+                {{ msg.role === 'user' ? (lang === 'ar' ? 'أنت' : 'You') : 'CoreHub' }}
+              </span>
+              <span class="text-[10px] text-gray-600">{{ formatTime(msg.time) }}</span>
+            </div>
+            
+            <div class="rounded-2xl px-4 py-3 shadow-lg backdrop-blur-sm"
+                 :class="msg.role === 'user'
+                   ? 'bg-blue-600/20 border border-blue-500/30 text-gray-100'
+                   : 'bg-gray-800/80 border border-gray-700/50 text-gray-200'">
+              <div v-if="msg.role === 'assistant'" 
+                   class="prose prose-invert prose-sm max-w-none"
+                   v-html="renderMarkdown(msg.content)"></div>
+              <div v-else class="whitespace-pre-wrap text-sm leading-relaxed">{{ msg.content }}</div>
+            </div>
+            
+          </div>
+        </div>
+        
+        <div v-if="loading" class="flex justify-end animate-fadeIn">
+          <div class="max-w-[75%]">
+            <div class="flex items-center gap-2 mb-1 px-1 flex-row-reverse">
+              <div class="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-xs font-medium shadow-sm text-white">C</div>
+              <span class="text-[10px] text-gray-500 font-medium">CoreHub</span>
+            </div>
+            <div class="bg-gray-800/80 border border-gray-700/50 rounded-2xl px-4 py-3 shadow-lg">
+              <div class="flex gap-1.5 items-center">
+                <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
+                <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
+                <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div v-if="error" class="flex justify-center animate-fadeIn">
+          <div class="bg-red-900/30 border border-red-800/50 rounded-2xl px-4 py-3 text-red-300 text-sm flex items-center gap-3 max-w-md shadow-lg">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                    d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="flex-1">{{ error }}</span>
+            <button @click="error = ''" class="text-red-400 hover:text-red-200 text-xl leading-none touch-manipulation">&times;</button>
+          </div>
+        </div>
+        
+      </div>
+      
+      <div class="border-t border-gray-800 bg-gray-900/95 backdrop-blur-xl px-4 py-3 safe-area-bottom flex-shrink-0">
+        <div class="flex gap-2 items-end max-w-4xl mx-auto">
+          
+          <div class="flex-1 relative">
+            <textarea
+              ref="inputField"
+              v-model="input"
+              @keydown="handleKeyDown"
+              :placeholder="lang === 'ar' ? 'اكتب رسالتك...' : 'Type your message...'"
+              :disabled="loading"
+              rows="1"
+              class="w-full bg-gray-800 border border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-2xl px-4 py-3 text-white placeholder-gray-500 resize-none transition-all outline-none text-sm leading-relaxed max-h-32 overflow-y-auto touch-manipulation"
+              :dir="lang === 'ar' ? 'rtl' : 'ltr'"
+            ></textarea>
+          </div>
+          
+          <button
+            @click="sendMessage"
+            :disabled="loading || !input.trim()"
+            class="h-12 w-12 flex-shrink-0 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 active:from-blue-800 active:to-purple-800 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed rounded-2xl flex items-center justify-center transition-all shadow-lg disabled:shadow-none touch-manipulation"
+          >
+            <svg v-if="!loading" class="w-5 h-5 text-white" :class="lang === 'ar' ? 'rotate-180' : ''" 
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+            </svg>
+            <svg v-else class="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+          </button>
+          
+        </div>
+        
+        <p class="text-[10px] text-gray-600 mt-2 text-center leading-relaxed">
+          {{ lang === 'ar' 
+             ? 'CoreHub Nexus · مدعوم بالذكاء الاصطناعي · محسّن لـ iPhone' 
+             : 'CoreHub Nexus · AI-Powered · Optimized for iPhone' }}
+        </p>
+      </div>
+      
+    </main>
+    
+    <div class="safe-area-bottom bg-gray-900"></div>
+    
+  </div>
+  
+  <script src="app.js"></script>
+  
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/ios-app/sw.js', { scope: '/ios-app/' })
+          .then(reg => console.log('✅ Service Worker registered:', reg.scope))
+          .catch(err => console.log('❌ SW registration failed:', err));
+      });
+    }
+    
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        e.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, false);
+    
+    window.addEventListener('online', () => console.log('📶 Back online'));
+    window.addEventListener('offline', () => console.log('📵 Gone offline'));
+  </script>
+  
+</body>
+</html>

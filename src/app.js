@@ -138,6 +138,31 @@ app.use(
   express.static(path.join(process.cwd(), "src/chat"))
 );
 
+// serve iOS app (CoreHub Nexus) - optimized for iPhone
+app.use(
+  "/ios-app",
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-eval'",
+          "https://unpkg.com",
+          "https://cdn.tailwindcss.com",
+          "https://cdn.jsdelivr.net"
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "blob:"],
+        connectSrc: ["'self'", ...env.corsOrigins],
+        manifestSrc: ["'self'"],
+        workerSrc: ["'self'"]
+      }
+    }
+  }),
+  express.static(path.join(process.cwd(), "ios-app"))
+);
+
 app.use(notFound);
 app.use(errorHandler);
 
