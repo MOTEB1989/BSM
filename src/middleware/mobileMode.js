@@ -11,7 +11,8 @@ import logger from "../utils/logger.js";
 const mobileAllowedPaths = [
   "/api/chat",
   "/api/chat/direct",
-  "/api/chat/key-status"
+  "/api/chat/key-status",
+  "/api/mobile"
 ];
 
 const restrictedOperations = {
