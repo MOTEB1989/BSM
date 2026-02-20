@@ -1,0 +1,65 @@
+name: Deploy iOS App to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ios-app/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy CoreHub Nexus iOS App
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      
+      - name: Validate App Structure
+        run: |
+          echo "📦 Validating iOS app structure..."
+          if [ ! -f "ios-app/index.html" ]; then
+            echo "❌ Error: index.html not found"
+            exit 1
+          fi
+          if [ ! -f "ios-app/app.js" ]; then
+            echo "❌ Error: app.js not found"
+            exit 1
+          fi
+          if [ ! -f "ios-app/manifest.json" ]; then
+            echo "❌ Error: manifest.json not found"
+            exit 1
+          fi
+          if [ ! -f "ios-app/sw.js" ]; then
+            echo "❌ Error: sw.js not found"
+            exit 1
+          fi
+          echo "✅ All required files present"
+      
+      - name: List iOS App Files
+        run: |
+          echo "📁 iOS App Contents:"
+          ls -lh ios-app/
+      
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: corehub-nexus-ios
+          directory: ios-app
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
+      
+      - name: Deployment Summary
+        run: |
+          echo "🎉 Deployment completed!"
+          echo "📱 iOS App URL: https://corehub.nexus/ios-app/"
+          echo "🔍 Verify at: https://corehub-nexus-ios.pages.dev"
