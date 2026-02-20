@@ -114,6 +114,41 @@ Direct GPT-4o-mini chat endpoint with bilingual support (Arabic/English) and con
 
 📖 See [GitHub Webhook Setup Guide](docs/GITHUB-WEBHOOK-SETUP.md) for configuration details.
 
+### User Interfaces
+
+BSM provides **4 professional user interfaces** ready for immediate use:
+
+| Interface | Path | Features | Status |
+|-----------|------|----------|--------|
+| **Chat UI** | `/chat` | Vue 3 + Tailwind, PWA, Bilingual (AR/EN) | ✅ Active |
+| **Admin Dashboard** | `/admin` | Agent management, System monitoring | ✅ Active |
+| **iOS App** | `/ios-app` | CoreHub Nexus, iPhone optimized, PWA | ✅ Active |
+| **Lexprim Chat** | `lexprim-chat/` | Nuxt 3, Pinia state management | ✅ Active |
+
+**Quick Access Links:**
+
+**Local Development:**
+```
+Chat UI:    http://localhost:3000/chat
+Admin:      http://localhost:3000/admin
+iOS App:    http://localhost:3000/ios-app
+API:        http://localhost:3000/api
+```
+
+**Production:**
+```
+Chat UI:    https://bsm.onrender.com/chat
+Admin:      https://bsm.onrender.com/admin
+iOS App:    https://bsm.onrender.com/ios-app
+Website:    https://lexdo.uk
+```
+
+📖 **Complete Guides:**
+- [🚀 UI Activation Guide (Arabic)](docs/UI-ACTIVATION-GUIDE-AR.md) - Full setup and configuration guide
+- [⚡ UI Quick Reference](docs/UI-QUICK-REFERENCE.md) - Quick access links and commands
+- [💬 Chat UI Documentation](src/chat/README.md) - Chat interface details
+- [📱 iOS App Guide (Arabic)](ios-app/USER-GUIDE-AR.md) - iOS app user guide
+
 ### Chat Interface
 - `/chat` - Professional Arabic/English GPT chat interface (Vue 3 + Tailwind)
 
@@ -499,6 +534,7 @@ The project includes GitHub Actions workflows:
 - [Agent Orchestration Patterns](docs/AGENT-ORCHESTRATION.md) - Multi-agent design patterns and workflows
 - [CI/CD Recommendations](docs/CICD-RECOMMENDATIONS.md) - Pipeline enhancements and automation strategies
 - [Security & Deployment Guide](docs/SECURITY-DEPLOYMENT.md) - Security best practices and deployment procedures
+- [Render CLI Deployment](docs/RENDER-CLI-DEPLOYMENT.md) - Automated Render.com deployment using CLI
 - [Documentation Deployment Policy](docs/DOCS-DEPLOYMENT.md) - Official docs CI/CD, build source, and versioning policy
 
 ### API Documentation

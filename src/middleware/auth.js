@@ -25,10 +25,11 @@ export const adminAuth = (req, res, next) => {
   if (!token || !env.adminToken || !timingSafeEqual(token, env.adminToken)) {
     return res.status(401).json({ error: "Unauthorized" });
   }
+  req.adminToken = token;
   next();
 };
 
-// Backward-compatible alias used by legacy routes.
+// Backward-compatible alias used by routes that import { auth }.
 export const auth = adminAuth;
 
 export const adminUiAuth = (req, res, next) => {
