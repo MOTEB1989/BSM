@@ -24,6 +24,8 @@ export const errorHandler = (err, req, res, next) => {
     clientMessage = "AI service request timed out. Please try again.";
   } else if (err.code === "RATE_LIMITED") {
     clientMessage = "AI service rate limit exceeded. Please try again shortly.";
+  } else if (err.code === "ALL_PROVIDERS_FAILED") {
+    clientMessage = err.message || "All AI providers failed. Please try again or contact the administrator.";
   } else if (status === 500) {
     // For all other 500 errors, use generic message
     clientMessage = "Internal Server Error";

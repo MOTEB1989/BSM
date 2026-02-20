@@ -198,10 +198,10 @@ createApp({
           errorMessage = lang.value === 'ar'
             ? 'انتهت مهلة طلب الذكاء الاصطناعي. يرجى المحاولة مرة أخرى.'
             : 'AI service request timed out. Please try again.';
-        } else if (err.code === 'MISSING_API_KEY' || err.status === 503) {
+        } else if (err.code === 'MISSING_API_KEY' || err.code === 'ALL_PROVIDERS_FAILED' || err.status === 503) {
           errorMessage = lang.value === 'ar'
-            ? 'خدمة الذكاء الاصطناعي غير متاحة حالياً. يرجى الاتصال بالمسؤول.'
-            : 'AI service is not currently available. Please contact the administrator.';
+            ? 'خدمة الذكاء الاصطناعي غير متاحة حالياً. يرجى التحقق من مفاتيح API أو المحاولة لاحقاً.'
+            : 'AI service is not currently available. Please check API keys or try again later.';
         } else if (err.code === 'INVALID_API_KEY') {
           errorMessage = lang.value === 'ar'
             ? 'مفتاح خدمة الذكاء الاصطناعي غير صحيح. يرجى إبلاغ المسؤول.'

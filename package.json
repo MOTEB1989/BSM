@@ -29,6 +29,7 @@
     "prepare": "node scripts/install-git-hooks.js",
     "mcp:install": "cd mcp-servers && npm install",
     "mcp:start": "node mcp-servers/bsu-agent-server.js",
+    "mcp:banking": "node mcp-servers/banking-hub.js",
     "postinstall": "npm run mcp:install",
     "agents:integrity": "node scripts/run-integrity-check.js",
     "agents:audit": "node scripts/audit-runner.js",

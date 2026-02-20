@@ -14,10 +14,12 @@ import pr from "./pr.js";
 import agentExecutor from "./agent-executor.js";
 import joke from "./joke.js";
 import notifications from "./notifications.js";
+import mobile from "./mobile.js";
 
 const router = Router();
 
 router.use("/health", health);
+router.use("/mobile", mobile);
 router.use("/", status); // Mount status at root for /api/status
 router.use("/agents", agents);
 router.use("/knowledge", knowledge);

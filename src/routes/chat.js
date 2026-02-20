@@ -15,7 +15,7 @@ import {
 
 const router = Router();
 
-// AI key status for chat UI
+// AI key status for chat UI - reflects actual enabled models from buildChatProviders
 router.get("/key-status", asyncHandler(async (_req, res) => {
   const providers = buildChatProviders(models);
   const status = {
@@ -23,7 +23,8 @@ router.get("/key-status", asyncHandler(async (_req, res) => {
     kimi: providers.some((p) => p.type === "kimi"),
     perplexity: providers.some((p) => p.type === "perplexity"),
     anthropic: providers.some((p) => p.type === "anthropic"),
-    google: false
+    google: providers.some((p) => p.type === "gemini"),
+    groq: providers.some((p) => p.type === "groq")
   };
   const anyAvailable = providers.length > 0;
 
@@ -33,6 +34,7 @@ router.get("/key-status", asyncHandler(async (_req, res) => {
     perplexity: status.perplexity ? "✅ Perplexity Ready" : "🔴 Perplexity Offline",
     anthropic: status.anthropic ? "✅ Claude Ready" : "🔴 Claude Offline",
     google: status.google ? "✅ Gemini Ready" : "🔴 Gemini Offline",
+    groq: status.groq ? "✅ Groq Ready" : "🔴 Groq Offline",
     chat: anyAvailable ? "✅ Chat Available" : "🔴 Chat Offline"
   };
 
