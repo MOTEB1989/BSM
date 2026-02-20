@@ -11,11 +11,20 @@ This MCP server provides unified access to multiple AI agents through GitHub Cop
 - **Perplexity** (with web search and citations)
 - **Kimi** (Moonshot AI)
 
+Additional banking-focused MCP server:
+- **banking-hub.js** (Arabic-first routing for iPhone/Windows Cursor workflows)
+
 ## Installation
 
 ```bash
 cd mcp-servers
 npm install
+```
+
+Start banking MCP server:
+
+```bash
+npm run start:banking
 ```
 
 ## Configuration
@@ -35,6 +44,9 @@ The server is configured in `.github/copilot/mcp.json`:
   }
 }
 ```
+
+You can also use root-level `mcp-settings.json` with MCP clients that support the
+`servers` schema directly (e.g. Cursor configurations).
 
 ## Available Tools
 

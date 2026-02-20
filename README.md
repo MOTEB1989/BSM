@@ -148,6 +148,7 @@ Website:    https://lexdo.uk
 - [⚡ UI Quick Reference](docs/UI-QUICK-REFERENCE.md) - Quick access links and commands
 - [💬 Chat UI Documentation](src/chat/README.md) - Chat interface details
 - [📱 iOS App Guide (Arabic)](ios-app/USER-GUIDE-AR.md) - iOS app user guide
+- [🔗 iPhone + Windows Cursor Remote Control (Arabic)](docs/IPHONE-WINDOWS-REMOTE-CONTROL-AR.md) - MCP setup, remote control, and AI chat routing
 
 ### Chat Interface
 - `/chat` - Professional Arabic/English GPT chat interface (Vue 3 + Tailwind)

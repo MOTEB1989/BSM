@@ -27,6 +27,23 @@
           "cloudflarePages": "https://9e71cbf3.lexbank.pages.dev"
         }
       }
+    },
+    "bsm-banking-agents": {
+      "command": "node",
+      "args": [
+        "mcp-servers/banking-hub.js"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
+        "GOOGLE_API_KEY": "${GOOGLE_API_KEY}",
+        "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
+      },
+      "metadata": {
+        "name": "BSM Banking Agents MCP",
+        "version": "1.0.0",
+        "description": "Arabic-first banking tools router for iPhone and Windows Cursor"
+      }
     }
   }
 }
