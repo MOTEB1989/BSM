@@ -1,0 +1,69 @@
+name: Keep Alive — Render Ping
+
+on:
+  schedule:
+    # Ping every 10 minutes to prevent Render free-tier sleep (sleeps after 15 min)
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'URL to ping (leave empty to use default)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    name: Ping Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Ping sr-bsm.onrender.com/health
+        id: ping_render
+        run: |
+          TARGET="${{ github.event.inputs.target || 'https://sr-bsm.onrender.com/health' }}"
+          echo "Pinging: $TARGET"
+
+          HTTP_CODE=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+            --max-time 30 \
+            --retry 2 \
+            --retry-delay 5 \
+            "$TARGET" || echo "000")
+
+          BODY=$(cat /tmp/response.txt 2>/dev/null | head -c 200)
+          echo "HTTP status: $HTTP_CODE"
+          echo "Response: $BODY"
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "status=online" >> $GITHUB_OUTPUT
+            echo "✅ Server is awake and healthy (HTTP $HTTP_CODE)"
+          elif [ "$HTTP_CODE" = "000" ]; then
+            echo "status=timeout" >> $GITHUB_OUTPUT
+            echo "⏳ Server timed out — may be waking up"
+          else
+            echo "status=error" >> $GITHUB_OUTPUT
+            echo "⚠️ Unexpected response: HTTP $HTTP_CODE"
+          fi
+
+      - name: Ping corehub.nexus/health
+        if: always()
+        continue-on-error: true
+        run: |
+          echo "Pinging: https://corehub.nexus/health"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 15 \
+            "https://corehub.nexus/health" || echo "000")
+          echo "corehub.nexus health: HTTP $HTTP_CODE"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### Keep-Alive Ping Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Endpoint | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| sr-bsm.onrender.com | ${{ steps.ping_render.outputs.status || 'unknown' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Pinged at: $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY

@@ -10,6 +10,7 @@ services:
     #   - OPENAI_API_KEY or OPENAI_BSM_KEY or OPENAI_BSU_KEY (OpenAI API key)
     #   - ADMIN_TOKEN (admin authentication token, minimum 16 characters)
     #   - NODE_ENV (production)
+    # Required for GitHub Pages + corehub.nexus frontend access:
+    #   - CORS_ORIGINS=https://moteb1989.github.io,https://corehub.nexus,https://www.corehub.nexus
     # Optional:
-    #   - CORS_ORIGINS (comma-separated origins, e.g., https://www.lexdo.uk,https://lexdo.uk)
     #   - GITHUB_WEBHOOK_SECRET (required only if using GitHub webhooks)
