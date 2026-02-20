@@ -58,10 +58,20 @@ const formatTime = (timestamp) => {
   )
 }
 
+const escapeHtml = (value) => {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 const renderMarkdown = (text) => {
   if (!text) return ''
   try {
-    return marked.parse(text, { breaks: true, gfm: true })
+    // Prevent raw HTML/script injection while keeping markdown formatting.
+    return marked.parse(escapeHtml(text), { breaks: true, gfm: true })
   } catch {
     return text
   }

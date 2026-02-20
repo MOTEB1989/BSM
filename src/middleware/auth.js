@@ -50,3 +50,6 @@ export const adminUiAuth = (req, res, next) => {
 
   return next();
 };
+
+// Backward-compatible alias used by some routes.
+export const auth = adminAuth;

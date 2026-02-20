@@ -2,6 +2,7 @@ import fetch from "node-fetch";
 import logger from "../utils/logger.js";
 import { AppError } from "../utils/errors.js";
 import { env } from "./env.js";
+import { getCircuitBreaker } from "../utils/circuitBreaker.js";
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 const PERPLEXITY_URL = "https://api.perplexity.ai/chat/completions";
@@ -10,6 +11,21 @@ const REQUEST_TIMEOUT_MS = 45000;
 
 export class MultiModelRouter {
   constructor() {
+    this.circuitBreakers = {
+      openai: getCircuitBreaker("model-router-openai", {
+        failureThreshold: 5,
+        resetTimeout: 30000
+      }),
+      perplexity: getCircuitBreaker("model-router-perplexity", {
+        failureThreshold: 5,
+        resetTimeout: 30000
+      }),
+      kimi: getCircuitBreaker("model-router-kimi", {
+        failureThreshold: 5,
+        resetTimeout: 30000
+      })
+    };
+
     this.capabilities = {
       "gpt-4": { reasoning: 10, speed: 6, cost: 10, search: false },
       "gpt-4o": { reasoning: 9, speed: 9, cost: 7, search: false },
@@ -108,18 +124,28 @@ export class MultiModelRouter {
     }
   }
 
+  async executeWithProviderCircuitBreaker(provider, requestFn) {
+    const breaker = this.circuitBreakers[provider];
+    if (!breaker) {
+      return requestFn();
+    }
+    return breaker.execute(requestFn);
+  }
+
   async callOpenAI(model, prompt, options) {
     const apiKey = process.env.OPENAI_BSM_KEY || process.env.OPENAI_BSU_KEY;
     if (!apiKey) {
       throw new AppError("Missing OpenAI API key", 500, "MISSING_API_KEY");
     }
 
-    const response = await this.postChat(OPENAI_URL, apiKey, {
-      model: model || process.env.OPENAI_MODEL || env.defaultModel,
-      messages: this.buildMessages(prompt),
-      temperature: options.temperature,
-      max_tokens: options.maxTokens
-    });
+    const response = await this.executeWithProviderCircuitBreaker("openai", () =>
+      this.postChat(OPENAI_URL, apiKey, {
+        model: model || process.env.OPENAI_MODEL || env.defaultModel,
+        messages: this.buildMessages(prompt),
+        temperature: options.temperature,
+        max_tokens: options.maxTokens
+      })
+    );
 
     return {
       output: response.choices?.[0]?.message?.content || "",
@@ -137,24 +163,26 @@ export class MultiModelRouter {
       throw new AppError("Missing Perplexity API key", 500, "MISSING_API_KEY");
     }
 
-    const response = await this.postChat(PERPLEXITY_URL, apiKey, {
-      model: model || env.perplexityModel,
-      messages: [
-        {
-          role: "system",
-          content: "أنت مساعد ذكي تبحث في الإنترنت وتقدم إجابات دقيقة مع مصادر. استخدم اللغة العربية إذا كان السؤال بالعربية."
-        },
-        {
-          role: "user",
-          content: searchQuery || this.extractUserPrompt(prompt)
-        }
-      ],
-      temperature: options.temperature,
-      max_tokens: options.maxTokens,
-      return_citations: env.perplexityCitations,
-      return_images: false,
-      return_related_questions: false
-    });
+    const response = await this.executeWithProviderCircuitBreaker("perplexity", () =>
+      this.postChat(PERPLEXITY_URL, apiKey, {
+        model: model || env.perplexityModel,
+        messages: [
+          {
+            role: "system",
+            content: "أنت مساعد ذكي تبحث في الإنترنت وتقدم إجابات دقيقة مع مصادر. استخدم اللغة العربية إذا كان السؤال بالعربية."
+          },
+          {
+            role: "user",
+            content: searchQuery || this.extractUserPrompt(prompt)
+          }
+        ],
+        temperature: options.temperature,
+        max_tokens: options.maxTokens,
+        return_citations: env.perplexityCitations,
+        return_images: false,
+        return_related_questions: false
+      })
+    );
 
     const choice = response.choices?.[0] || {};
 
@@ -174,12 +202,14 @@ export class MultiModelRouter {
       throw new AppError("Missing Kimi API key", 500, "MISSING_API_KEY");
     }
 
-    const response = await this.postChat(KIMI_URL, apiKey, {
-      model: model || process.env.KIMI_MODEL || "moonshot-v1-8k",
-      messages: this.buildMessages(prompt),
-      temperature: options.temperature,
-      max_tokens: options.maxTokens
-    });
+    const response = await this.executeWithProviderCircuitBreaker("kimi", () =>
+      this.postChat(KIMI_URL, apiKey, {
+        model: model || process.env.KIMI_MODEL || "moonshot-v1-8k",
+        messages: this.buildMessages(prompt),
+        temperature: options.temperature,
+        max_tokens: options.maxTokens
+      })
+    );
 
     return {
       output: response.choices?.[0]?.message?.content || "",

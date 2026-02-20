@@ -42,7 +42,8 @@ export default defineNuxtConfig({
 
   tailwindcss: {
     cssPath: '~/assets/styles/tailwind.css',
-    configPath: 'tailwind.config.js'
+    configPath: 'tailwind.config.js',
+    exposeConfig: true
   },
 
   // Mobile-first optimization
