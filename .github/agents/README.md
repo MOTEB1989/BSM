@@ -6,6 +6,8 @@ This directory contains custom agent definitions and configurations for the BSU 
 
 Each `.agent.md` file defines a custom agent with its role, instructions, and capabilities:
 
+### Core Platform Agents (10)
+- **agent-auto.agent.md** - BSU Smart Agent for platform management with auto-execute capabilities
 - **bsu-audit.agent.md** - Configuration audit and validation agent
 - **bsu-autonomous-architect.agent.md** - Architecture analysis and recommendations
 - **code-review.agent.md** - Code quality and standards review
@@ -16,6 +18,20 @@ Each `.agent.md` file defines a custom agent with its role, instructions, and ca
 - **pr-merge.agent.md** - Pull request merge automation
 - **runner.agent.md** - Build, test, and deployment execution
 - **security.agent.md** - Security vulnerability scanning
+
+### AI Model Agents (5)
+- **kimi-agent.agent.md** - Moonshot AI with Chinese language expertise
+- **gemini-agent.agent.md** - Google Gemini with Arabic language capabilities
+- **claude-agent.agent.md** - Anthropic Claude for analytical reasoning
+- **perplexity-agent.agent.md** - Research assistant with real-time web search
+- **groq-agent.agent.md** - Ultra-fast inference with LPU technology
+
+### Specialized Integration Agents (3)
+- **ios-chat-integration-agent.agent.md** - iPhone chat optimization
+- **governance-review-agent.agent.md** - Governance review and compliance
+- **repository-review-agent.agent.md** - Comprehensive repository analysis
+
+**Total: 19 Custom Agents**
 
 ## Orchestrator Configuration
 
