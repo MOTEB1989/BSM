@@ -84,7 +84,16 @@ export const postJson = async (url, options = {}) => {
       );
     }
 
-    return await res.json();
+    try {
+      return await res.json();
+    } catch (parseErr) {
+      // Ensure malformed JSON from providers is surfaced as an AppError
+      throw new AppError(
+        `${providerName} returned malformed JSON`,
+        502,
+        "PROVIDER_ERROR"
+      );
+    }
   } catch (err) {
     clearTimeout(timeoutId);
     if (err.name === "AbortError") {
