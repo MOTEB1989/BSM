@@ -78,7 +78,7 @@ export async function handleTelegramWebhook(req, res) {
   }
 }
 
-const TELEGRAM_MESSAGE_LIMIT = 3900;
+const TELEGRAM_MESSAGE_LIMIT = 4000;
 const TELEGRAM_CHUNK_DELAY_MS = 80; // Small delay to avoid hitting Telegram rate limits
 
 function delay(ms) {
