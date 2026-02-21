@@ -44,18 +44,24 @@ npm run dev
 
 ## 3) إعداد MCP لـ Cursor Windows
 
-تمت إضافة ملف:
+في المشروع يوجد ملفان إعداد لـ MCP، لكل عميل (Client) ملفه الخاص:
 
-- `mcp-settings.json`
+1. **Cursor (Windows)**  
+   - ملف الإعداد: `mcp-settings.json`  
+   - هذا الملف يُستخدم من تطبيق Cursor فقط.  
+   - يعتمد حقل `servers` ويحتوي مرجع `$schema` لتعريف بنية الملف.  
+   - مضاف فيه الخادم:  
+     - `bsm-banking-agents` -> `./mcp-servers/banking-hub.js`
 
-ويحتوي خادم:
+2. **GitHub Copilot (GitHub / Copilot Chat)**  
+   - ملف الإعداد: `.github/copilot/mcp.json`  
+   - هذا الملف يُستخدم من GitHub Copilot فقط (ولا يقرأه Cursor).  
+   - يعتمد حقل `mcpServers`، وقد لا يحتوي على حقل `$schema` لأن صيغة Copilot مختلفة.  
+   - مضاف فيه نفس الخادم المنطقي `bsm-banking-agents` ولكن بصيغة الإعداد الخاصة بـ Copilot.
 
-- `bsm-banking-agents` -> `./mcp-servers/banking-hub.js`
-
-كما تمت إضافة نفس الخادم داخل:
-
-- `.github/copilot/mcp.json`
-
+> ملاحظة:  
+> - يجب أن يعرّف كلا الملفين **نفس خوادم MCP المنطقية** (مثل `bsm-banking-agents`) حتى تحصل على نفس السلوك في Cursor وGitHub Copilot.  
+> - الاختلاف في أسماء الحقول (`servers` مقابل `mcpServers`) ووجود `$schema` هو اختلاف مقصود لأن كل عميل يتوقع تنسيقًا مختلفًا، وليس خطأ في الإعداد.
 ## 4) تشغيل خادم MCP البنكي
 
 ```bash
