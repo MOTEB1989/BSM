@@ -50,7 +50,6 @@
 | إيقاف وكيل | `POST /api/agents/stop/:agentId` | إيقاف وكيل |
 | حالة جميع الوكلاء | `GET /api/agents/status` | حالة كل الوكلاء |
 | حالة وكيل | `GET /api/agents/:agentId/status` | حالة وكيل معيّن |
-| صحة Raptor | `GET /api/agents/raptor-agent/health` | صحة وكيل Raptor |
 
 ### الدردشة
 
