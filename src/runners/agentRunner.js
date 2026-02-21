@@ -66,6 +66,54 @@ export const runAgent = async ({ agentId, input, payload = {} }) => {
     const agent = agents.find(a => a.id === agentId);
     if (!agent) throw new AppError(`Agent not found: ${agentId}`, 404, "AGENT_NOT_FOUND");
 
+    // Load registry for validation
+    const { loadRegistry } = await import("../utils/registryCache.js");
+    const registry = await loadRegistry();
+    
+    // Validate approval requirements and context restrictions
+    if (registry && registry.agents) {
+      const registryAgent = registry.agents.find(a => a.id === agentId);
+      
+      if (registryAgent) {
+        // Check approval requirements
+        if (registryAgent.approval?.required) {
+          const isAdmin = payload.isAdmin || false;
+          if (!isAdmin) {
+            logger.warn({ agentId, approvalRequired: true }, "Agent execution blocked: approval required");
+            throw new AppError(
+              `Agent "${agentId}" requires admin approval`,
+              403,
+              "APPROVAL_REQUIRED"
+            );
+          }
+          logger.info({ agentId, isAdmin: true }, "Agent approval check passed");
+        }
+
+        // Check context restrictions
+        const requestContext = payload.context || "api";
+        const allowedContexts = registryAgent.contexts?.allowed || [];
+        
+        if (allowedContexts.length > 0 && !allowedContexts.includes(requestContext)) {
+          logger.warn({ 
+            agentId, 
+            requestContext, 
+            allowedContexts 
+          }, "Agent execution blocked: context not allowed");
+          throw new AppError(
+            `Agent "${agentId}" is not allowed in "${requestContext}" context. Allowed: ${allowedContexts.join(", ")}`,
+            403,
+            "CONTEXT_NOT_ALLOWED"
+          );
+        }
+        
+        logger.info({ 
+          agentId, 
+          requestContext, 
+          allowedContexts 
+        }, "Agent context validation passed");
+      }
+    }
+
     const knowledge = await loadKnowledgeIndex();
     const knowledgeString = knowledge.join("\n"); // Compute once
 

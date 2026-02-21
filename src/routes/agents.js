@@ -6,11 +6,12 @@ import {
   getAgentsStatus, 
   getAgentStatus 
 } from "../controllers/agentControl.js";
+import { adminAuth } from "../middleware/auth.js";
 
 const router = Router();
 
 router.get("/", listAgents);
-router.post("/run", executeAgent);
+router.post("/run", adminAuth, executeAgent);
 
 // Agent control endpoints
 router.post("/start/:agentId", startAgent);
