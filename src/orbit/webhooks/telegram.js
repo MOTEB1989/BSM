@@ -1,6 +1,14 @@
 // src/orbit/webhooks/telegram.js
 import { telegramAgent } from "../agents/TelegramAgent.js";
 import { verifyTelegramSecret, extractTelegramMessage, isAdminChatId } from "../../utils/telegramUtils.js";
+import { runAgent } from "../../runners/agentRunner.js";
+
+const TELEGRAM_MAX_MESSAGE_LENGTH = 4000;
+
+function truncateForTelegram(text) {
+  if (!text || text.length <= TELEGRAM_MAX_MESSAGE_LENGTH) return text;
+  return text.slice(0, TELEGRAM_MAX_MESSAGE_LENGTH - 3) + "...";
+}
 
 export async function handleTelegramWebhook(req, res) {
   try {
@@ -29,8 +37,18 @@ export async function handleTelegramWebhook(req, res) {
       }
 
       await telegramAgent.sendMessage(chatId, `⏳ جاري تنفيذ: ${query}...`);
-      // TODO: ربط بـ research agent
-      await telegramAgent.sendMessage(chatId, `✅ تم استلام الطلب: ${query}`);
+      try {
+        const { output } = await runAgent({
+          agentId: "agent-auto",
+          input: query,
+          payload: { source: "telegram", chatId }
+        });
+        const reply = truncateForTelegram(output || "لم يصل رد من الوكيل.");
+        await telegramAgent.sendMessage(chatId, reply);
+      } catch (err) {
+        const errMsg = err.message || "فشل تنفيذ الطلب.";
+        await telegramAgent.sendMessage(chatId, `❌ ${errMsg}`);
+      }
       return res.sendStatus(200);
     }
 
