@@ -51,7 +51,7 @@
 | حالة جميع الوكلاء | `GET /api/agents/status` | حالة كل الوكلاء |
 | حالة وكيل | `GET /api/agents/:agentId/status` | حالة وكيل معيّن |
 
-> **ملاحظة:** نقاط نهاية healthcheck المعرفة في السجل (مثل `/api/agents/:agentId/health`) هي placeholders مستقبلية ولم يتم تطبيقها بعد. استخدم `/api/agents/:agentId/status` للحصول على حالة الوكيل.
+> **ملاحظة:** نقاط نهاية healthcheck المعرفة في السجل (مثل `/api/agents/:agentId/health`) هي نقاط مؤقتة مستقبلية ولم يتم تطبيقها بعد. استخدم `/api/agents/:agentId/status` للحصول على حالة الوكيل.
 
 ### الدردشة
 

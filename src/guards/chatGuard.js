@@ -65,19 +65,7 @@ export async function guardChatAgent(agentId, isAdmin = false) {
     throw new Error(`Agent "${agentId}" is not selectable in chat interface`);
   }
 
-  // Check 4: Terminal execution agents without chat context
-  const capabilities = agent.capabilities || [];
-  if (capabilities.includes("terminal_execution") && !contexts.includes("chat")) {
-    logger.warn({ 
-      agentId, 
-      capabilities,
-      contexts,
-      isAdmin 
-    }, "Agent blocked: terminal execution agent without chat context");
-    throw new Error(`Agent "${agentId}" has terminal execution capability and is not allowed in chat context`);
-  }
-
-  // Check 5: Approval required?
+  // Check 4: Approval required?
   if (agent.approval?.required && !isAdmin) {
     logger.warn({ 
       agentId, 
@@ -87,7 +75,7 @@ export async function guardChatAgent(agentId, isAdmin = false) {
     throw new Error(`Agent "${agentId}" requires admin approval`);
   }
 
-  // Check 6: Risk level warning for high/critical
+  // Check 5: Risk level warning for high/critical
   if (agent.risk?.level === "high" || agent.risk?.level === "critical") {
     if (!isAdmin) {
       logger.warn({ 
