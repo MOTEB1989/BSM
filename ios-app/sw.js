@@ -2,6 +2,85 @@
 const CACHE_NAME = 'corehub-nexus-v1';
 const OFFLINE_URL = '/ios-app/index.html';
 
+// IndexedDB config for offline message queue
+const DB_NAME = 'corehub-nexus-offline';
+const DB_STORE = 'pending-messages';
+
+// IndexedDB helpers
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) {
+        db.createObjectStore(DB_STORE, { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    request.onsuccess = (event) => resolve(event.target.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function getPendingMessages(db) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readonly');
+    const store = tx.objectStore(DB_STORE);
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function deleteMessage(db, id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    const store = tx.objectStore(DB_STORE);
+    const request = store.delete(id);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function syncOfflineMessages() {
+  console.log('[SW] Syncing offline messages...');
+  const db = await openDB();
+  const pending = await getPendingMessages(db);
+
+  if (pending.length === 0) {
+    console.log('[SW] No pending messages to sync');
+    return;
+  }
+
+  console.log(`[SW] Found ${pending.length} pending message(s) to sync`);
+
+  for (const item of pending) {
+    const endpoint = item.mode === 'direct' ? '/api/chat/direct' : '/api/chat';
+    const payload = {
+      message: item.message,
+      language: item.language,
+      history: [],
+      ...(item.mode !== 'direct' && { destination: item.mode })
+    };
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      await deleteMessage(db, item.id);
+      console.log(`[SW] Synced and removed pending message id=${item.id}`);
+    } else {
+      console.warn(`[SW] Server rejected message id=${item.id}: HTTP ${response.status}`);
+      // Leave the message in the queue; the sync event will retry
+      throw new Error(`Server error ${response.status} for message id=${item.id}`);
+    }
+  }
+
+  console.log('[SW] Offline message sync complete');
+}
+
 // Files to cache for offline support
 const CACHE_URLS = [
   '/ios-app/',
@@ -183,14 +262,7 @@ self.addEventListener('message', (event) => {
 if (self.registration.sync) {
   self.addEventListener('sync', (event) => {
     if (event.tag === 'sync-messages') {
-      event.waitUntil(
-        // Sync offline messages when back online
-        Promise.resolve().then(() => {
-          console.log('[SW] Syncing offline messages...');
-          // TODO: Implement actual sync logic here
-          // e.g., fetch pending messages from IndexedDB and POST to API
-        })
-      );
+      event.waitUntil(syncOfflineMessages());
     }
   });
 }

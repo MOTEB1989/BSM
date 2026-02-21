@@ -111,9 +111,10 @@ createApp({
       
       // Check if online
       if (!this.isOnline) {
-        this.error = this.lang === 'ar' 
-          ? 'أنت غير متصل بالإنترنت. يرجى التحقق من الاتصال.' 
-          : 'You are offline. Please check your connection.';
+        await this.queueOfflineMessage(userMessage);
+        this.error = this.lang === 'ar'
+          ? 'أنت غير متصل. تم حفظ رسالتك وستُرسل تلقائياً عند استعادة الاتصال.'
+          : 'You are offline. Your message has been saved and will be sent automatically when the connection is restored.';
         return;
       }
       
@@ -273,6 +274,48 @@ createApp({
       });
     },
     
+    async queueOfflineMessage(message) {
+      await new Promise((resolve, reject) => {
+        const request = indexedDB.open('corehub-nexus-offline', 1);
+
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains('pending-messages')) {
+            db.createObjectStore('pending-messages', { keyPath: 'id', autoIncrement: true });
+          }
+        };
+
+        request.onsuccess = (event) => {
+          const db = event.target.result;
+          const tx = db.transaction('pending-messages', 'readwrite');
+          tx.objectStore('pending-messages').add({
+            message,
+            mode: this.mode,
+            language: this.lang,
+            timestamp: Date.now()
+          });
+          tx.oncomplete = () => {
+            db.close();
+            resolve();
+          };
+          tx.onerror = () => reject(tx.error);
+        };
+
+        request.onerror = () => reject(request.error);
+      });
+
+      // Register background sync so messages are sent when back online
+      if ('serviceWorker' in navigator && 'sync' in ServiceWorkerRegistration.prototype) {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          await registration.sync.register('sync-messages');
+          console.log('[App] Background sync registered for offline messages');
+        } catch (err) {
+          console.error('[App] Background sync registration failed:', err);
+        }
+      }
+    },
+
     setupOnlineListener() {
       window.addEventListener('online', () => {
         this.isOnline = true;
