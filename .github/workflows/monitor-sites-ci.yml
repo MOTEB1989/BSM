@@ -1,0 +1,26 @@
+name: Monitor Sites Script CI
+
+on:
+  push:
+    paths:
+      - 'scripts/monitor_sites.sh'
+      - 'tests/monitor_sites.test.sh'
+      - '.github/workflows/monitor-sites-ci.yml'
+  pull_request:
+    paths:
+      - 'scripts/monitor_sites.sh'
+      - 'tests/monitor_sites.test.sh'
+      - '.github/workflows/monitor-sites-ci.yml'
+
+jobs:
+  test-monitor-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Syntax check
+        run: bash -n scripts/monitor_sites.sh
+
+      - name: Run monitor script tests
+        run: bash tests/monitor_sites.test.sh
