@@ -349,27 +349,209 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
 });
 
 /**
+ * Spawn the GitHub MCP server process based on configuration.
+ * Returns a ChildProcess instance with stdio pipes.
+ */
+function spawnGitHubMCPProcess() {
+  const method = GITHUB_MCP_CONFIG.method;
+
+  if (method === 'docker') {
+    const image = `${GITHUB_MCP_CONFIG.docker.image}:${GITHUB_MCP_CONFIG.docker.tag}`;
+    const envArgs = [];
+
+    // Pass token through environment if configured
+    const env = { ...process.env };
+    if (GITHUB_MCP_CONFIG.token) {
+      env.GITHUB_PERSONAL_ACCESS_TOKEN = GITHUB_MCP_CONFIG.token;
+    }
+
+    const args = [
+      'run',
+      '-i',
+      '--rm',
+      ...(GITHUB_MCP_CONFIG.token ? ['-e', 'GITHUB_PERSONAL_ACCESS_TOKEN'] : []),
+      image,
+      ...GITHUB_MCP_CONFIG.docker.args,
+    ];
+
+    return spawn('docker', args, {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env,
+    });
+  }
+
+  if (method === 'go') {
+    const env = { ...process.env };
+    if (GITHUB_MCP_CONFIG.token) {
+      env.GITHUB_PERSONAL_ACCESS_TOKEN = GITHUB_MCP_CONFIG.token;
+    }
+
+    const args = [
+      'run',
+      GITHUB_MCP_CONFIG.go.package,
+      ...GITHUB_MCP_CONFIG.go.args,
+    ];
+
+    return spawn('go', args, {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env,
+    });
+  }
+
+  throw new Error(`Unsupported GitHub MCP method: ${method}`);
+}
+
+/**
+ * Call the GitHub MCP server over stdio using MCP/JSON-RPC framing.
+ *
+ * @param {string} method - JSON-RPC method name (e.g., "tools/call").
+ * @param {object} params - JSON-RPC params object.
+ * @returns {Promise<any>} - Resolves with the "result" field of the JSON-RPC response.
+ */
+async function callGitHubMCP(method, params) {
+  return new Promise((resolve, reject) => {
+    let child;
+    try {
+      child = spawnGitHubMCPProcess();
+    } catch (err) {
+      return reject(err);
+    }
+
+    let stdoutBuffer = Buffer.alloc(0);
+    let stderrBuffer = Buffer.alloc(0);
+
+    const requestId = 1;
+    const requestPayload = {
+      jsonrpc: '2.0',
+      id: requestId,
+      method,
+      params,
+    };
+
+    const body = Buffer.from(JSON.stringify(requestPayload), 'utf8');
+    const header = Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, 'utf8');
+
+    const timeout = setTimeout(() => {
+      child.kill();
+      reject(new Error('Timed out waiting for response from GitHub MCP server'));
+    }, 60000);
+
+    function cleanup() {
+      clearTimeout(timeout);
+      if (child) {
+        child.removeAllListeners();
+        if (!child.killed) {
+          child.kill();
+        }
+      }
+    }
+
+    child.stdout.on('data', (data) => {
+      stdoutBuffer = Buffer.concat([stdoutBuffer, data]);
+
+      const text = stdoutBuffer.toString('utf8');
+      const headerEnd = text.indexOf('\r\n\r\n');
+      if (headerEnd === -1) {
+        return;
+      }
+
+      const headerText = text.slice(0, headerEnd);
+      const match = headerText.match(/Content-Length:\s*(\d+)/i);
+      if (!match) {
+        return;
+      }
+
+      const contentLength = parseInt(match[1], 10);
+      const bodyStart = headerEnd + 4;
+      const totalLength = bodyStart + contentLength;
+
+      if (stdoutBuffer.length < totalLength) {
+        return;
+      }
+
+      const bodyBuffer = stdoutBuffer.slice(bodyStart, totalLength);
+      const bodyString = bodyBuffer.toString('utf8');
+
+      try {
+        const response = JSON.parse(bodyString);
+        if (response.id !== requestId) {
+          return;
+        }
+        cleanup();
+        if (response.error) {
+          const err = new Error(
+            `GitHub MCP server error: ${response.error.message || 'Unknown error'}`
+          );
+          err.code = response.error.code;
+          err.data = response.error.data;
+          reject(err);
+        } else {
+          resolve(response.result);
+        }
+      } catch (e) {
+        cleanup();
+        reject(e);
+      }
+    });
+
+    child.stderr.on('data', (data) => {
+      stderrBuffer = Buffer.concat([stderrBuffer, data]);
+    });
+
+    child.on('error', (err) => {
+      cleanup();
+      reject(err);
+    });
+
+    child.on('exit', (code, signal) => {
+      if (code !== 0 && code !== null) {
+        const stderrText = stderrBuffer.toString('utf8');
+        const msg = `GitHub MCP process exited with code ${code}${
+          stderrText ? `: ${stderrText}` : ''
+        }`;
+        cleanup();
+        reject(new Error(msg));
+      } else if (signal && !stdoutBuffer.length) {
+        cleanup();
+        reject(new Error(`GitHub MCP process was terminated by signal ${signal}`));
+      }
+    });
+
+    // Send the framed request
+    try {
+      child.stdin.write(header);
+      child.stdin.write(body);
+    } catch (e) {
+      cleanup();
+      reject(e);
+    }
+  });
+}
+
+/**
  * Handle GitHub MCP tool calls
  * This proxies calls to the actual GitHub MCP server
  */
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-  
-  // For now, return a placeholder response
-  // In production, this would proxy to the actual GitHub MCP server
-  return {
-    content: [
-      {
-        type: 'text',
-        text: JSON.stringify({
-          tool: name,
-          args,
-          message: 'GitHub MCP integration is configured. To use GitHub operations, ensure Docker or Go is installed and GitHub token is set.',
-          documentation: 'https://github.com/github/github-mcp-server',
-        }, null, 2),
-      },
-    ],
-  };
+  try {
+    // Forward the original tool call as an MCP "tools/call" request
+    const result = await callGitHubMCP('tools/call', request.params);
+    return result;
+  } catch (error) {
+    console.error('Error calling GitHub MCP server:', error);
+    // Return a tool error response so callers see a clear message
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Failed to execute GitHub MCP tool call: ${
+            error && error.message ? error.message : String(error)
+          }`,
+        },
+      ],
+      isError: true,
+    };
+  }
 });
 
 /**
