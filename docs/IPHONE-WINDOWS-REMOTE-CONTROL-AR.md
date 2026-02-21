@@ -21,12 +21,6 @@ git status
 git remote set-url origin https://github.com/MOTEB1989/BSM.git
 ```
 
-إذا كنت تريد `BSM-main` فتأكد أولًا أن المستودع موجود ومتاح لك:
-
-```bash
-git ls-remote --heads https://github.com/MOTEB1989/BSM-main.git
-```
-
 ## 2) تشغيل الخادم للاتصال من iPhone
 
 ```bash
