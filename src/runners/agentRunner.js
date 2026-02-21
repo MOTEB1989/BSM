@@ -8,6 +8,7 @@ import { extractIntent, intentToAction } from "../utils/intent.js";
 import { parseCommandBlocks, executeCommands } from "../utils/commandExecutor.js";
 import logger from "../utils/logger.js";
 import { hasUsableApiKey } from "../utils/apiKey.js";
+import { loadRegistry } from "../utils/registryCache.js";
 
 const resolveTemplateValue = (context, keyPath) => {
   return keyPath
@@ -60,11 +61,85 @@ export const buildAgentProviders = (agent) => {
   return providers;
 };
 
-export const runAgent = async ({ agentId, input, payload = {} }) => {
+export const runAgent = async ({ agentId, input, payload = {}, context = "api", isAdmin = false }) => {
   try {
     const agents = await loadAgents();
     const agent = agents.find(a => a.id === agentId);
     if (!agent) throw new AppError(`Agent not found: ${agentId}`, 404, "AGENT_NOT_FOUND");
+
+    // Defense-in-depth: Validate approval and context requirements
+    const registry = await loadRegistry();
+    if (registry && registry.agents) {
+      const registryAgent = registry.agents.find(a => a.id === agentId);
+      if (registryAgent) {
+        // Validate context (defense-in-depth)
+        const allowedContexts = registryAgent.contexts?.allowed || [];
+        if (!allowedContexts.includes(context)) {
+          logger.warn({ 
+            agentId, 
+            context, 
+            allowedContexts 
+          }, "Agent runner blocked: context not allowed");
+          throw new AppError(
+            `Agent "${agentId}" is not allowed in "${context}" context`, 
+            403, 
+            "CONTEXT_NOT_ALLOWED"
+          );
+        }
+
+        // Validate approval requirement (defense-in-depth)
+        if (registryAgent.approval?.required && !isAdmin) {
+          logger.warn({ 
+            agentId, 
+            context,
+            isAdmin 
+          }, "Agent runner blocked: approval required but user not admin");
+          throw new AppError(
+            `Agent "${agentId}" requires admin approval`, 
+            403, 
+            "APPROVAL_REQUIRED"
+          );
+        }
+
+        // Block destructive agents unless admin
+        if (registryAgent.safety?.mode === "destructive" && !isAdmin) {
+          logger.warn({ 
+            agentId, 
+            context,
+            isAdmin 
+          }, "Agent runner blocked: destructive mode requires admin");
+          throw new AppError(
+            `Agent "${agentId}" is destructive and requires admin authorization`, 
+            403, 
+            "DESTRUCTIVE_REQUIRES_ADMIN"
+          );
+        }
+
+        // Block high/critical risk agents unless admin
+        const riskLevel = registryAgent.risk?.level;
+        if ((riskLevel === "high" || riskLevel === "critical") && !isAdmin) {
+          logger.warn({ 
+            agentId, 
+            context,
+            riskLevel,
+            isAdmin 
+          }, "Agent runner blocked: high/critical risk requires admin");
+          throw new AppError(
+            `Agent "${agentId}" has ${riskLevel} risk and requires admin authorization`, 
+            403, 
+            "HIGH_RISK_REQUIRES_ADMIN"
+          );
+        }
+
+        logger.info({ 
+          agentId, 
+          context, 
+          isAdmin,
+          approvalRequired: registryAgent.approval?.required,
+          riskLevel 
+        }, "Agent runner: validation passed");
+      }
+    }
 
     const knowledge = await loadKnowledgeIndex();
     const knowledgeString = knowledge.join("\n"); // Compute once
