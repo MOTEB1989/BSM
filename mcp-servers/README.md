@@ -1,15 +1,66 @@
-# BSU/LexBANK MCP Server
+# BSU/LexBANK MCP Servers
 
-Model Context Protocol (MCP) server for GitHub Copilot integration with BSU/LexBANK AI agents.
+This directory contains Model Context Protocol (MCP) servers for the BSM/LexBANK platform.
 
 ## Overview
 
-This MCP server provides unified access to multiple AI agents through GitHub Copilot:
+MCP (Model Context Protocol) is a standard protocol that enables AI agents and tools to interact with various services. BSM provides multiple MCP servers:
+
+1. **BSU Agent Server** - Unified access to all BSU AI agents
+2. **Banking Hub** - Banking and financial services
+3. **GitHub MCP Server** - Comprehensive GitHub and Git management
+
+## Available Servers
+
+### 1. BSU Agent Server (`bsu-agent-server.js`)
+
+**Main unified MCP server for BSU AI agents**
+
+Provides access to multiple AI providers:
 - **GPT-4** (OpenAI)
 - **Gemini** (Google)
 - **Claude** (Anthropic)
 - **Perplexity** (with web search and citations)
 - **Kimi** (Moonshot AI)
+
+**Tools (7):**
+- `list_agents` - List all available AI agents
+- `chat_gpt` - Chat with GPT-4 (Arabic/English)
+- `chat_gemini` - Chat with Google Gemini
+- `chat_claude` - Chat with Anthropic Claude
+- `chat_perplexity` - Chat with Perplexity (includes citations)
+- `chat_kimi` - Chat with Moonshot Kimi
+- `get_key_status` - Check API key status
+
+**Resources (3):**
+- `bsu://config` - Platform configuration
+- `bsu://agents` - Agent list
+- `bsu://status` - System status
+
+**Start:** `npm run mcp:start`
+
+### 2. Banking Hub (`banking-hub.js`)
+
+**Specialized MCP server for banking operations**
+
+**Start:** `npm run mcp:banking`
+
+### 3. GitHub MCP Server (`github-mcp-server.js`)
+
+**Integration with GitHub's official MCP server**
+
+Provides comprehensive GitHub and Git repository management:
+- **29+ Git Operations**: add, commit, push, pull, branch, merge, rebase, tag, stash, etc.
+- **GitHub API Integration**: repos, PRs, issues, workflows, security alerts
+- **Workflow Automation**: automated releases, PR reviews, issue triage
+- **CI/CD Visibility**: workflow status, logs
+
+**Methods:**
+- Docker: `npm run mcp:github:docker` (recommended)
+- Go: Via `github-mcp-go` configuration
+- Node.js wrapper: `npm run mcp:github`
+
+**See:** `docs/GITHUB-MCP-INTEGRATION.md` for complete setup guide
 
 ## Installation
 
