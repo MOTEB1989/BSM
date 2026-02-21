@@ -39,11 +39,8 @@ function check_git_repo {
 
 # دالة للتحقق من نظافة مساحة العمل
 function check_clean_working_tree {
-    if ! git diff-index --quiet HEAD -- 2>/dev/null; then
-        error_exit "مساحة العمل غير نظيفة. يرجى commit أو stash التغييرات قبل تشغيل هذا السكربت."
-    fi
     if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
-        error_exit "توجد ملفات غير محفوظة. يرجى commit أو stash التغييرات قبل تشغيل هذا السكربت."
+        error_exit "مساحة العمل غير نظيفة. يرجى commit أو stash التغييرات قبل تشغيل هذا السكربت."
     fi
 }
 
@@ -78,8 +75,12 @@ function resolve_conflicts_with_mergetool {
     info "محاولة حل التعارضات باستخدام mergetool..."
     
     # أولاً: محاولة استخدام أداة الدمج الافتراضية التي تم إعدادها في git
-    if git mergetool --no-prompt 2>/dev/null; then
+    local mergetool_output
+    mergetool_output=$(git mergetool --no-prompt 2>&1)
+    if [ $? -eq 0 ]; then
         return 0
+    else
+        info "فشل استخدام mergetool الافتراضي. الخطأ: $mergetool_output"
     fi
 
     # ثانياً: محاولة استخدام vimdiff كخيار احتياطي إذا كان متاحاً
