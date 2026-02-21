@@ -4,7 +4,7 @@ import { verifyTelegramSecret, extractTelegramMessage, isAdminChatId } from "../
 import { runAgent } from "../../runners/agentRunner.js";
 
 const PRIMARY_RESEARCH_AGENT_ID = process.env.TELEGRAM_RESEARCH_AGENT_ID || "perplexity-agent";
-const FALLBACK_RESEARCH_AGENT_ID = "legal-agent";
+const FALLBACK_RESEARCH_AGENT_ID = process.env.TELEGRAM_FALLBACK_AGENT_ID || PRIMARY_RESEARCH_AGENT_ID;
 const MAX_TELEGRAM_REPLY_LENGTH = 3500;
 
 export async function handleTelegramWebhook(req, res) {
