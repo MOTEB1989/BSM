@@ -66,14 +66,14 @@ actions:
   - suggest_improvements
 contexts:
   allowed:
-  - api
-  - ci
-  safety:
+    - api
+    - ci
+safety:
   mode: restricted
   requires_approval: true
 expose:
-  selectable: true
-  internal_only: false
+  selectable: false
+  internal_only: true
 risk:
   level: medium
   rationale: "Deputy with full repository leadership - requires approval for safety"
