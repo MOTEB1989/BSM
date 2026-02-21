@@ -67,14 +67,12 @@ export async function handleTelegramWebhook(req, res) {
 }
 
 async function runResearchAgent(query, payload) {
-  const primaryRun = () => runAgent({
-    agentId: PRIMARY_RESEARCH_AGENT_ID,
-    input: query,
-    payload
-  });
-
   try {
-    const result = await primaryRun();
+    const result = await runAgent({
+      agentId: PRIMARY_RESEARCH_AGENT_ID,
+      input: query,
+      payload
+    });
     return { result, agentId: PRIMARY_RESEARCH_AGENT_ID };
   } catch (primaryError) {
     if (PRIMARY_RESEARCH_AGENT_ID === FALLBACK_RESEARCH_AGENT_ID) {
