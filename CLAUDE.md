@@ -50,7 +50,8 @@ npm run agents:integrity        # Run integrity agent
 npm run agents:audit            # Run audit agent
 npm run agents:orchestrate      # Run orchestration pipeline
 
-# PR review
+# PR operations
+npm run fix-pr                  # Auto-fix PR: merge main, resolve conflicts, run tests, push
 npm run pr-check                # Local PR review checklist
 npm run pr-check:verbose        # Verbose PR review checklist
 
@@ -264,7 +265,8 @@ scripts/             # Build, validation, and automation scripts
   build_reports_index.js # Report generation
   json_to_md.js      #   JSON to Markdown conversion
   security-check.sh  #   Security validation
-  safe-rebase.sh     #   Safe git rebase helper
+  fix-pr.sh         #   Auto-fix PR: merge main, resolve conflicts, run tests, push
+  safe-rebase.sh    #   Safe git rebase helper
   schema.yaml        #   YAML schema definitions
   test-validation-performance.js # Validation performance benchmarks
   mysql/             # MySQL initialization scripts
