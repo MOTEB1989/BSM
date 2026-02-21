@@ -1,4 +1,5 @@
 import { Router } from "express";
+import crypto from "crypto";
 import { runChat } from "../services/gptService.js";
 import { models } from "../config/models.js";
 import { AppError } from "../utils/errors.js";
@@ -15,6 +16,28 @@ import {
 } from "../utils/messageFormatter.js";
 
 const router = Router();
+
+/**
+ * Timing-safe admin token comparison
+ * @param {string} providedToken - Token from request
+ * @param {string} expectedToken - Expected admin token
+ * @returns {boolean} True if tokens match
+ */
+function isAdminTokenValid(providedToken, expectedToken) {
+  if (!expectedToken || !providedToken) return false;
+  
+  // Ensure both strings are the same length for constant-time comparison
+  const providedBuf = Buffer.from(providedToken);
+  const expectedBuf = Buffer.from(expectedToken);
+  
+  // If lengths don't match, use dummy comparison to prevent timing leak
+  if (providedBuf.length !== expectedBuf.length) {
+    crypto.timingSafeEqual(expectedBuf, expectedBuf); // Dummy operation
+    return false;
+  }
+  
+  return crypto.timingSafeEqual(providedBuf, expectedBuf);
+}
 
 // AI key status for chat UI
 router.get("/key-status", asyncHandler(async (_req, res) => {
@@ -53,7 +76,8 @@ router.post("/", validateChatInput, asyncHandler(async (req, res) => {
   // Enforce context restrictions - validate agent is allowed in chat
   if (agentId && agentId !== "direct") {
     const adminToken = process.env.ADMIN_TOKEN;
-    const isAdmin = adminToken && req.headers['x-admin-token'] === adminToken;
+    const providedToken = req.headers['x-admin-token'];
+    const isAdmin = isAdminTokenValid(providedToken, adminToken);
     await guardChatAgent(agentId, isAdmin);
   }
 

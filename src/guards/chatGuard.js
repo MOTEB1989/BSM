@@ -12,6 +12,13 @@ import { loadRegistry } from "../utils/registryCache.js";
 import logger from "../utils/logger.js";
 
 /**
+ * Agents that bypass chat context validation
+ * These are special routing agents or direct chat modes that don't represent
+ * executable agents with dangerous capabilities
+ */
+const CHAT_BYPASS_AGENTS = ['direct', 'agent-auto', 'kimi-agent'];
+
+/**
  * Guard chat agent execution
  * 
  * @param {string} agentId - Agent identifier
@@ -20,18 +27,17 @@ import logger from "../utils/logger.js";
  * @throws {Error} If agent is not allowed in chat context
  */
 export async function guardChatAgent(agentId, isAdmin = false) {
-  // Special agents that bypass guard (direct chat, agent-auto routing)
-  const bypassAgents = ['direct', 'agent-auto', 'kimi-agent'];
-  if (bypassAgents.includes(agentId)) {
+  // Special agents that bypass guard (direct chat, agent-auto routing, AI providers)
+  if (CHAT_BYPASS_AGENTS.includes(agentId)) {
     return { id: agentId, allowed: true };
   }
 
   const registry = await loadRegistry();
   
-  // If no registry, be permissive (backward compatibility)
+  // Security: Fail closed - registry is required for validation
   if (!registry || !registry.agents) {
-    logger.warn({ agentId }, "No registry found, allowing agent execution");
-    return { id: agentId, allowed: true };
+    logger.error({ agentId }, "Registry unavailable - blocking agent execution for security");
+    throw new Error("Agent registry unavailable - cannot validate security contexts");
   }
 
   // Find agent in registry
