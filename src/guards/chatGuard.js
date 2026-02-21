@@ -43,7 +43,7 @@ export async function guardChatAgent(agentId, isAdmin = false) {
 
   // Check 1: Chat context allowed?
   const contexts = agent.contexts?.allowed || [];
-  if (!contexts.includes("chat") && !contexts.includes("api")) {
+  if (!contexts.includes("chat")) {
     logger.warn({ 
       agentId, 
       contexts,
@@ -52,15 +52,15 @@ export async function guardChatAgent(agentId, isAdmin = false) {
     throw new Error(`Agent "${agentId}" is not allowed in chat interface (restricted to ${contexts.join(', ')} contexts)`);
   }
 
-  // Check 2: Agents with terminal_execution must not be accessible from chat
+  // Check 2: Agents with terminal_execution must never be accessible from chat
   const capabilities = agent.capabilities || [];
-  if (capabilities.includes('terminal_execution') && !contexts.includes("chat")) {
+  if (capabilities.includes('terminal_execution')) {
     logger.warn({ 
       agentId, 
       contexts,
       capabilities,
       isAdmin 
-    }, "Agent blocked: terminal_execution agents restricted to api/ci contexts");
+    }, "Agent blocked: terminal_execution agents cannot run from chat");
     throw new Error(`Agent "${agentId}" has terminal execution capability and cannot run from chat interface`);
   }
 
@@ -130,14 +130,13 @@ export async function getChatAllowedAgents() {
       const contexts = agent.contexts?.allowed || [];
       const capabilities = agent.capabilities || [];
       
-      // Must have chat or api context
-      const hasValidContext = contexts.includes("chat") || contexts.includes("api");
-      
-      // Must not have terminal_execution if only api/ci contexts
-      const hasTerminalExec = capabilities.includes('terminal_execution');
+      // Must have chat context
       const hasChatContext = contexts.includes("chat");
       
-      return hasValidContext && (!hasTerminalExec || hasChatContext);
+      // Must not have terminal_execution capability (security requirement)
+      const hasTerminalExec = capabilities.includes('terminal_execution');
+      
+      return hasChatContext && !hasTerminalExec;
     })
     .map(agent => agent.id);
 }

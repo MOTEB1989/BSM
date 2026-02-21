@@ -52,7 +52,8 @@ router.post("/", validateChatInput, asyncHandler(async (req, res) => {
 
   // Enforce context restrictions - validate agent is allowed in chat
   if (agentId && agentId !== "direct") {
-    const isAdmin = req.headers['x-admin-token'] === process.env.ADMIN_TOKEN;
+    const adminToken = process.env.ADMIN_TOKEN;
+    const isAdmin = adminToken && req.headers['x-admin-token'] === adminToken;
     await guardChatAgent(agentId, isAdmin);
   }
 
