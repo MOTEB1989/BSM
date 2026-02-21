@@ -5,6 +5,8 @@ import { loadRegistry } from "../utils/registryCache.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import logger from "../utils/logger.js";
 import { badRequest, success } from "../utils/httpResponses.js";
+import { guardAgentExecution } from "../guards/agentExecutionGuard.js";
+import { timingSafeEqual } from "../middleware/auth.js";
 
 export const listAgents = asyncHandler(async (req, res) => {
   const agents = await loadAgents();
@@ -115,6 +117,21 @@ export const executeAgent = asyncHandler(async (req, res) => {
     );
   }
   
-  const result = await runAgent({ agentId, input, payload });
+  // Verify admin authentication (adminAuth middleware ensures this)
+  const adminToken = req.headers["x-admin-token"];
+  const isAdmin = adminToken && env.adminToken && timingSafeEqual(adminToken, env.adminToken);
+  
+  // Extract context from payload or default to "api"
+  const context = payload?.context || "api";
+  
+  // Guard: validate agent execution permissions
+  try {
+    await guardAgentExecution(agentId, context, isAdmin);
+  } catch (error) {
+    logger.warn({ agentId, context, error: error.message }, "Agent execution guard blocked");
+    return badRequest(res, error.message, req.correlationId);
+  }
+  
+  const result = await runAgent({ agentId, input, payload, context, isAdmin });
   success(res, { result }, req.correlationId);
 });

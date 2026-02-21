@@ -12,6 +12,9 @@ import {
   getDestinationSystemPrompt,
   formatOutput
 } from "../utils/messageFormatter.js";
+import { guardChatAgent } from "../guards/chatGuard.js";
+import { timingSafeEqual } from "../middleware/auth.js";
+import { env } from "../config/env.js";
 
 const router = Router();
 
@@ -48,6 +51,20 @@ router.get("/key-status", asyncHandler(async (_req, res) => {
 // agentId selects a specialized system prompt (legal-agent, governance-agent, agent-auto, direct)
 router.post("/", validateChatInput, asyncHandler(async (req, res) => {
   const { agentId, message, history = [], language = "ar" } = req.body;
+  
+  // Check if user is admin (for agents requiring approval)
+  const adminToken = req.headers["x-admin-token"];
+  const isAdmin = adminToken && env.adminToken && timingSafeEqual(adminToken, env.adminToken);
+  
+  // If agentId is provided and not "direct", validate against chat context
+  if (agentId && agentId !== "direct") {
+    try {
+      await guardChatAgent(agentId, isAdmin);
+    } catch (error) {
+      logger.warn({ agentId, error: error.message }, "Chat agent guard blocked execution");
+      throw new AppError(error.message, 403, "AGENT_NOT_ALLOWED_IN_CHAT");
+    }
+  }
 
   // Build provider list - when agentId is kimi-agent, prefer Kimi first
   const providers = [];

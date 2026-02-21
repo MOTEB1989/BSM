@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { env } from "../config/env.js";
 
 // Constant-time string comparison to prevent timing attacks
-const timingSafeEqual = (a, b) => {
+export const timingSafeEqual = (a, b) => {
   if (!a || !b) return false;
   const bufA = Buffer.from(a);
   const bufB = Buffer.from(b);
