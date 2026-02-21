@@ -339,5 +339,5 @@ netstat -an | grep LISTEN
 ---
 
 **آخر تحديث - Last Updated:** 2026-02-21  
-**الإصدار - Version:** 1.0.0  
+**الإصدار - Version:** 0.2.23  
 **الحالة - Status:** نشط - Active

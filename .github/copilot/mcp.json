@@ -39,7 +39,7 @@
       },
       "metadata": {
         "name": "Browser DevTools MCP",
-        "version": "1.0.0",
+        "version": "0.2.23",
         "description": "Browser DevTools integration for debugging and development",
         "capabilities": [
           "browser-automation",
