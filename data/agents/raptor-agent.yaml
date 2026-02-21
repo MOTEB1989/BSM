@@ -4,7 +4,7 @@ role: نائب المالك وقائد المستودع والوكالة - Deput
 description: |
   Raptor is the designated deputy for repository ownership. Full authority over repository
   management, agent orchestration, and all necessary operational commands.
-  وكلاء Raptor النائب المعيّن عن المالك - سلطة كاملة على إدارة المستودع وتنسيق الوكلاء.
+  وكيل Raptor النائب المعيّن عن المالك - سلطة كاملة على إدارة المستودع وتنسيق الوكلاء.
 version: 1.0.0
 modelProvider: openai
 modelKey: bsm
