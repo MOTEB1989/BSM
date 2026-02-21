@@ -36,13 +36,40 @@
       "env": {
         "OPENAI_API_KEY": "${OPENAI_API_KEY}",
         "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
-        "GOOGLE_API_KEY": "${GOOGLE_API_KEY}",
-        "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
+        "GEMINI_API_KEY": "${GEMINI_API_KEY}",
+        "PERPLEXITY_KEY": "${PERPLEXITY_KEY}"
       },
       "metadata": {
         "name": "BSM Banking Agents MCP",
         "version": "1.0.0",
-        "description": "Arabic-first banking tools router for iPhone and Windows Cursor"
+        "description": "Arabic-first banking tools router for iPhone and Windows Cursor",
+        "networkEgress": {
+          "justification": "This MCP server provides routing logic and agent selection for banking queries. The AI_AGENTS configuration contains informational metadata about external AI services (OpenAI, Anthropic, Google Gemini, Perplexity) but does NOT make direct network calls in the current implementation. Future functionality may include actual API calls to these services for query execution, at which point proper egress controls, timeout management, and circuit breaker patterns must be implemented following the patterns in src/services/gptService.js.",
+          "currentImplementation": "routing_only",
+          "plannedServices": [
+            {
+              "service": "OpenAI",
+              "purpose": "GPT-4 completions for technical coding, data analysis, and integration queries",
+              "status": "planned"
+            },
+            {
+              "service": "Anthropic",
+              "purpose": "Claude completions for legal analysis, code review, and risk assessment",
+              "status": "planned"
+            },
+            {
+              "service": "Google Gemini",
+              "purpose": "Gemini Pro for Arabic language support, general banking, and customer support",
+              "status": "planned"
+            },
+            {
+              "service": "Perplexity",
+              "purpose": "Real-time search for market updates, rate information, and fact verification",
+              "status": "planned"
+            }
+          ],
+          "securityControls": "When network calls are implemented, they must follow BSM security patterns: circuit breaker (src/utils/circuitBreaker.js), timeout enforcement, API key sanitization, deny-by-default egress policy (EGRESS_POLICY environment variable), and explicit allowlist (EGRESS_ALLOWED_HOSTS)"
+        }
       }
     }
   }

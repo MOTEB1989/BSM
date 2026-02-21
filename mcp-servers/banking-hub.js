@@ -8,22 +8,18 @@ const AI_AGENTS = {
   gemini: {
     name: 'Gemini Pro',
     specialties: ['Arabic Language', 'General Banking', 'Customer Support'],
-    endpoint: 'https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent',
   },
   claude: {
     name: 'Claude-3 Haiku',
     specialties: ['Legal Analysis', 'Code Review', 'Risk Assessment'],
-    endpoint: 'https://api.anthropic.com/v1/messages',
   },
   gpt4: {
     name: 'GPT-4 Turbo',
     specialties: ['Technical Coding', 'Data Analysis', 'Integration'],
-    endpoint: 'https://api.openai.com/v1/chat/completions',
   },
   perplexity: {
     name: 'Perplexity Sonar',
     specialties: ['Real-time Search', 'Market Updates', 'Fact Verification'],
-    endpoint: 'https://api.perplexity.ai/chat/completions',
   },
 };
 
@@ -31,15 +27,33 @@ function normalizeText(value) {
   return String(value || '').trim().toLowerCase();
 }
 
+/**
+ * Detects the appropriate AI agent based on query content, category, and language.
+ * 
+ * Routing priority (deterministic):
+ * 1. Explicit category overrides everything:
+ *    - 'legal'     → claude
+ *    - 'technical' → gpt4
+ *    - 'creative'  → gemini
+ * 2. Query content analysis (fixed priority: legal > technical > market):
+ *    - Legal keywords (قانون، امتثال، legal, compliance) → claude
+ *    - Technical keywords (برمجة، كود، code, api) → gpt4
+ *    - Market keywords (سعر، مؤشر، price, market, rate) → perplexity
+ * 3. Language-based fallback:
+ *    - Arabic ('ar') → gemini (best Arabic support)
+ *    - Other languages → gpt4
+ */
 function detectAgent({ query, language, category }) {
   const normalizedQuery = normalizeText(query);
   const normalizedCategory = normalizeText(category);
   const normalizedLanguage = normalizeText(language);
 
+  // Priority 1: Category-based routing (highest priority)
   if (normalizedCategory === 'legal') return 'claude';
   if (normalizedCategory === 'technical') return 'gpt4';
   if (normalizedCategory === 'creative') return 'gemini';
 
+  // Priority 2: Query content analysis (fixed precedence: legal > technical > market)
   if (
     normalizedQuery.includes('قانون') ||
     normalizedQuery.includes('امتثال') ||
@@ -69,6 +83,7 @@ function detectAgent({ query, language, category }) {
     return 'perplexity';
   }
 
+  // Priority 3: Language-based fallback
   if (normalizedLanguage === 'ar') return 'gemini';
   return 'gpt4';
 }
@@ -96,12 +111,12 @@ class BankingAgentServer {
       tools: [
         {
           name: 'route_banking_query',
-          description: 'توجيه الاستفسار البنكي للعامل المناسب',
+          description: 'توجيه الاستفسار البنكي للوكيل المناسب',
           inputSchema: {
             type: 'object',
             properties: {
               query: { type: 'string', description: 'نص الاستفسار' },
-              language: { type: 'string', enum: ['ar', 'en'], default: 'ar' },
+              language: { type: 'string', enum: ['ar', 'en'] },
               category: {
                 type: 'string',
                 enum: ['general', 'technical', 'legal', 'creative'],
@@ -113,7 +128,7 @@ class BankingAgentServer {
         },
         {
           name: 'check_agent_status',
-          description: 'فحص حالة العوامل المختلفة',
+          description: 'فحص حالة الوكلاء المختلفة',
           inputSchema: {
             type: 'object',
             properties: {
@@ -137,6 +152,7 @@ class BankingAgentServer {
             throw new Error(`Unknown tool: ${name}`);
         }
       } catch (error) {
+        console.error('MCP tool execution error:', { tool: request.params.name, error: error.message, stack: error.stack });
         return {
           content: [{ type: 'text', text: `خطأ: ${error.message}` }],
           isError: true,
@@ -163,9 +179,8 @@ class BankingAgentServer {
             `**الاستفسار**: ${query}\n` +
             `**اللغة**: ${language === 'ar' ? 'العربية' : 'English'}\n` +
             `**الفئة**: ${category}\n\n` +
-            '⚡ **حالة العامل**: نشط ومتاح\n' +
-            '🔒 **الأمان**: مفعّل (Banking Grade Security)\n' +
-            `🌐 **Endpoint**: ${agent.endpoint}`,
+            '⚡ **حالة الوكيل**: نشط ومتاح\n' +
+            '🔒 **الأمان**: مفعّل (Banking Grade Security)',
         },
       ],
     };
@@ -174,16 +189,18 @@ class BankingAgentServer {
   async checkAgentStatus({ agent } = {}) {
     const selectedAgent = agent || 'gemini';
     if (!AI_AGENTS[selectedAgent]) {
-      throw new Error(`عامل غير موجود: ${selectedAgent}`);
+      throw new Error(`وكيل غير موجود: ${selectedAgent}`);
     }
 
-    const status = {
+    const agentInfo = AI_AGENTS[selectedAgent];
+    
+    // Note: This returns static configuration data, not live health status
+    const info = {
       agent: selectedAgent,
-      name: AI_AGENTS[selectedAgent].name,
-      status: 'active',
-      response_time: '< 200ms',
-      last_check: new Date().toISOString(),
+      name: agentInfo.name,
+      specialties: agentInfo.specialties.join(', '),
       arabic_support: selectedAgent === 'gemini' ? 'native' : 'translated',
+      status_type: 'configuration',
     };
 
     return {
@@ -191,11 +208,10 @@ class BankingAgentServer {
         {
           type: 'text',
           text:
-            `✅ **حالة العامل ${status.name}**:\n\n` +
-            `🟢 **الحالة**: ${status.status}\n` +
-            `⏱️ **زمن الاستجابة**: ${status.response_time}\n` +
-            `🌐 **دعم العربية**: ${status.arabic_support}\n` +
-            `🔍 **آخر فحص**: ${status.last_check}`,
+            `ℹ️ **معلومات الوكيل ${info.name}**:\n\n` +
+            `📋 **التخصصات**: ${info.specialties}\n` +
+            `🌐 **دعم العربية**: ${info.arabic_support}\n` +
+            `ℹ️ **ملاحظة**: هذه بيانات إعداد ثابتة وليست حالة تشغيلية مباشرة`,
         },
       ],
     };
@@ -204,7 +220,7 @@ class BankingAgentServer {
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error('BSM Banking Agents MCP server started');
+    console.log('🏦 BSM Banking Agents Server started - تم تشغيل خادم الوكلاء البنكية');
   }
 }
 
