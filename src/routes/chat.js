@@ -12,6 +12,7 @@ import {
   getDestinationSystemPrompt,
   formatOutput
 } from "../utils/messageFormatter.js";
+import { guardChatAgent } from "../guards/chatGuard.js";
 
 const router = Router();
 
@@ -49,6 +50,13 @@ router.get("/key-status", asyncHandler(async (_req, res) => {
 router.post("/", validateChatInput, asyncHandler(async (req, res) => {
   const { agentId, message, history = [], language = "ar" } = req.body;
 
+  // Validate agent context if agentId is provided (skip for "direct" mode)
+  if (agentId && agentId !== "direct") {
+    // For now, treat all chat users as non-admin (no x-admin-token validation in chat)
+    // TODO: Consider adding admin detection via x-admin-token header if needed
+    await guardChatAgent(agentId, false);
+  }
+
   // Build provider list - when agentId is kimi-agent, prefer Kimi first
   const providers = [];
   const openaiKey = models.openai?.bsm || models.openai?.default;
@@ -56,13 +64,19 @@ router.post("/", validateChatInput, asyncHandler(async (req, res) => {
   const perplexityKey = models.perplexity?.default;
   const anthropicKey = models.anthropic?.default;
 
-  if (agentId === "kimi-agent" && hasUsableApiKey(kimiKey)) {
+  // Special handling for kimi-agent: require KIMI key or fail
+  if (agentId === "kimi-agent") {
+    if (!hasUsableApiKey(kimiKey)) {
+      throw new AppError("KIMI AI service is not configured. Please configure KIMI_API_KEY.", 503, "MISSING_API_KEY");
+    }
     providers.push({ type: "kimi", apiKey: kimiKey });
+  } else {
+    // Normal fallback chain for other agents
+    if (hasUsableApiKey(openaiKey)) providers.push({ type: "openai", apiKey: openaiKey });
+    if (hasUsableApiKey(kimiKey)) providers.push({ type: "kimi", apiKey: kimiKey });
+    if (hasUsableApiKey(perplexityKey)) providers.push({ type: "perplexity", apiKey: perplexityKey });
+    if (hasUsableApiKey(anthropicKey)) providers.push({ type: "anthropic", apiKey: anthropicKey });
   }
-  if (hasUsableApiKey(openaiKey)) providers.push({ type: "openai", apiKey: openaiKey });
-  if (hasUsableApiKey(kimiKey) && agentId !== "kimi-agent") providers.push({ type: "kimi", apiKey: kimiKey });
-  if (hasUsableApiKey(perplexityKey)) providers.push({ type: "perplexity", apiKey: perplexityKey });
-  if (hasUsableApiKey(anthropicKey)) providers.push({ type: "anthropic", apiKey: anthropicKey });
 
   if (providers.length === 0) {
     throw new AppError("No AI service is configured", 503, "MISSING_API_KEY");
