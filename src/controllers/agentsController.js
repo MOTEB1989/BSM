@@ -6,16 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import logger from "../utils/logger.js";
 import { badRequest, success } from "../utils/httpResponses.js";
 import { guardAgentExecution } from "../guards/agentExecutionGuard.js";
-import crypto from "crypto";
-
-// Timing-safe comparison to prevent timing attacks
-const timingSafeEqual = (a, b) => {
-  if (!a || !b) return false;
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) return false;
-  return crypto.timingSafeEqual(bufA, bufB);
-};
+import { timingSafeEqual } from "../middleware/auth.js";
 
 export const listAgents = asyncHandler(async (req, res) => {
   const agents = await loadAgents();
@@ -128,6 +119,11 @@ export const executeAgent = asyncHandler(async (req, res) => {
 
   // Check if admin token is provided
   const adminToken = req.headers["x-admin-token"];
+  
+  if (!env.adminToken) {
+    logger.warn({ agentId }, "Admin token not configured - all agents requiring admin will be blocked");
+  }
+  
   const isAdmin = adminToken && env.adminToken && timingSafeEqual(adminToken, env.adminToken);
 
   // Validate agent execution constraints (approval, context, terminal execution)
