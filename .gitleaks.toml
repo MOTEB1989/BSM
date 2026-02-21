@@ -190,8 +190,8 @@ paths = [
   '''test/''',
   '''tests/''',
   '''__tests__/''',
-  '''*.test.js''',
-  '''*.spec.js''',
+  '''.*\.test\.js''',
+  '''.*\.spec\.js''',
   
   # Documentation
   '''docs/''',
