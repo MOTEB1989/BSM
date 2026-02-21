@@ -6,6 +6,7 @@ import logger from "../utils/logger.js";
 import { hasUsableApiKey } from "../utils/apiKey.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { validateChatInput } from "../middleware/validateChatInput.js";
+import { guardChatAgent } from "../guards/chatGuard.js";
 import {
   buildChatMessages,
   getSystemPrompt,
@@ -48,6 +49,12 @@ router.get("/key-status", asyncHandler(async (_req, res) => {
 // agentId selects a specialized system prompt (legal-agent, governance-agent, agent-auto, direct)
 router.post("/", validateChatInput, asyncHandler(async (req, res) => {
   const { agentId, message, history = [], language = "ar" } = req.body;
+
+  // Enforce context restrictions - validate agent is allowed in chat
+  if (agentId && agentId !== "direct") {
+    const isAdmin = req.headers['x-admin-token'] === process.env.ADMIN_TOKEN;
+    await guardChatAgent(agentId, isAdmin);
+  }
 
   // Build provider list - when agentId is kimi-agent, prefer Kimi first
   const providers = [];
