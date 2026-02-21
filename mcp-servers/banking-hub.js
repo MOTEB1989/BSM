@@ -152,7 +152,8 @@ class BankingAgentServer {
             throw new Error(`Unknown tool: ${name}`);
         }
       } catch (error) {
-        console.error('MCP tool execution error:', { tool: request.params.name, error: error.message, stack: error.stack });
+        const toolName = request?.params?.name;
+        console.error('MCP tool execution error:', { tool: toolName, error: error.message, stack: error.stack });
         return {
           content: [{ type: 'text', text: `خطأ: ${error.message}` }],
           isError: true,
