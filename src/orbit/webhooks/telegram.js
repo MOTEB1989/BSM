@@ -112,5 +112,5 @@ function buildAgentOutputMessage(output, agentId) {
 }
 
 function escapeTelegramMarkdown(text) {
-  return String(text).replace(/([_*`\[])/g, "\\$1");
+  return String(text).replace(/([_*[\]()~`>#+\-=|{}.!])/g, "\\$1");
 }
