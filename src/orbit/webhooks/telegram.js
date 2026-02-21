@@ -58,7 +58,8 @@ export async function handleTelegramWebhook(req, res) {
         const output = formatOutput(result, language);
         await sendTelegramLongMessage(chatId, output);
       } catch (err) {
-        await telegramAgent.sendMessage(chatId, `❌ تعذر تنفيذ الطلب: ${err?.message || String(err)}`);
+        console.error("Error executing /run command:", err);
+        await telegramAgent.sendMessage(chatId, "❌ تعذر تنفيذ الطلب. حدث خطأ داخلي.");
       }
       return res.sendStatus(200);
     }
