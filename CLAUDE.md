@@ -39,6 +39,14 @@ npm run health:detailed         # Comprehensive health check
 # PR review
 npm run pr-check                # Local PR review checklist
 npm run pr-check:verbose        # Verbose PR review checklist
+
+# MCP Servers
+npm run mcp:install             # Install MCP server dependencies
+npm run mcp:start               # Start BSU unified MCP server
+npm run mcp:banking             # Start banking hub MCP server
+npm run mcp:github              # Start GitHub MCP server (Node.js wrapper)
+npm run mcp:github:docker       # Start GitHub MCP server (Docker)
+npm run mcp:github:test         # Test GitHub MCP server connection
 ```
 
 ## Architecture
@@ -472,6 +480,61 @@ The project has 53 GitHub Actions workflows in `.github/workflows/` covering:
 - **PR management**: `pr-management.yml`, `pr-governance-check.yml`, `auto-merge.yml`, `close-stale-prs.yml`
 - **Infrastructure**: `cf-deploy.yml`, `cf-purge-cache.yml`, `deploy-pages.yml`
 - **ORBIT**: `orbit-actions.yml`, `orbit-telegram.yml`
+
+## GitHub MCP Server Integration
+
+BSM includes integration with GitHub's official MCP (Model Context Protocol) server, providing comprehensive GitHub and Git repository management capabilities.
+
+### Features
+- **29+ Git Operations**: add, commit, push, pull, branch, merge, rebase, tag, stash, etc.
+- **GitHub API Integration**: repositories, PRs, issues, workflows, security alerts
+- **Workflow Automation**: automated release workflows, PR reviews, issue triage
+- **CI/CD Visibility**: workflow status, run history, logs
+- **Security Monitoring**: Dependabot alerts, code scanning, secret scanning
+
+### Configuration
+
+GitHub MCP server is configured in `.github/copilot/mcp.json` with two options:
+
+1. **Docker Method** (recommended):
+   ```bash
+   npm run mcp:github:docker
+   ```
+
+2. **Go Method** (if Docker unavailable):
+   ```bash
+   go run github.com/github/github-mcp-server/cmd/github-mcp-server@latest stdio --dynamic-toolsets
+   ```
+
+### Required Environment Variables
+```bash
+GITHUB_BSU_TOKEN=ghp_...              # GitHub Personal Access Token
+GITHUB_MCP_METHOD=docker              # 'docker' or 'go'
+GITHUB_MCP_DOCKER_IMAGE=ghcr.io/github/github-mcp-server
+GO_PATH=/usr/local/go/bin/go          # For 'go' method
+```
+
+### Usage with GitHub Copilot
+Once configured, use natural language commands:
+- "List all open pull requests in MOTEB1989/BSM"
+- "Show me the status of CI workflows"
+- "What issues are assigned to me?"
+- "Show git status and recent commits"
+
+### Integration with BSU Agents
+GitHub MCP tools are available to all BSU agents:
+- **agent-auto**: Repository health checks, maintenance
+- **code-review-agent**: PR reviews, code quality checks
+- **security-agent**: Security alert monitoring
+- **pr-merge-agent**: Automated PR merging, branch cleanup
+
+### Documentation
+See `docs/GITHUB-MCP-INTEGRATION.md` for comprehensive setup guide, examples, and troubleshooting.
+
+### Resources
+- GitHub MCP Server: https://github.com/github/github-mcp-server
+- Official Docs: https://docs.github.com/en/copilot/how-tos/provide-context/use-mcp/set-up-the-github-mcp-server
+- Model Context Protocol: https://modelcontextprotocol.io/
 
 ## Lexprim Chat (Nuxt 3 Frontend)
 
