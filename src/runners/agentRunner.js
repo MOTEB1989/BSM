@@ -68,6 +68,9 @@ export const runAgent = async ({ agentId, input, payload = {} }) => {
     if (!agent) throw new AppError(`Agent not found: ${agentId}`, 404, "AGENT_NOT_FOUND");
 
     // Validate agent approval and context restrictions from registry
+    // This is a second layer of defense (defense-in-depth):
+    // - chatGuard.js validates at the chat route level
+    // - This validation applies to ALL execution paths (API, orchestrator, etc.)
     const registry = await loadRegistry();
     if (registry && registry.agents) {
       const registryAgent = registry.agents.find(a => a.id === agentId);

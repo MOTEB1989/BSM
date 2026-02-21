@@ -106,21 +106,21 @@ export async function guardChatAgent(agentId, isAdmin = false) {
   }
 
   // Check 7: Risk level warning for high/critical
-  if (agent.risk?.level === "high" || agent.risk?.level === "critical") {
-    if (!isAdmin) {
-      logger.warn({ 
-        agentId, 
-        riskLevel: agent.risk.level,
-        isAdmin 
-      }, "Agent blocked: high/critical risk requires admin");
-      throw new Error(`Agent "${agentId}" has ${agent.risk.level} risk and requires admin authorization`);
-    } else {
-      logger.info({ 
-        agentId, 
-        riskLevel: agent.risk.level,
-        isAdmin 
-      }, "High/critical risk agent allowed for admin");
-    }
+  if ((agent.risk?.level === "high" || agent.risk?.level === "critical") && !isAdmin) {
+    logger.warn({ 
+      agentId, 
+      riskLevel: agent.risk.level,
+      isAdmin 
+    }, "Agent blocked: high/critical risk requires admin");
+    throw new Error(`Agent "${agentId}" has ${agent.risk.level} risk and requires admin authorization`);
+  }
+
+  if ((agent.risk?.level === "high" || agent.risk?.level === "critical") && isAdmin) {
+    logger.info({ 
+      agentId, 
+      riskLevel: agent.risk.level,
+      isAdmin 
+    }, "High/critical risk agent allowed for admin");
   }
 
   logger.info({ 
