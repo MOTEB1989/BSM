@@ -5,6 +5,17 @@ import { loadRegistry } from "../utils/registryCache.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import logger from "../utils/logger.js";
 import { badRequest, success } from "../utils/httpResponses.js";
+import { guardAgentExecution } from "../guards/agentExecutionGuard.js";
+import crypto from "crypto";
+
+// Timing-safe comparison to prevent timing attacks
+const timingSafeEqual = (a, b) => {
+  if (!a || !b) return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+};
 
 export const listAgents = asyncHandler(async (req, res) => {
   const agents = await loadAgents();
@@ -113,6 +124,22 @@ export const executeAgent = asyncHandler(async (req, res) => {
       `Input exceeds maximum length of ${env.maxAgentInputLength} characters`,
       req.correlationId
     );
+  }
+
+  // Check if admin token is provided
+  const adminToken = req.headers["x-admin-token"];
+  const isAdmin = adminToken && env.adminToken && timingSafeEqual(adminToken, env.adminToken);
+
+  // Validate agent execution constraints (approval, context, terminal execution)
+  try {
+    await guardAgentExecution(agentId, isAdmin, "api");
+  } catch (error) {
+    logger.warn({ agentId, isAdmin, error: error.message }, "Agent execution guard blocked request");
+    return res.status(403).json({ 
+      error: error.message,
+      code: "AGENT_NOT_ALLOWED",
+      correlationId: req.correlationId
+    });
   }
   
   const result = await runAgent({ agentId, input, payload });

@@ -12,6 +12,7 @@ import {
   getDestinationSystemPrompt,
   formatOutput
 } from "../utils/messageFormatter.js";
+import { guardChatAgent } from "../guards/chatGuard.js";
 
 const router = Router();
 
@@ -48,6 +49,17 @@ router.get("/key-status", asyncHandler(async (_req, res) => {
 // agentId selects a specialized system prompt (legal-agent, governance-agent, agent-auto, direct)
 router.post("/", validateChatInput, asyncHandler(async (req, res) => {
   const { agentId, message, history = [], language = "ar" } = req.body;
+
+  // Validate agent context restrictions before processing
+  // Skip validation for "direct" chat (no agent)
+  if (agentId && agentId !== "direct") {
+    try {
+      await guardChatAgent(agentId, false); // Chat users are not admin by default
+    } catch (error) {
+      logger.warn({ agentId, error: error.message }, "Chat agent guard blocked request");
+      throw new AppError(error.message, 403, "AGENT_NOT_ALLOWED");
+    }
+  }
 
   // Build provider list - when agentId is kimi-agent, prefer Kimi first
   const providers = [];
