@@ -5,6 +5,8 @@ import { loadRegistry } from "../utils/registryCache.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import logger from "../utils/logger.js";
 import { badRequest, success } from "../utils/httpResponses.js";
+import { guardAgentExecution } from "../guards/agentExecutionGuard.js";
+import { timingSafeEqual } from "../middleware/auth.js";
 
 export const listAgents = asyncHandler(async (req, res) => {
   const agents = await loadAgents();
@@ -113,6 +115,27 @@ export const executeAgent = asyncHandler(async (req, res) => {
       `Input exceeds maximum length of ${env.maxAgentInputLength} characters`,
       req.correlationId
     );
+  }
+
+  // Check if admin token is provided
+  const adminToken = req.headers["x-admin-token"];
+  const isAdmin = adminToken && env.adminToken && timingSafeEqual(adminToken, env.adminToken);
+
+  // Validate agent execution constraints (approval, context, terminal execution)
+  try {
+    await guardAgentExecution(agentId, isAdmin, "api");
+  } catch (error) {
+    // Log warning about missing admin token only when an admin-required agent is blocked
+    if (!env.adminToken && error.message.includes("requires admin")) {
+      logger.warn({ agentId }, "Admin token not configured - agent requiring admin was blocked");
+    }
+    
+    logger.warn({ agentId, isAdmin, error: error.message }, "Agent execution guard blocked request");
+    return res.status(403).json({ 
+      error: error.message,
+      code: "AGENT_NOT_ALLOWED",
+      correlationId: req.correlationId
+    });
   }
   
   const result = await runAgent({ agentId, input, payload });
