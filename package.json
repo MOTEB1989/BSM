@@ -8,7 +8,11 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "lint": "npm run validate:registry && npm run validate",
+    "lint": "npm run lint:eslint && npm run validate:registry && npm run validate",
+    "lint:eslint": "eslint .",
+    "lint:fix": "eslint . --fix && prettier --write .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "validate": "node scripts/validate.js",
     "validate:registry": "node scripts/validate-registry.js",
     "validate:agent-sync": "node scripts/validate-agent-sync.js",
@@ -45,8 +49,13 @@
     "yaml": "^2.4.5"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
     "nodemon": "^3.1.11",
-    "pino-pretty": "^11.0.0"
+    "pino-pretty": "^11.0.0",
+    "prettier": "^3.8.1"
   },
   "overrides": {
     "minimatch": "^10.2.1"

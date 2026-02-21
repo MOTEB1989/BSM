@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+coverage/
+*.min.js
+
+# Reports
+reports/
+report/
+runner-results.json
+
+# Git
+.git/
+.github/
+
+# Config files that need specific formatting
+*.json
+*.yaml
+*.yml
+
+# Third-party or generated files
+lexprim-chat/node_modules/
+mcp-servers/node_modules/
+
+# Documentation (preserve manual formatting)
+*.md
+
+# Environment files
+.env*
+
+# Lock files
+*.lock

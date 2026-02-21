@@ -344,6 +344,23 @@ See `.env.example` for the full list. Key variables:
 - **Registry validation gate**: server refuses to start if `agents/registry.yaml` validation fails (`src/server.js`)
 - **Standard HTTP responses**: use `src/utils/httpResponses.js` for consistent response formatting
 
+### Code Quality Tools
+
+The project uses ESLint and Prettier for code quality and formatting:
+- **ESLint**: Modern flat config (`eslint.config.js`) with separate rules for Node.js and browser environments
+- **Prettier**: Auto-formatting on save (`.prettierrc`)
+- **EditorConfig**: Cross-IDE editor settings (`.editorconfig`)
+
+**Commands:**
+```bash
+npm run lint:eslint    # Check code with ESLint
+npm run lint:fix       # Auto-fix ESLint and Prettier issues
+npm run format         # Format all code with Prettier
+npm run format:check   # Check formatting without changes
+```
+
+**VS Code Integration:** Format-on-save and ESLint auto-fix are enabled in `.vscode/settings.json`. See `docs/CLEAN-CODE-SETUP.md` for full details.
+
 ### Refactoring Patterns (Established 2026-02)
 
 To reduce code duplication and improve maintainability, the following patterns should be used:
