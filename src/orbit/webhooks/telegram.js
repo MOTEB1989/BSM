@@ -1,6 +1,14 @@
 // src/orbit/webhooks/telegram.js
 import { telegramAgent } from "../agents/TelegramAgent.js";
 import { verifyTelegramSecret, extractTelegramMessage, isAdminChatId } from "../../utils/telegramUtils.js";
+import { runChat } from "../../services/gptService.js";
+import { models } from "../../config/models.js";
+import { buildChatProviders } from "../../utils/providerUtils.js";
+import {
+  buildChatMessages,
+  getDestinationSystemPrompt,
+  formatOutput
+} from "../../utils/messageFormatter.js";
 
 export async function handleTelegramWebhook(req, res) {
   try {
@@ -29,8 +37,29 @@ export async function handleTelegramWebhook(req, res) {
       }
 
       await telegramAgent.sendMessage(chatId, `⏳ جاري تنفيذ: ${query}...`);
-      // TODO: ربط بـ research agent
-      await telegramAgent.sendMessage(chatId, `✅ تم استلام الطلب: ${query}`);
+      try {
+        const providers = buildChatProviders(models);
+        if (providers.length === 0) {
+          await telegramAgent.sendMessage(chatId, "❌ لا توجد خدمة ذكاء اصطناعي مهيأة حاليًا.");
+          return res.sendStatus(200);
+        }
+
+        const language = "ar";
+        const systemPrompt = getDestinationSystemPrompt(language, "agent-auto");
+        const messages = buildChatMessages(systemPrompt, [], query);
+
+        const result = await runChat({
+          system: systemPrompt,
+          user: query,
+          messages,
+          providers
+        });
+
+        const output = formatOutput(result, language);
+        await sendTelegramLongMessage(chatId, output);
+      } catch (err) {
+        await telegramAgent.sendMessage(chatId, `❌ تعذر تنفيذ الطلب: ${err?.message || String(err)}`);
+      }
       return res.sendStatus(200);
     }
 
@@ -47,4 +76,40 @@ export async function handleTelegramWebhook(req, res) {
     console.error("Webhook error:", err);
     return res.sendStatus(500);
   }
+}
+
+const TELEGRAM_MESSAGE_LIMIT = 3900;
+
+async function sendTelegramLongMessage(chatId, text) {
+  const chunks = splitTelegramMessage(String(text ?? ""), TELEGRAM_MESSAGE_LIMIT);
+  for (const chunk of chunks) {
+    if (!chunk) continue;
+    await telegramAgent.sendMessage(chatId, chunk);
+  }
+}
+
+function splitTelegramMessage(text, maxLen) {
+  if (!text) return [""];
+  if (text.length <= maxLen) return [text];
+
+  const chunks = [];
+  let remaining = text;
+
+  while (remaining.length > maxLen) {
+    let slice = remaining.slice(0, maxLen);
+
+    const paragraphBreak = slice.lastIndexOf("\n\n");
+    const lineBreak = slice.lastIndexOf("\n");
+    const breakAt = Math.max(paragraphBreak, lineBreak);
+
+    if (breakAt > Math.floor(maxLen * 0.5)) {
+      slice = slice.slice(0, breakAt);
+    }
+
+    chunks.push(slice.trimEnd());
+    remaining = remaining.slice(slice.length).trimStart();
+  }
+
+  if (remaining.length > 0) chunks.push(remaining);
+  return chunks;
 }
