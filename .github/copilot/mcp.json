@@ -27,6 +27,27 @@
           "cloudflarePages": "https://9e71cbf3.lexbank.pages.dev"
         }
       }
+    },
+    "browser-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "browser-devtools-mcp"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "metadata": {
+        "name": "Browser DevTools MCP",
+        "version": "1.0.0",
+        "description": "Browser DevTools integration for debugging and development",
+        "capabilities": [
+          "browser-automation",
+          "debugging",
+          "network-inspection",
+          "console-access"
+        ]
+      }
     }
   }
 }

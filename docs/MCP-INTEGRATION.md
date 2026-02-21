@@ -132,6 +132,41 @@ await chat_kimi({
 - متخصص في اللغة الصينية - Chinese language expertise
 - معالجة ملفات كبيرة - Large document processing
 
+### 6. Browser DevTools
+```javascript
+// استخدام - Usage via MCP
+// Integrated via VS Code/Cursor extension
+// Provides browser automation and debugging capabilities
+```
+
+**المميزات - Features:**
+- أتمتة المتصفح - Browser automation
+- تصحيح الأخطاء المتقدم - Advanced debugging
+- فحص الشبكة - Network inspection  
+- الوصول إلى وحدة التحكم - Console access
+- التكامل مع أدوات المطور - DevTools integration
+
+**التكوين - Configuration:**
+```json
+{
+  "mcpServers": {
+    "browser-devtools": {
+      "command": "npx",
+      "args": ["-y", "browser-devtools-mcp"]
+    }
+  }
+}
+```
+
+**ملاحظة - Note:** يتطلب تثبيت ملحق VS Code/Cursor:
+```bash
+# VS Code
+code --install-extension serkan-ozal.browser-devtools-mcp-vscode
+
+# Cursor  
+cursor --install-extension serkan-ozal.browser-devtools-mcp-vscode
+```
+
 ---
 
 ## التثبيت والإعداد - Installation & Setup

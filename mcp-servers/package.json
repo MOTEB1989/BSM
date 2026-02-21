@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.2",
+    "browser-devtools-mcp": "^1.0.0",
     "node-fetch": "^2.7.0"
   },
   "keywords": [
