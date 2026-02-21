@@ -79,12 +79,22 @@ export async function handleTelegramWebhook(req, res) {
 }
 
 const TELEGRAM_MESSAGE_LIMIT = 3900;
+const TELEGRAM_CHUNK_DELAY_MS = 80; // Small delay to avoid hitting Telegram rate limits
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 async function sendTelegramLongMessage(chatId, text) {
   const chunks = splitTelegramMessage(String(text ?? ""), TELEGRAM_MESSAGE_LIMIT);
-  for (const chunk of chunks) {
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
     if (!chunk) continue;
     await telegramAgent.sendMessage(chatId, chunk);
+    // Add a small delay between chunks to respect Telegram rate limits
+    if (i < chunks.length - 1) {
+      await delay(TELEGRAM_CHUNK_DELAY_MS);
+    }
   }
 }
 
