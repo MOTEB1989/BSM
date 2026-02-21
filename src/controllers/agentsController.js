@@ -119,17 +119,17 @@ export const executeAgent = asyncHandler(async (req, res) => {
 
   // Check if admin token is provided
   const adminToken = req.headers["x-admin-token"];
-  
-  if (!env.adminToken) {
-    logger.warn({ agentId }, "Admin token not configured - all agents requiring admin will be blocked");
-  }
-  
   const isAdmin = adminToken && env.adminToken && timingSafeEqual(adminToken, env.adminToken);
 
   // Validate agent execution constraints (approval, context, terminal execution)
   try {
     await guardAgentExecution(agentId, isAdmin, "api");
   } catch (error) {
+    // Log warning about missing admin token only when an admin-required agent is blocked
+    if (!env.adminToken && error.message.includes("requires admin")) {
+      logger.warn({ agentId }, "Admin token not configured - agent requiring admin was blocked");
+    }
+    
     logger.warn({ agentId, isAdmin, error: error.message }, "Agent execution guard blocked request");
     return res.status(403).json({ 
       error: error.message,
