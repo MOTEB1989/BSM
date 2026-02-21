@@ -132,7 +132,7 @@ export async function guardChatAgent(agentId, isAdmin = false) {
  * Get list of agents allowed in chat context
  * 
  * @param {boolean} isAdmin - Whether the user is an admin
- * @returns {Promise<Array>} List of agent IDs allowed in chat context
+ * @returns {Promise<Array>} List of agent objects with id, name, category, and risk properties
  */
 export async function getAvailableChatAgents(isAdmin = false) {
   const registry = await loadRegistry();
