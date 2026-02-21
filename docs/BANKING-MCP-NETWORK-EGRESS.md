@@ -53,7 +53,7 @@ When network calls are implemented, the following security controls MUST be enfo
 - **Purpose**: Prevent cascade failures from external API outages
 
 ### 2. Timeout Enforcement
-- **Default**: 10 seconds per request
+- **Default**: 30 seconds per request (aligned with `src/utils/httpClient.js` and `src/services/gptService.js`)
 - **Maximum**: 30 seconds
 - **Configuration**: Per-provider timeout settings
 - **Purpose**: Prevent hung connections and resource exhaustion
