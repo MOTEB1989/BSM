@@ -59,7 +59,7 @@ When network calls are implemented, the following security controls MUST be enfo
 - **Purpose**: Prevent hung connections and resource exhaustion
 
 ### 3. API Key Sanitization
-- **Implementation**: Use `sanitizeApiKey()` from `src/utils/errors.js`
+- **Implementation**: Use `sanitizeApiKey()` from `src/utils/httpClient.js`
 - **Validation**: Remove whitespace, invisible characters, check for placeholder values
 - **Purpose**: Prevent misconfigurations and security issues
 
