@@ -1,7 +1,8 @@
 import logger from "../utils/logger.js";
 
 export const errorHandler = (err, req, res, next) => {
-  const status = err.status || 500;
+  // Map certain error codes to appropriate HTTP status codes
+  const status = err.status || (err.code === "CIRCUIT_BREAKER_OPEN" ? 503 : 500);
 
   logger.error({
     correlationId: req.correlationId,
@@ -20,12 +21,16 @@ export const errorHandler = (err, req, res, next) => {
     clientMessage = "AI service credentials are invalid. Please contact the administrator.";
   } else if (err.code === "NETWORK_ERROR") {
     clientMessage = "Cannot connect to AI service. Please check server network configuration.";
-  } else if (err.code === "GPT_TIMEOUT") {
+  } else if (err.code === "GPT_TIMEOUT" || err.code === "PROVIDER_TIMEOUT") {
     clientMessage = "AI service request timed out. Please try again.";
   } else if (err.code === "RATE_LIMITED") {
     clientMessage = "AI service rate limit exceeded. Please try again shortly.";
-  } else if (err.code === "ALL_PROVIDERS_FAILED") {
+  } else if (err.code === "CIRCUIT_BREAKER_OPEN") {
+    clientMessage = "AI service is temporarily unavailable due to repeated failures. Please try again shortly.";
+  } else if (err.code === "ALL_PROVIDERS_FAILED" || err.code === "ALL_MODELS_FAILED") {
     clientMessage = err.message || "All AI providers failed. Please try again or contact the administrator.";
+  } else if (err.code === "PROVIDER_ERROR") {
+    clientMessage = "AI service returned an error. Please try again.";
   } else if (status === 500) {
     // For all other 500 errors, use generic message
     clientMessage = "Internal Server Error";

@@ -33,7 +33,7 @@
     "mcp:github": "node mcp-servers/github-mcp-server.js",
     "mcp:github:docker": "docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_BSU_TOKEN} ghcr.io/github/github-mcp-server:latest",
     "mcp:github:test": "docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_BSU_TOKEN} ghcr.io/github/github-mcp-server:latest",
-    "postinstall": "npm run mcp:install",
+    "postinstall": "npm run mcp:install || echo 'MCP install skipped (optional)'",
     "agents:integrity": "node scripts/run-integrity-check.js",
     "agents:audit": "node scripts/audit-runner.js",
     "agents:orchestrate": "bash scripts/run_agents.sh"

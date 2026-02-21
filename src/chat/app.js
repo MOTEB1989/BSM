@@ -194,11 +194,15 @@ createApp({
           errorMessage = lang.value === 'ar'
             ? 'لا يمكن الاتصال بخدمة الذكاء الاصطناعي. يرجى الاتصال بالمسؤول.'
             : 'Cannot connect to AI service. Please contact the administrator.';
-        } else if (err.code === 'GPT_TIMEOUT') {
+        } else if (err.code === 'GPT_TIMEOUT' || err.code === 'PROVIDER_TIMEOUT') {
           errorMessage = lang.value === 'ar'
             ? 'انتهت مهلة طلب الذكاء الاصطناعي. يرجى المحاولة مرة أخرى.'
             : 'AI service request timed out. Please try again.';
-        } else if (err.code === 'MISSING_API_KEY' || err.code === 'ALL_PROVIDERS_FAILED' || err.status === 503) {
+        } else if (err.code === 'CIRCUIT_BREAKER_OPEN') {
+          errorMessage = lang.value === 'ar'
+            ? 'خدمة الذكاء الاصطناعي غير متاحة مؤقتاً بسبب أعطال متكررة. يرجى المحاولة لاحقاً.'
+            : 'AI service is temporarily unavailable due to repeated failures. Please try again shortly.';
+        } else if (err.code === 'MISSING_API_KEY' || err.code === 'ALL_PROVIDERS_FAILED' || err.code === 'ALL_MODELS_FAILED' || err.status === 503) {
           errorMessage = lang.value === 'ar'
             ? 'خدمة الذكاء الاصطناعي غير متاحة حالياً. يرجى التحقق من مفاتيح API أو المحاولة لاحقاً.'
             : 'AI service is not currently available. Please check API keys or try again later.';
@@ -206,6 +210,10 @@ createApp({
           errorMessage = lang.value === 'ar'
             ? 'مفتاح خدمة الذكاء الاصطناعي غير صحيح. يرجى إبلاغ المسؤول.'
             : 'AI service credentials are invalid. Please notify the administrator.';
+        } else if (err.code === 'PROVIDER_ERROR') {
+          errorMessage = lang.value === 'ar'
+            ? 'حدث خطأ في خدمة الذكاء الاصطناعي. يرجى المحاولة مرة أخرى.'
+            : 'AI service returned an error. Please try again.';
         } else if (err.status === 500) {
           errorMessage = lang.value === 'ar'
             ? 'حدث خطأ في الخادم. يرجى المحاولة لاحقاً.'
