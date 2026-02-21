@@ -2,6 +2,7 @@
 import { telegramAgent } from "../agents/TelegramAgent.js";
 import { verifyTelegramSecret, extractTelegramMessage, isAdminChatId } from "../../utils/telegramUtils.js";
 import { runAgent } from "../../runners/agentRunner.js";
+import { auditLogger } from "../../utils/auditLogger.js";
 
 const PRIMARY_RESEARCH_AGENT_ID = process.env.TELEGRAM_RESEARCH_AGENT_ID || "perplexity-agent";
 const FALLBACK_RESEARCH_AGENT_ID = process.env.TELEGRAM_FALLBACK_AGENT_ID || PRIMARY_RESEARCH_AGENT_ID;
