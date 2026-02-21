@@ -37,12 +37,39 @@
         "OPENAI_API_KEY": "${OPENAI_API_KEY}",
         "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
         "GOOGLE_API_KEY": "${GOOGLE_API_KEY}",
-        "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
+        "PERPLEXITY_KEY": "${PERPLEXITY_KEY}"
       },
       "metadata": {
         "name": "BSM Banking Agents MCP",
         "version": "1.0.0",
-        "description": "Arabic-first banking tools router for iPhone and Windows Cursor"
+        "description": "Arabic-first banking tools router for iPhone and Windows Cursor",
+        "networkEgress": {
+          "justification": "The server currently performs local routing and status tools only. Provider keys are optional and reserved for controlled future integrations through existing BSM egress policies.",
+          "destinations": [
+            {
+              "service": "OpenAI",
+              "purpose": "Optional future provider integration via approved egress policy"
+            },
+            {
+              "service": "Anthropic",
+              "purpose": "Optional future provider integration via approved egress policy"
+            },
+            {
+              "service": "Google",
+              "purpose": "Optional future provider integration via approved egress policy"
+            },
+            {
+              "service": "Perplexity",
+              "purpose": "Optional future provider integration via approved egress policy"
+            }
+          ],
+          "keysForOptionalIntegration": [
+            "OPENAI_API_KEY",
+            "ANTHROPIC_API_KEY",
+            "GOOGLE_API_KEY",
+            "PERPLEXITY_KEY"
+          ]
+        }
       }
     }
   }

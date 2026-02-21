@@ -2,7 +2,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const ROOT_DIR = process.cwd();
-const ROOT_MCP_SETTINGS = path.join(ROOT_DIR, "mcp-settings.json");
+const ROOT_MCP_SETTINGS_REL = "mcp-settings.json";
+const COPILOT_MCP_SETTINGS_REL = ".github/copilot/mcp.json";
+const BANKING_HUB_PATH_REL = "mcp-servers/banking-hub.js";
+
+const ROOT_MCP_SETTINGS = path.join(ROOT_DIR, ROOT_MCP_SETTINGS_REL);
 const COPILOT_MCP_SETTINGS = path.join(ROOT_DIR, ".github", "copilot", "mcp.json");
 const BANKING_HUB_PATH = path.join(ROOT_DIR, "mcp-servers", "banking-hub.js");
 
@@ -51,6 +55,9 @@ const readJsonIfExists = async (filePath) => {
 
 const hasBankingServerConfig = (configRoot, keyName) =>
   Boolean(configRoot?.[keyName] && configRoot[keyName][TARGET_SERVER_NAME]);
+
+const hasPerplexityKeyEnv = (serverConfig) =>
+  Boolean(serverConfig?.env && typeof serverConfig.env === "object" && "PERPLEXITY_KEY" in serverConfig.env);
 
 const normalizeArgsPath = (argPath) => String(argPath || "").replace(/\\/g, "/");
 
@@ -102,6 +109,8 @@ export const getMcpConnectionStatus = async () => {
   const copilotArgs = Array.isArray(copilotServer?.args) ? copilotServer.args : [];
   const rootCommandReady = rootServer?.command === "node" && rootArgs.some(isBankingHubArg);
   const copilotCommandReady = copilotServer?.command === "node" && copilotArgs.some(isBankingHubArg);
+  const rootPerplexityReady = hasPerplexityKeyEnv(rootServer);
+  const copilotPerplexityReady = hasPerplexityKeyEnv(copilotServer);
 
   const status = getStatusLevel({
     rootConfigReady,
@@ -128,6 +137,12 @@ export const getMcpConnectionStatus = async () => {
   if (copilotConfigReady && !copilotCommandReady) {
     recommendations.push("copilot mcp.json server command/args should target mcp-servers/banking-hub.js");
   }
+  if (rootConfigReady && !rootPerplexityReady) {
+    recommendations.push("mcp-settings.json should use PERPLEXITY_KEY (project standard)");
+  }
+  if (copilotConfigReady && !copilotPerplexityReady) {
+    recommendations.push(".github/copilot/mcp.json should use PERPLEXITY_KEY (project standard)");
+  }
 
   return {
     status,
@@ -135,23 +150,25 @@ export const getMcpConnectionStatus = async () => {
     timestamp: new Date().toISOString(),
     checks: {
       rootMcpSettings: {
-        path: rootConfig.path,
+        path: ROOT_MCP_SETTINGS_REL,
         exists: rootConfig.exists,
         validJson: rootConfig.validJson,
         hasServer: rootConfigReady,
         command: rootServer?.command || null,
-        args: rootArgs
+        args: rootArgs,
+        hasPerplexityKeyEnv: rootPerplexityReady
       },
       copilotMcpSettings: {
-        path: copilotConfig.path,
+        path: COPILOT_MCP_SETTINGS_REL,
         exists: copilotConfig.exists,
         validJson: copilotConfig.validJson,
         hasServer: copilotConfigReady,
         command: copilotServer?.command || null,
-        args: copilotArgs
+        args: copilotArgs,
+        hasPerplexityKeyEnv: copilotPerplexityReady
       },
       bankingHubFile: {
-        path: BANKING_HUB_PATH,
+        path: BANKING_HUB_PATH_REL,
         exists: bankingHubExists
       }
     },
@@ -161,14 +178,14 @@ export const getMcpConnectionStatus = async () => {
         "على جهاز Windows افتح Cursor > Settings > MCP.",
         "أضف إعداد server باسم bsm-banking-agents.",
         "استخدم command=node و args تشير إلى mcp-servers/banking-hub.js.",
-        "أضف مفاتيح OPENAI_API_KEY و ANTHROPIC_API_KEY و GOOGLE_API_KEY و PERPLEXITY_API_KEY.",
+        "أضف مفاتيح OPENAI_API_KEY و ANTHROPIC_API_KEY و GOOGLE_API_KEY و PERPLEXITY_KEY.",
         "احفظ الإعدادات ثم أعد تشغيل Cursor واختبر أداة route_banking_query."
       ],
       en: [
         "On Windows, open Cursor > Settings > MCP.",
         "Add a server entry named bsm-banking-agents.",
         "Use command=node and args pointing to mcp-servers/banking-hub.js.",
-        "Provide OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, and PERPLEXITY_API_KEY.",
+        "Provide OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, and PERPLEXITY_KEY.",
         "Save, restart Cursor, then test with route_banking_query."
       ]
     }

@@ -7,23 +7,23 @@ const { CallToolRequestSchema, ListToolsRequestSchema } = require('@modelcontext
 const AI_AGENTS = {
   gemini: {
     name: 'Gemini Pro',
+    provider: 'Google',
     specialties: ['Arabic Language', 'General Banking', 'Customer Support'],
-    endpoint: 'https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent',
   },
   claude: {
     name: 'Claude-3 Haiku',
+    provider: 'Anthropic',
     specialties: ['Legal Analysis', 'Code Review', 'Risk Assessment'],
-    endpoint: 'https://api.anthropic.com/v1/messages',
   },
   gpt4: {
     name: 'GPT-4 Turbo',
+    provider: 'OpenAI',
     specialties: ['Technical Coding', 'Data Analysis', 'Integration'],
-    endpoint: 'https://api.openai.com/v1/chat/completions',
   },
   perplexity: {
     name: 'Perplexity Sonar',
+    provider: 'Perplexity',
     specialties: ['Real-time Search', 'Market Updates', 'Fact Verification'],
-    endpoint: 'https://api.perplexity.ai/chat/completions',
   },
 };
 
@@ -36,38 +36,37 @@ function detectAgent({ query, language, category }) {
   const normalizedCategory = normalizeText(category);
   const normalizedLanguage = normalizeText(language);
 
+  // Deterministic routing priority:
+  // 1) Explicit category always wins.
+  // 2) Query-content rules with fixed precedence: legal > technical > market.
+  // 3) Fallback by language: Arabic -> gemini, otherwise -> gpt4.
   if (normalizedCategory === 'legal') return 'claude';
   if (normalizedCategory === 'technical') return 'gpt4';
   if (normalizedCategory === 'creative') return 'gemini';
 
-  if (
+  const isLegalQuery =
     normalizedQuery.includes('قانون') ||
     normalizedQuery.includes('امتثال') ||
     normalizedQuery.includes('legal') ||
-    normalizedQuery.includes('compliance')
-  ) {
-    return 'claude';
-  }
+    normalizedQuery.includes('compliance');
 
-  if (
+  const isTechnicalQuery =
     normalizedQuery.includes('برمجة') ||
     normalizedQuery.includes('كود') ||
     normalizedQuery.includes('code') ||
-    normalizedQuery.includes('api')
-  ) {
-    return 'gpt4';
-  }
+    normalizedQuery.includes('api');
 
-  if (
+  const isMarketQuery =
     normalizedQuery.includes('سعر') ||
     normalizedQuery.includes('اسعار') ||
     normalizedQuery.includes('مؤشر') ||
     normalizedQuery.includes('price') ||
     normalizedQuery.includes('market') ||
-    normalizedQuery.includes('rate')
-  ) {
-    return 'perplexity';
-  }
+    normalizedQuery.includes('rate');
+
+  if (isLegalQuery) return 'claude';
+  if (isTechnicalQuery) return 'gpt4';
+  if (isMarketQuery) return 'perplexity';
 
   if (normalizedLanguage === 'ar') return 'gemini';
   return 'gpt4';
@@ -96,12 +95,12 @@ class BankingAgentServer {
       tools: [
         {
           name: 'route_banking_query',
-          description: 'توجيه الاستفسار البنكي للعامل المناسب',
+          description: 'توجيه الاستفسار البنكي للوكيل المناسب',
           inputSchema: {
             type: 'object',
             properties: {
               query: { type: 'string', description: 'نص الاستفسار' },
-              language: { type: 'string', enum: ['ar', 'en'], default: 'ar' },
+              language: { type: 'string', enum: ['ar', 'en'] },
               category: {
                 type: 'string',
                 enum: ['general', 'technical', 'legal', 'creative'],
@@ -125,9 +124,10 @@ class BankingAgentServer {
     }));
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      try {
-        const { name, arguments: args = {} } = request.params;
+      const { name, arguments: args = {} } = request.params;
+      const preferredLanguage = normalizeText(args.language) === 'ar' ? 'ar' : 'en';
 
+      try {
         switch (name) {
           case 'route_banking_query':
             return this.routeBankingQuery(args);
@@ -137,8 +137,18 @@ class BankingAgentServer {
             throw new Error(`Unknown tool: ${name}`);
         }
       } catch (error) {
+        console.error('[BSM-Banking-Agents] Tool execution failed', {
+          tool: name,
+          message: error.message,
+        });
+
+        const text =
+          preferredLanguage === 'ar'
+            ? `خطأ في تنفيذ الأداة: ${error.message}`
+            : `Tool execution error: ${error.message}`;
+
         return {
-          content: [{ type: 'text', text: `خطأ: ${error.message}` }],
+          content: [{ type: 'text', text }],
           isError: true,
         };
       }
@@ -163,9 +173,9 @@ class BankingAgentServer {
             `**الاستفسار**: ${query}\n` +
             `**اللغة**: ${language === 'ar' ? 'العربية' : 'English'}\n` +
             `**الفئة**: ${category}\n\n` +
+            `🧩 **المزوّد**: ${agent.provider}\n` +
             '⚡ **حالة العامل**: نشط ومتاح\n' +
-            '🔒 **الأمان**: مفعّل (Banking Grade Security)\n' +
-            `🌐 **Endpoint**: ${agent.endpoint}`,
+            '🔒 **الأمان**: مفعّل (Banking Grade Security)',
         },
       ],
     };
