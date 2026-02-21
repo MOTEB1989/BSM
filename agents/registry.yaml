@@ -571,9 +571,9 @@ agents:
       requires_approval: true
     contexts:
       allowed:
-        - chat
         - api
         - ci
+      # Security: raptor-agent has terminal_execution capability and must NOT be accessible from 'chat' or 'mobile' contexts
     expose:
       selectable: true
       internal_only: false

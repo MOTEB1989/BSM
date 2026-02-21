@@ -68,6 +68,7 @@ contexts:
   allowed:
     - api
     - ci
+  # Security: raptor-agent has terminal_execution capability and must NOT be accessible from 'chat' or 'mobile' contexts
 safety:
   mode: restricted
   requires_approval: true
