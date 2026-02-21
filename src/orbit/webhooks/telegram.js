@@ -99,9 +99,11 @@ async function runResearchAgent(query, payload) {
 
 function buildAgentOutputMessage(output, agentId) {
   const normalizedOutput =
-    typeof output === "string"
-      ? output.trim()
-      : JSON.stringify(output ?? "", null, 2);
+    output == null
+      ? ""
+      : typeof output === "string"
+        ? output.trim()
+        : JSON.stringify(output, null, 2);
 
   const safeOutput = escapeTelegramMarkdown(normalizedOutput || "لم يصل رد من وكيل البحث.");
   const trimmedOutput = safeOutput.length > MAX_TELEGRAM_REPLY_LENGTH
