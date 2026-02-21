@@ -214,7 +214,7 @@ class BankingAgentServer {
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error('BSM Banking Agents MCP server started');
+    console.log('🏦 BSM Banking Agents Server started - تم تشغيل خادم العوامل البنكية');
   }
 }
 
