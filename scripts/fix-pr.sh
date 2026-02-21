@@ -37,6 +37,13 @@ function check_git_repo {
     git rev-parse --git-dir > /dev/null 2>&1 || error_exit "هذا المجلد ليس مستودع Git."
 }
 
+# دالة للتحقق من نظافة مساحة العمل
+function check_clean_working_tree {
+    if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
+        error_exit "مساحة العمل غير نظيفة. يرجى commit أو stash التغييرات قبل تشغيل هذا السكربت."
+    fi
+}
+
 # دالة لتحديد الفرع الحالي
 function get_current_branch {
     git branch --show-current 2>/dev/null || error_exit "لا يمكن تحديد الفرع الحالي."
@@ -66,12 +73,26 @@ function merge_with_strategy {
 # دالة لحل التعارضات باستخدام mergetool (إذا كان متاحاً)
 function resolve_conflicts_with_mergetool {
     info "محاولة حل التعارضات باستخدام mergetool..."
-    git mergetool --tool=vimdiff --no-prompt 2>/dev/null
-    if [ $? -ne 0 ]; then
-        info "لم يتمكن mergetool من حل جميع التعارضات، سيتم استخدام استراتيجية $AUTO_RESOLVE_STRATEGY."
-        return 1
+    
+    # أولاً: محاولة استخدام أداة الدمج الافتراضية التي تم إعدادها في git
+    local mergetool_output
+    mergetool_output=$(git mergetool --no-prompt 2>&1)
+    if [ $? -eq 0 ]; then
+        return 0
+    else
+        info "فشل استخدام mergetool الافتراضي. الخطأ: $mergetool_output"
     fi
-    return 0
+
+    # ثانياً: محاولة استخدام vimdiff كخيار احتياطي إذا كان متاحاً
+    if command -v vimdiff >/dev/null 2>&1; then
+        info "استخدام vimdiff كأداة دمج احتياطية..."
+        if git mergetool --tool=vimdiff --no-prompt 2>/dev/null; then
+            return 0
+        fi
+    fi
+
+    info "لم يتمكن mergetool من حل جميع التعارضات، سيتم استخدام استراتيجية $AUTO_RESOLVE_STRATEGY."
+    return 1
 }
 
 # دالة لإصلاح مشاكل التنسيق (lint)
@@ -135,6 +156,9 @@ info "بدء سكربت إصلاح الطلبات..."
 # التحقق من وجود git
 check_git_repo
 
+# التحقق من نظافة مساحة العمل قبل البدء
+check_clean_working_tree
+
 # الحصول على اسم الفرع الحالي
 CURRENT_BRANCH=$(get_current_branch)
 info "الفرع الحالي: $CURRENT_BRANCH"
@@ -151,8 +175,11 @@ fetch_updates
 for ((attempt=1; attempt<=MAX_RETRIES; attempt++)); do
     info "محاولة الدمج رقم $attempt..."
 
+    # تعطيل set -e مؤقتاً لالتقاط رمز الخروج دون إنهاء السكربت
+    set +e
     merge_with_strategy "$MAIN_BRANCH" "$AUTO_RESOLVE_STRATEGY"
     merge_exit_code=$?
+    set -e
 
     if [ $merge_exit_code -eq 0 ]; then
         info "تم الدمج بنجاح دون تعارضات."
@@ -160,8 +187,12 @@ for ((attempt=1; attempt<=MAX_RETRIES; attempt++)); do
     else
         info "حدثت تعارضات أثناء الدمج."
 
+        set +e
         resolve_conflicts_with_mergetool
-        if [ $? -eq 0 ]; then
+        mergetool_result=$?
+        set -e
+
+        if [ $mergetool_result -eq 0 ]; then
             git add -A 2>/dev/null || true
             git commit --no-edit 2>/dev/null || info "لا يوجد تغييرات جديدة بعد حل التعارضات."
             break
@@ -184,8 +215,12 @@ fi
 # تشغيل الاختبارات
 if [ "$RUN_TESTS" = true ]; then
     info "تشغيل الاختبارات..."
+    
+    # تعطيل set -e مؤقتاً لالتقاط رمز الخروج
+    set +e
     run_tests
     test_result=$?
+    set -e
 
     if [ $test_result -ne 0 ]; then
         info "فشلت الاختبارات. تم التراجع عن الدمج."
