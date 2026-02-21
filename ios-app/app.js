@@ -30,6 +30,7 @@ const API_PATHS = {
   keyStatus: "/api/chat/key-status",
   mobileAgents: "/api/agents?mode=mobile",
   mcpTools: "/api/mcp/tools",
+  mcpConnectionStatus: "/api/mcp/connection-status",
   mcpCall: "/api/mcp/tools/call",
   orchestratorRun: "/api/orchestrator/run"
 };
@@ -53,7 +54,8 @@ createApp({
         health: null,
         keyStatus: null,
         mobileAgents: [],
-        mcpTools: []
+        mcpTools: [],
+        connectionStatus: null
       },
       remoteLogs: [],
       mcpForm: {
@@ -85,6 +87,10 @@ createApp({
 
     mobileAgentCount() {
       return Array.isArray(this.dashboard.mobileAgents) ? this.dashboard.mobileAgents.length : 0;
+    },
+
+    cursorConnectionReady() {
+      return this.dashboard.connectionStatus?.status === "ready";
     }
   },
 
@@ -253,7 +259,8 @@ createApp({
         ["health", `${this.apiBaseUrl}${API_PATHS.health}`],
         ["keyStatus", `${this.apiBaseUrl}${API_PATHS.keyStatus}`],
         ["mobileAgents", `${this.apiBaseUrl}${API_PATHS.mobileAgents}`],
-        ["mcpTools", `${this.apiBaseUrl}${API_PATHS.mcpTools}`]
+        ["mcpTools", `${this.apiBaseUrl}${API_PATHS.mcpTools}`],
+        ["connectionStatus", `${this.apiBaseUrl}${API_PATHS.mcpConnectionStatus}`]
       ];
 
       const results = await Promise.allSettled(
@@ -316,6 +323,13 @@ createApp({
             { timeoutMs: 30000 }
           );
           this.appendRemoteLog("orchestrator/run", result);
+          return;
+        }
+
+        if (action === "cursorConnectionCheck") {
+          const connectionStatus = await this.requestJson(`${this.apiBaseUrl}${API_PATHS.mcpConnectionStatus}`);
+          this.dashboard.connectionStatus = connectionStatus;
+          this.appendRemoteLog("mcp/connection-status", connectionStatus);
           return;
         }
       } catch (err) {
@@ -398,6 +412,22 @@ createApp({
       if (this.remoteLogs.length > 30) {
         this.remoteLogs = this.remoteLogs.slice(0, 30);
       }
+    },
+
+    connectionStateLabel() {
+      const state = this.dashboard.connectionStatus?.status;
+      if (state === "ready") return this.t("جاهز", "Ready");
+      if (state === "partial") return this.t("جزئي", "Partial");
+      if (state === "not_ready") return this.t("غير جاهز", "Not Ready");
+      return "-";
+    },
+
+    connectionStateClass() {
+      const state = this.dashboard.connectionStatus?.status;
+      if (state === "ready") return "text-green-400";
+      if (state === "partial") return "text-amber-400";
+      if (state === "not_ready") return "text-red-400";
+      return "text-gray-400";
     },
 
     sendQuickAction(text) {

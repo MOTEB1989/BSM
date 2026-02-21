@@ -6,6 +6,7 @@ import {
   executeBankingTool,
   listBankingTools
 } from "../services/bankingMcpService.js";
+import { getMcpConnectionStatus } from "../services/mcpConnectionService.js";
 
 const router = Router();
 
@@ -52,6 +53,15 @@ router.post("/tools/call", asyncHandler(async (req, res) => {
     },
     req.correlationId
   );
+}));
+
+/**
+ * GET /api/mcp/connection-status
+ * Returns readiness status for Cursor Windows MCP wiring.
+ */
+router.get("/connection-status", asyncHandler(async (req, res) => {
+  const status = await getMcpConnectionStatus();
+  success(res, status, req.correlationId);
 }));
 
 export default router;

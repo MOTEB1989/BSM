@@ -275,6 +275,45 @@
           </div>
 
           <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-semibold">{{ lang === 'ar' ? 'اتصال Cursor Windows' : 'Cursor Windows Connection' }}</h3>
+              <span class="text-xs font-semibold" :class="connectionStateClass()">{{ connectionStateLabel() }}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-[11px] mb-3">
+              <div class="bg-gray-800 border border-gray-700 rounded-lg p-2">
+                <p class="text-gray-500">mcp-settings.json</p>
+                <p class="mt-1" :class="dashboard.connectionStatus?.checks?.rootMcpSettings?.hasServer ? 'text-green-400' : 'text-red-400'">
+                  {{ dashboard.connectionStatus?.checks?.rootMcpSettings?.hasServer ? 'OK' : 'Missing' }}
+                </p>
+              </div>
+              <div class="bg-gray-800 border border-gray-700 rounded-lg p-2">
+                <p class="text-gray-500">copilot/mcp.json</p>
+                <p class="mt-1" :class="dashboard.connectionStatus?.checks?.copilotMcpSettings?.hasServer ? 'text-green-400' : 'text-red-400'">
+                  {{ dashboard.connectionStatus?.checks?.copilotMcpSettings?.hasServer ? 'OK' : 'Missing' }}
+                </p>
+              </div>
+              <div class="bg-gray-800 border border-gray-700 rounded-lg p-2">
+                <p class="text-gray-500">banking-hub.js</p>
+                <p class="mt-1" :class="dashboard.connectionStatus?.checks?.bankingHubFile?.exists ? 'text-green-400' : 'text-red-400'">
+                  {{ dashboard.connectionStatus?.checks?.bankingHubFile?.exists ? 'OK' : 'Missing' }}
+                </p>
+              </div>
+            </div>
+            <button @click="runRemoteAction('cursorConnectionCheck')" class="w-full bg-cyan-600/20 border border-cyan-500/40 rounded-lg py-2 text-xs hover:bg-cyan-600/30">
+              {{ lang === 'ar' ? 'فحص اتصال Cursor الآن' : 'Check Cursor Connection Now' }}
+            </button>
+            <ul class="mt-3 space-y-1.5 text-xs text-gray-300 list-decimal pr-5">
+              <li v-for="(step, idx) in (dashboard.connectionStatus?.instructions?.[lang] || [])" :key="idx">{{ step }}</li>
+            </ul>
+            <div v-if="dashboard.connectionStatus?.recommendations?.length" class="mt-3 bg-amber-950/30 border border-amber-800/50 rounded-lg p-2">
+              <p class="text-[11px] text-amber-300 mb-1">{{ lang === 'ar' ? 'توصيات إصلاح' : 'Fix Recommendations' }}</p>
+              <ul class="text-xs space-y-1">
+                <li v-for="(item, idx) in dashboard.connectionStatus.recommendations" :key="idx" class="text-amber-200">- {{ item }}</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
             <h3 class="text-sm font-semibold mb-3">{{ lang === 'ar' ? 'إجراءات سريعة' : 'Quick Actions' }}</h3>
             <div class="grid grid-cols-2 gap-2">
               <button @click="runRemoteAction('refresh')" class="bg-blue-600/20 border border-blue-500/40 rounded-lg py-2 text-xs hover:bg-blue-600/30">

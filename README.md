@@ -116,6 +116,7 @@ Direct GPT-4o-mini chat endpoint with bilingual support (Arabic/English) and con
 
 ### MCP Tool Endpoints
 - `GET /api/mcp/tools` - List MCP-style banking tools for clients (iPhone, web, Cursor integrations)
+- `GET /api/mcp/connection-status` - Validate Cursor Windows MCP wiring (files, server config, readiness)
 - `POST /api/mcp/tools/call` - Execute supported MCP tools (`route_banking_query`, `check_agent_status`)
 
 ### User Interfaces

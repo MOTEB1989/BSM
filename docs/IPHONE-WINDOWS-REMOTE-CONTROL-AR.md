@@ -85,6 +85,7 @@ npm run start:banking
 تمت إضافة مسار MCP HTTP للواجهة:
 
 - `GET /api/mcp/tools`
+- `GET /api/mcp/connection-status` (فحص جاهزية Cursor Windows)
 - `POST /api/mcp/tools/call`
 
 ## 6) ملاحظات أمان سريعة

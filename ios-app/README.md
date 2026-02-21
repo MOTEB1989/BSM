@@ -46,6 +46,7 @@
 - تحديث حالة النظام (`/api/status`, `/api/health`, `/api/chat/key-status`)
 - عرض وكلاء الجوال (`/api/agents?mode=mobile`)
 - تشغيل Orchestrator (`POST /api/orchestrator/run`)
+- فحص جاهزية Cursor Windows (`GET /api/mcp/connection-status`)
 - تنفيذ أدوات MCP عبر HTTP:
   - `GET /api/mcp/tools`
   - `POST /api/mcp/tools/call`
