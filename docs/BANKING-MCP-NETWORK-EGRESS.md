@@ -128,7 +128,8 @@ Before enabling network calls, verify:
 
 - Circuit Breaker: `src/utils/circuitBreaker.js`
 - GPT Service Pattern: `src/services/gptService.js`
-- Error Utilities: `src/utils/errors.js`
+- Error Handling (AppError): `src/utils/errors.js`
+- HTTP Client & API Key Sanitization: `src/utils/httpClient.js`
 - Security Policy: `SECURITY.md`
 - Governance: `GOVERNANCE.md`
 - Environment Configuration: `src/config/env.js`
