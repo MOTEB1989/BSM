@@ -12,6 +12,7 @@ import {
   getDestinationSystemPrompt,
   formatOutput
 } from "../utils/messageFormatter.js";
+import { guardChatAgent } from "../guards/chatGuard.js";
 
 const router = Router();
 
@@ -48,6 +49,9 @@ router.get("/key-status", asyncHandler(async (_req, res) => {
 // agentId selects a specialized system prompt (legal-agent, governance-agent, agent-auto, direct)
 router.post("/", validateChatInput, asyncHandler(async (req, res) => {
   const { agentId, message, history = [], language = "ar" } = req.body;
+
+  // Validate agent context restrictions before processing
+  await guardChatAgent(agentId, false);
 
   // Build provider list - when agentId is kimi-agent, prefer Kimi first
   const providers = [];

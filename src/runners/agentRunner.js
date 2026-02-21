@@ -6,6 +6,7 @@ import { AppError } from "../utils/errors.js";
 import { createFile } from "../actions/githubActions.js";
 import { extractIntent, intentToAction } from "../utils/intent.js";
 import { parseCommandBlocks, executeCommands } from "../utils/commandExecutor.js";
+import { loadRegistry } from "../utils/registryCache.js";
 import logger from "../utils/logger.js";
 import { hasUsableApiKey } from "../utils/apiKey.js";
 
@@ -65,6 +66,52 @@ export const runAgent = async ({ agentId, input, payload = {} }) => {
     const agents = await loadAgents();
     const agent = agents.find(a => a.id === agentId);
     if (!agent) throw new AppError(`Agent not found: ${agentId}`, 404, "AGENT_NOT_FOUND");
+
+    // Validate agent approval and context restrictions from registry
+    // This is a second layer of defense (defense-in-depth):
+    // - chatGuard.js validates at the chat route level
+    // - This validation applies to ALL execution paths (API, orchestrator, etc.)
+    const registry = await loadRegistry();
+    if (registry && registry.agents) {
+      const registryAgent = registry.agents.find(a => a.id === agentId);
+      
+      if (registryAgent) {
+        // Check approval requirements
+        if (registryAgent.approval?.required) {
+          // Check if caller has admin privileges (via payload)
+          const isAdmin = payload?.isAdmin === true;
+          
+          if (!isAdmin) {
+            logger.warn({ 
+              agentId, 
+              approvalRequired: true 
+            }, "Agent execution blocked: requires admin approval");
+            throw new AppError(
+              `Agent "${agentId}" requires admin approval`,
+              403,
+              "APPROVAL_REQUIRED"
+            );
+          }
+        }
+
+        // Check context restrictions if provided in payload
+        if (payload?.context) {
+          const contexts = registryAgent.contexts?.allowed || [];
+          if (!contexts.includes(payload.context)) {
+            logger.warn({ 
+              agentId, 
+              requestedContext: payload.context,
+              allowedContexts: contexts
+            }, "Agent execution blocked: context not allowed");
+            throw new AppError(
+              `Agent "${agentId}" is not allowed in context "${payload.context}"`,
+              403,
+              "CONTEXT_NOT_ALLOWED"
+            );
+          }
+        }
+      }
+    }
 
     const knowledge = await loadKnowledgeIndex();
     const knowledgeString = knowledge.join("\n"); // Compute once

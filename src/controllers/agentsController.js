@@ -115,6 +115,14 @@ export const executeAgent = asyncHandler(async (req, res) => {
     );
   }
   
-  const result = await runAgent({ agentId, input, payload });
+  // Pass admin flag to runner for approval validation
+  // adminAuth middleware sets req.adminToken when admin authenticated
+  const enrichedPayload = {
+    ...payload,
+    isAdmin: !!req.adminToken,
+    context: "api" // /api/agents/run is an "api" context
+  };
+  
+  const result = await runAgent({ agentId, input, payload: enrichedPayload });
   success(res, { result }, req.correlationId);
 });
