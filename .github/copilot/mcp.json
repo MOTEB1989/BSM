@@ -48,6 +48,54 @@
           "console-access"
         ]
       }
+    },
+    "github-mcp": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "ghcr.io/github/github-mcp-server:latest"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_BSU_TOKEN}"
+      },
+      "metadata": {
+        "name": "GitHub MCP Server",
+        "version": "2.0.0",
+        "description": "Official GitHub MCP server for comprehensive repository and Git management",
+        "capabilities": [
+          "git-operations",
+          "github-api",
+          "repository-management",
+          "workflow-automation",
+          "pr-management",
+          "issue-tracking",
+          "ci-cd-integration"
+        ],
+        "documentation": "https://github.com/github/github-mcp-server"
+      }
+    },
+    "github-mcp-go": {
+      "command": "go",
+      "args": [
+        "run",
+        "github.com/github/github-mcp-server/cmd/github-mcp-server@latest",
+        "stdio",
+        "--dynamic-toolsets"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_BSU_TOKEN}",
+        "HOME": "${HOME}"
+      },
+      "metadata": {
+        "name": "GitHub MCP Server (Go)",
+        "version": "2.0.0",
+        "description": "GitHub MCP server via Go runtime (no Docker required)",
+        "note": "Use this if Docker is not available"
+      }
     }
   }
 }
