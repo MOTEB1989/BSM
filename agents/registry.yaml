@@ -574,8 +574,8 @@ agents:
         - api
         - ci
     expose:
-      selectable: true
-      internal_only: false
+      selectable: false
+      internal_only: true
     risk:
       level: medium
       rationale: "Designated deputy for repository leadership and agent orchestration"
