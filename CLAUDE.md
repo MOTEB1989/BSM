@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-BSM (Business Service Management) is a Node.js/Express.js multi-agent AI platform for legal services and knowledge management. It integrates with multiple AI providers (OpenAI, Perplexity, Anthropic, Gemini, Groq, Cohere, Mistral, Azure OpenAI), serves a Vue 3 chat frontend, and provides agent orchestration via YAML-configured agents.
+BSM (Business Service Management) is a Node.js/Express.js multi-agent AI platform for legal services and knowledge management. It integrates with multiple AI providers (OpenAI, Perplexity, Anthropic, Gemini, Groq, Cohere, Mistral, Azure OpenAI, Kimi/Moonshot), serves a Vue 3 chat frontend, and provides agent orchestration via YAML-configured agents.
 
 The package name is `bsu` and the server logs identify as "BSU API". The repository is `LexBANK/BSM`.
 
@@ -28,17 +28,37 @@ npm test
 # or equivalently:
 npm run validate
 
+# Run unit tests (Node.js built-in test runner)
+npm run test:unit
+
 # Additional validation scripts
 npm run validate:registry       # Registry-specific validation
 npm run validate:agent-sync     # Agent synchronization validation
+npm run validate:render         # Render deployment config validation
+
+# Agent deduplication and management
+npm run check:duplicates        # Check for duplicate agents (also runs as precommit hook)
+npm run merge:agents            # Merge agent definitions
+npm run check:tools             # Verify required tools are installed
 
 # Health checks
 npm run health                  # Basic health check
 npm run health:detailed         # Comprehensive health check
 
+# Agent operations
+npm run agents:integrity        # Run integrity agent
+npm run agents:audit            # Run audit agent
+npm run agents:orchestrate      # Run orchestration pipeline
+
 # PR review
 npm run pr-check                # Local PR review checklist
 npm run pr-check:verbose        # Verbose PR review checklist
+
+# Performance testing
+npm run perf                    # Run performance test suite
+
+# Git hooks
+npm run install:hooks           # Install .githooks into .git/hooks
 
 # MCP Servers
 npm run mcp:install             # Install MCP server dependencies
@@ -55,7 +75,7 @@ npm run mcp:github:test         # Test GitHub MCP server connection
 src/
   server.js          # Server entry point (registry validation gate, listens on PORT)
   app.js             # Express app setup (CORS, Helmet, rate limiting, CSP, middleware)
-  routes/            # API route definitions (11 route modules)
+  routes/            # API route definitions (17 route modules)
     index.js         #   Route aggregator, mounts all under /api
     health.js        #   Health check endpoints
     status.js        #   System status with features and capabilities
@@ -68,55 +88,75 @@ src/
     webhooks.js      #   GitHub and Telegram webhook routing
     emergency.js     #   Emergency control endpoints
     control.js       #   Control plane endpoints
+    pr.js            #   PR evaluation and batch operations
+    agent-executor.js #  Safe agent command execution (whitelisted commands)
+    joke.js          #   Random joke endpoint (/api/random-joke)
+    notifications.js #   Team notifications hub (multi-channel)
+    mobile.js        #   Lightweight mobile/PWA remote control endpoints
   controllers/       # Request handlers
-    healthController.js    # Comprehensive health checks (filesystem, registry, env, circuit breakers)
-    agentsController.js    # Agent listing and execution
-    agentControl.js        # Agent lifecycle management (start/stop/status)
-    knowledgeController.js # Knowledge document retrieval
+    healthController.js      # Comprehensive health checks (filesystem, registry, env, circuit breakers)
+    agentsController.js      # Agent listing and execution
+    agentControl.js          # Agent lifecycle management (start/stop/status)
+    knowledgeController.js   # Knowledge document retrieval
     orchestratorController.js # Orchestration control
-    webhookController.js   # GitHub webhook handling
+    webhookController.js     # GitHub webhook handling
+    prOperationsController.js # PR evaluation and batch operations
+    jokeController.js        # Random joke fetching
   services/          # Business logic
-    gptService.js          # OpenAI API integration with circuit breaker, timeouts
-    agentsService.js       # Agent loading with 1-min TTL cache, stampede prevention
-    knowledgeService.js    # Knowledge base loading with caching
-    orchestratorService.js # Agent orchestration logic
-    agentStateService.js   # State management for agents
-    goServiceClient.js     # Go microservice integration client
-    telegramStatusService.js # Telegram bot integration
-    vectorService.js       # Vector database operations
-    audit.js               # Audit logging
+    gptService.js                # OpenAI API integration with circuit breaker, timeouts
+    agentsService.js             # Agent loading with 1-min TTL cache, stampede prevention
+    knowledgeService.js          # Knowledge base loading with caching
+    orchestratorService.js       # Agent orchestration logic
+    agentStateService.js         # State management for agents
+    agentCoordinationService.js  # Agent coordination and inter-agent messaging
+    notificationService.js       # Team notifications (in-memory, Telegram, webhooks)
+    securityShieldService.js     # Security threat detection and coordinated response
+    jokeService.js               # External joke API integration
+    goServiceClient.js           # Go microservice integration client
+    telegramStatusService.js     # Telegram bot integration
+    vectorService.js             # Vector database operations
+    audit.js                     # Audit logging
+    githubWebhookIntegration.js  # GitHub webhook event processing
   middleware/        # Express middleware
-    auth.js          #   Timing-safe admin token auth + HTTP Basic Auth for admin UI
-    correlation.js   #   Request correlation ID injection
-    requestLogger.js #   HTTP request logging
-    errorHandler.js  #   Global error handling with structured responses
-    lanOnly.js       #   LAN-only access enforcement
-    mobileMode.js    #   Mobile-specific restrictions
-    notFound.js      #   404 handling
-    validateChatInput.js # Chat input validation (message, history, language)
+    auth.js               #   Timing-safe admin token auth + HTTP Basic Auth for admin UI
+    correlation.js        #   Request correlation ID injection
+    requestLogger.js      #   HTTP request logging
+    errorHandler.js       #   Global error handling with structured responses
+    lanOnly.js            #   LAN-only access enforcement
+    mobileMode.js         #   Mobile-specific restrictions
+    notFound.js           #   404 handling
+    validateChatInput.js  #   Chat input validation (message, history, language)
+    samaCompliance.js     #   SAMA (Saudi Central Bank) cybersecurity compliance
+    webhookRateLimit.js   #   Shared rate limiter for GitHub webhook endpoints
   runners/           # Agent execution logic
     agentRunner.js   #   Agent execution engine (template rendering, intent extraction, action validation)
     orchestrator.js  #   Orchestrator runner for pipelines
   config/            # Environment and model configuration
-    env.js           #   Environment variable parsing with validation
-    models.js        #   Model provider configuration (OpenAI, Perplexity)
-    modelRouter.js   #   Multi-model routing based on task complexity
+    env.js              #   Environment variable parsing with validation
+    models.js           #   Model provider configuration (OpenAI, Perplexity, Kimi, etc.)
+    modelRouter.js      #   Multi-model routing based on task complexity
     orchestratorEvents.js # Event configuration for orchestration
+    smartKeyManager.js  #   Smart API key manager with auto-rotation and failover
   utils/             # Shared utilities
-    logger.js        #   Pino-based structured logging (colorized dev, JSON prod)
-    circuitBreaker.js #  Circuit breaker pattern (CLOSED/OPEN/HALF_OPEN states)
-    errors.js        #   Custom error classes
-    intent.js        #   Intent extraction and mapping
-    asyncHandler.js  #   Async handler wrapper to eliminate try-catch boilerplate
-    messageFormatter.js # Chat message formatting utilities (buildChatMessages, getSystemPrompt, formatOutput)
-    cachedFileLoader.js # Generic file loader factory with TTL caching and stampede prevention
-    httpResponses.js #   Standard HTTP response builders
-    auditLogger.js   #   Audit trail logging
-    registryValidator.js # Registry validation (called at server startup)
-    registryCache.js #   Registry caching
-    telegramUtils.js #   Telegram utilities
-    fsSafe.js        #   Safe filesystem operations
-    githubDispatch.ts #  GitHub Actions dispatch (TypeScript)
+    logger.js           #   Pino-based structured logging (colorized dev, JSON prod)
+    circuitBreaker.js   #   Circuit breaker pattern (CLOSED/OPEN/HALF_OPEN states)
+    errors.js           #   Custom error classes
+    intent.js           #   Intent extraction and mapping
+    asyncHandler.js     #   Async handler wrapper to eliminate try-catch boilerplate
+    messageFormatter.js #   Chat message formatting (buildChatMessages, getSystemPrompt, formatOutput)
+    cachedFileLoader.js #   Generic file loader factory with TTL caching and stampede prevention
+    httpResponses.js    #   Standard HTTP response builders
+    httpClient.js       #   Shared fetch wrapper with timeout, error mapping, API key sanitization
+    providerUtils.js    #   Centralized AI provider selection and priority ordering
+    commandExecutor.js  #   Safe command executor (allowlisted base commands only)
+    bilingual.js        #   Arabic/English bilingual support (prompts, errors, RTL detection)
+    apiKey.js           #   API key utilities and usability checks
+    auditLogger.js      #   Audit trail logging
+    registryValidator.js #  Registry validation (called at server startup)
+    registryCache.js    #   Registry caching
+    telegramUtils.js    #   Telegram utilities
+    fsSafe.js           #   Safe filesystem operations
+    githubDispatch.ts   #   GitHub Actions dispatch (TypeScript)
   agents/            # Agent implementation classes
     CodeReviewAgent.js     # Code review automation
     GovernanceAgent.js     # Governance enforcement
@@ -133,26 +173,21 @@ src/
     telegramGuard.js #   Telegram-specific guards
   api/               # Multi-provider AI API clients (TypeScript)
     base-client.ts   #   Base client class
-    client-factory.ts #  Client factory pattern
-    openai-client.ts #   OpenAI integration
-    anthropic-client.ts # Claude/Anthropic integration
-    perplexity-client.ts # Perplexity API (with citations)
-    gemini-client.ts #   Google Gemini
-    groq-client.ts   #   Groq
-    cohere-client.ts #   Cohere
-    mistral-client.ts #  Mistral
-    azure-openai-client.ts # Azure OpenAI
-    types.ts         #   TypeScript type definitions
+    client-factory.ts #  Client factory pattern (add providers here, not new files)
     control.ts       #   Control plane
+    types.ts         #   TypeScript type definitions
     index.ts         #   Module exports
   orchestrator/      # TypeScript orchestrator
     index.ts         #   Pipeline execution, guards, approvals, audit
   audit/             # Audit logging
+    index.ts         #   Audit logging exports
     logger.ts        #   Audit logging implementation
   orbit/             # ORBIT self-healing agent
     agents/TelegramAgent.js # Telegram bot agent
-    router.js        #   ORBIT routing
-    webhooks/telegram.js #  Telegram webhook handler
+    orbit.worker.ts          # ORBIT worker (TypeScript)
+    telegram.gateway.worker.ts # Telegram gateway worker (TypeScript)
+    router.js                # ORBIT routing
+    webhooks/                # ORBIT webhook handlers
   database/          # Optional database connection helpers
     mysql.js         #   MySQL connection helper
   chat/              # Vue 3 + Tailwind chat UI (served at /chat)
@@ -176,19 +211,25 @@ src/
 
 data/
   agents/            # YAML agent definitions
-    index.json       #   Registry of 12 agent YAML files
+    index.json       #   Registry of 18 active agent YAML files
     my-agent.yaml    #   BSU Smart Agent (system management)
     agent-auto.yaml  #   Auto agent
     legal-agent.yaml #   Legal analysis
-    governance-agent.yaml # Governance enforcement
-    code-review-agent.yaml # Code review
-    security-agent.yaml    # Security scanning
-    pr-merge-agent.yaml    # PR merge automation
-    integrity-agent.yaml   # Integrity checking
-    bsu-audit-agent.yaml   # Audit logging
-    repository-review.yaml # Repository analysis
+    governance-agent.yaml       # Governance enforcement
+    governance-review-agent.yaml # Governance review
+    code-review-agent.yaml      # Code review
+    security-agent.yaml         # Security scanning
+    pr-merge-agent.yaml         # PR merge automation
+    integrity-agent.yaml        # Integrity checking
+    bsu-audit-agent.yaml        # Audit logging
+    repository-review.yaml      # Repository analysis
     ios-chat-integration-agent.yaml # iOS integration
-    governance-review-agent.yaml    # Governance review
+    kimi-agent.yaml             # Kimi/Moonshot AI agent
+    gemini-agent.yaml           # Google Gemini agent
+    claude-agent.yaml           # Anthropic Claude agent
+    perplexity-agent.yaml       # Perplexity search agent
+    groq-agent.yaml             # Groq ultra-fast inference agent
+    raptor-agent.yaml           # Raptor agent
   knowledge/         # Knowledge base documents
     index.json       #   Knowledge document registry
     example.md       #   Example knowledge document
@@ -203,10 +244,17 @@ scripts/             # Build, validation, and automation scripts
   validate-orchestrator.js # Orchestrator config validation
   validate-docker-compose.cjs # Docker Compose validation
   validate-env.sh    #   Environment variable validation
+  validate-render.js #   Render.com deployment config validation
   health-check.js    #   Comprehensive health check (supports --detailed)
   pr-review-checklist.js # PR review automation
   pr-status-check.js #   PR status checking
   pr-manager.js      #   PR management automation
+  pr-operations.js   #   PR operations automation
+  check-required-tools.js # Verify required tools are installed
+  prevent-duplicate-agents.js # Agent deduplication (runs as precommit hook)
+  merge-agents.js    #   Merge agent definitions
+  install-git-hooks.js # Install git hooks (runs as npm prepare)
+  verify-copilot-agents.js # Verify GitHub Copilot agents configuration
   run_agents.sh      #   Agent execution script
   run-integrity-check.js # Integrity agent runner
   audit-runner.js    #   Audit runner
@@ -216,8 +264,19 @@ scripts/             # Build, validation, and automation scripts
   build_reports_index.js # Report generation
   json_to_md.js      #   JSON to Markdown conversion
   security-check.sh  #   Security validation
+  safe-rebase.sh     #   Safe git rebase helper
+  schema.yaml        #   YAML schema definitions
+  test-validation-performance.js # Validation performance benchmarks
   mysql/             # MySQL initialization scripts
     init.sql         #   Database initialization
+
+mcp-servers/         # MCP (Model Context Protocol) server implementations
+  bsu-agent-server.js  # BSU unified MCP server for GitHub Copilot
+  banking-hub.js       # Banking hub MCP server
+  github-mcp-server.js # GitHub MCP server (Node.js wrapper)
+  supreme-unrestricted-agent.js # ⚠️ DANGER: Unrestricted agent (test environments ONLY)
+  agents/            # MCP agent definitions
+  package.json       # MCP server dependencies (@modelcontextprotocol/sdk, browser-devtools-mcp)
 
 lexprim-chat/        # Nuxt 3 chat frontend (separate app)
   nuxt.config.ts     #   Nuxt configuration
@@ -228,13 +287,21 @@ lexprim-chat/        # Nuxt 3 chat frontend (separate app)
   composables/useApi.js # API integration composable
   stores/chat.js     #   Pinia chat state management
 
-docs/                # Documentation and GitHub Pages frontend (lexdo.uk)
+tests/               # Test suite
+  *.test.js          #   Unit tests (Node.js built-in test runner via `npm run test:unit`)
+  integration/       #   Integration tests (ai-providers.test.js)
+
+docs/                # 93 documentation files and GitHub Pages frontend (lexdo.uk)
 
 .github/
-  workflows/         # 53 CI/CD workflow files
+  workflows/         # 42 CI/CD workflow files
   agents/            # Agent definitions for GitHub Actions
     orchestrator.config.json # Orchestrator configuration (validated by npm test)
   CODEOWNERS         # Code ownership
+
+.githooks/           # Local git hooks (install via `npm run install:hooks`)
+  pre-commit         # Runs duplicate agent check before each commit
+  install.sh         # Hook installer script
 ```
 
 ## Key API Endpoints
@@ -252,6 +319,9 @@ docs/                # Documentation and GitHub Pages frontend (lexdo.uk)
 - `POST /api/agents/stop/:agentId` - Stop an agent
 - `GET /api/agents/status` - All agents status
 - `GET /api/agents/:agentId/status` - Individual agent status
+
+### Agent Executor (Command Execution)
+- `POST /api/agent/execute` - Execute a whitelisted command via agent runner
 
 ### Chat
 - `POST /api/chat` - Agent-based chat
@@ -271,6 +341,22 @@ docs/                # Documentation and GitHub Pages frontend (lexdo.uk)
 ### Orchestrator
 - `POST /api/orchestrator/run` - Run orchestration pipeline
 - `GET /api/orchestrator/status` - Pipeline status
+
+### PR Operations
+- `POST /api/pr/evaluate` - Evaluate a single PR
+- `POST /api/pr/batch-evaluate` - Batch evaluate multiple PRs
+- `GET /api/pr/config` - PR operations configuration
+- `GET /api/pr/health` - PR operations health
+
+### Notifications
+- `GET /api/notifications` - Get recent notifications (filter by type, priority, since)
+- `POST /api/notifications` - Broadcast a notification to all subscribed agents
+
+### Mobile / Remote Control
+- `GET /api/mobile/status` - Minimal status for iPhone PWA and remote clients
+
+### Misc
+- `GET /api/random-joke` - Fetch a random joke (external API)
 
 ### Webhooks
 - `POST /webhook/github` - GitHub webhooks (top-level, before security middleware)
@@ -301,9 +387,17 @@ See `.env.example` for the full list. Key variables:
 - `DEFAULT_MODEL` - Default model for routing (default: `gpt-4o-mini`)
 - `MODEL_ROUTER_STRATEGY` - Multi-model routing strategy (default: `balanced`)
 - `FALLBACK_ENABLED` - Enable model fallback (default: `true`)
+- `ANTHROPIC_API_KEY` - Anthropic/Claude API key
+- `PERPLEXITY_KEY` - Perplexity AI API key
 - `PERPLEXITY_MODEL` - Perplexity model name
 - `PERPLEXITY_CITATIONS` - Enable citations (default: `true`)
 - `PERPLEXITY_RECENCY_DAYS` - Recency filter in days (default: `7`)
+- `GEMINI_API_KEY` - Google Gemini API key
+- `KIMI_API_KEY` - Moonshot AI (Kimi) API key
+- `GROQ_API_KEY` - Groq API key
+- `COHERE_API_KEY` - Cohere API key (optional)
+- `MISTRAL_API_KEY` - Mistral AI API key (optional)
+- `AZURE_OPENAI_ENDPOINT` / `AZURE_OPENAI_KEY` / `AZURE_OPENAI_DEPLOYMENT` - Azure OpenAI (optional)
 
 ### Authentication
 - `ADMIN_TOKEN` - Admin authentication token (must be 16+ chars in production, cannot be `change-me`)
@@ -315,11 +409,14 @@ See `.env.example` for the full list. Key variables:
 - `MAX_AGENT_INPUT_LENGTH` - Agent input character limit (default: `4000`)
 - `EGRESS_POLICY` - Outbound network policy: `allow_all`, `deny_by_default`, `deny_all`
 - `EGRESS_ALLOWED_HOSTS` - Allowed outbound hosts (default: `api.openai.com,github.com`)
+- `SAMA_DATA_RESIDENCY` - Set to `strict` to enforce SAMA cross-border data transfer restrictions
 
 ### Feature Flags
 - `MOBILE_MODE` - Restrict operations for mobile clients (default: `false`)
 - `LAN_ONLY` - Restrict access to local network (default: `false`)
 - `SAFE_MODE` - Disable all external API calls (default: `false`)
+- `SUPREME_AGENT_ENABLED` - Enable unrestricted agent (default: `false`, **never enable in production**)
+- `SUPREME_AGENT_DRY_RUN` - Dry-run mode for supreme agent (default: `true`)
 
 ### GitHub Integration
 - `GITHUB_BSU_TOKEN` - GitHub personal access token
@@ -345,12 +442,15 @@ See `.env.example` for the full list. Key variables:
 - **Express middleware pattern**: correlation IDs, request logging, auth, LAN/mobile guards, error handling
 - **Agent definitions** are YAML files in `data/agents/` referenced by `data/agents/index.json`
 - **Agent registry** at `agents/registry.yaml` requires governance fields (`risk`, `approval`, `startup`, `healthcheck`, `contexts.allowed`)
-- **Allowed agent actions** are restricted to a whitelist of ~30 actions in `scripts/validate.js`
+- **Allowed agent actions** are restricted to a whitelist in `scripts/validate.js`
 - **Circuit breaker pattern** for external API calls (`src/utils/circuitBreaker.js`): 5-failure threshold, 30s reset timeout, CLOSED/OPEN/HALF_OPEN states
 - **Cache stampede prevention**: agent and knowledge services use in-flight promise tracking with 1-minute TTL
 - **Multi-model routing**: `src/config/modelRouter.js` selects AI models based on task complexity
 - **Registry validation gate**: server refuses to start if `agents/registry.yaml` validation fails (`src/server.js`)
 - **Standard HTTP responses**: use `src/utils/httpResponses.js` for consistent response formatting
+- **Bilingual support**: use `src/utils/bilingual.js` for Arabic/English system prompts; the chat UI supports RTL (Arabic) and LTR (English)
+- **Precommit hook**: `npm run check:duplicates` runs automatically before each commit to prevent duplicate agent IDs
+- **Provider ordering**: `src/utils/providerUtils.js` defines canonical provider priority: openai → kimi → perplexity → anthropic → gemini → groq
 
 ### Refactoring Patterns (Established 2026-02)
 
@@ -363,7 +463,6 @@ To reduce code duplication and improve maintainability, the following patterns s
 
 2. **Chat Input Validation** (`src/middleware/validateChatInput.js`)
    - Use `validateChatInput` middleware for consistent validation of message, history, and language parameters
-   - Ensures security and consistency across all chat endpoints
    - Example: `router.post('/chat', validateChatInput, asyncHandler(async (req, res) => { ... }))`
 
 3. **Message Formatting Utilities** (`src/utils/messageFormatter.js`)
@@ -373,21 +472,53 @@ To reduce code duplication and improve maintainability, the following patterns s
 
 4. **Cached File Loader Factory** (`src/utils/cachedFileLoader.js`)
    - Use `createCachedFileLoader()` or `createYAMLLoader()` for loading files with TTL caching and stampede prevention
-   - Centralizes cache management logic
    - Example: `const { load, clear } = createYAMLLoader({ name, dirPath, indexFile, indexKey, validator, cacheTTL })`
 
 5. **API Client Factory Pattern** (`src/api/client-factory.ts`)
    - API clients are created dynamically via factory, not individual class files
    - To add new AI providers, update the `SUPPORTED_PROVIDERS` array in `client-factory.ts`
-   - Do not create separate client class files (e.g., `new-provider-client.ts`)
+   - Do not create separate client class files
+
+6. **Shared HTTP Client** (`src/utils/httpClient.js`)
+   - Use for external API calls with consistent timeout, error mapping, and API key sanitization
+   - Handles 401/403/429/502 consistently; eliminates duplication across service files
+
+7. **Provider Utilities** (`src/utils/providerUtils.js`)
+   - Use `buildChatProviders(models)` to get an ordered list of available AI providers
+   - Centralizes provider priority and API key resolution logic
+
+8. **Smart Key Manager** (`src/config/smartKeyManager.js`)
+   - Handles automatic API key rotation and failover across providers
+   - Tracks usage statistics and failure counts per provider
 
 ## Testing
 
-The project uses validation-based testing. `npm test` runs `scripts/validate.js` which checks:
+The project uses two testing approaches:
 
+### Validation Tests (`npm test`)
+Runs `scripts/validate.js` which checks:
 1. **Agent YAML validation**: `data/agents/index.json` exists and contains an `agents` array; each referenced YAML file exists and has an `id` field; agent actions are from the allowed set
 2. **Registry validation** (if `agents/registry.yaml` exists): all agents have required governance fields (`id`, `risk`, `approval`, `startup`, `healthcheck`, `contexts.allowed`); `auto_start` must be `false`
 3. **Orchestrator config validation** (if `.github/agents/orchestrator.config.json` exists): validates name, version, non-empty agents array; ensures `secrets.logging.logSecrets` is never `true`
+
+### Unit Tests (`npm run test:unit`)
+Uses Node.js built-in test runner (`node --test`). Test files in `tests/*.test.js` cover:
+- `adminUiAuth.test.js` - Admin UI authentication
+- `agent-executor.test.js` - Agent executor command safety
+- `agentRunner.providers.test.js` - Agent runner provider handling
+- `apiKey.test.js` - API key utilities
+- `auditLogger.test.js` - Audit logging
+- `cachedFileLoader.test.js` - File loader caching
+- `circuitBreaker.test.js` - Circuit breaker states
+- `httpClient.test.js` - HTTP client error handling
+- `integrity-agent.test.js` - Integrity agent
+- `ios-app.test.js` - iOS app integration
+- `joke-api.test.js` - Joke API
+- `knowledgeService.test.js` - Knowledge service caching
+- `providerUtils.test.js` - Provider utilities
+- `saffio-system.test.js` - Saffio unified system
+- `webhookController.test.js` - Webhook handling
+- `integration/ai-providers.test.js` - Integration tests for AI providers
 
 Additional validation commands:
 - `npm run validate:registry` - Registry-specific validation
@@ -412,6 +543,12 @@ CI runs validation on every PR and push to main (`.github/workflows/validate.yml
 - 1MB request body limit
 - Egress policy control (`deny_by_default` recommended in production)
 
+### SAMA Compliance (`src/middleware/samaCompliance.js`)
+- Implements Saudi Central Bank (SAMA) cybersecurity standards
+- Data residency controls (restrict cross-border transfer with `SAMA_DATA_RESIDENCY=strict`)
+- AES-256-GCM encryption standards
+- Audit logging for all regulated transactions
+
 ### Secret Scanning
 - Gitleaks configuration (`.gitleaks.toml`) with 25+ custom rules
 - CodeQL analysis via GitHub Actions
@@ -429,9 +566,14 @@ CI runs validation on every PR and push to main (`.github/workflows/validate.yml
 - Health checks for all Docker services
 - Circuit breaker pattern prevents cascade failures on external API outages
 
+### Security Shield (`src/services/securityShieldService.js`)
+- Detects threats and coordinates a response across all agents
+- Tracks threat level: `normal` → `elevated` → `high` → `critical`
+- Activates security shield mode and notifies via `notificationService`
+
 ## Deployment
 
-- **Render.com** - Default deployment target (`render.yaml`)
+- **Render.com** - Default deployment target (`render.yaml`, validated by `npm run validate:render`)
 - **Docker** - Multi-stage build available (`Dockerfile.example`): base, deps, dev, builder, production stages
 - **Docker Compose** - Multi-container setups:
   - `docker-compose.mysql.yml` - MySQL 8.0 + Redis 7 + Node.js
@@ -459,8 +601,29 @@ BSM includes optional database integration:
 5. Validate actions against the allowed whitelist
 6. Execute action if authorized
 
-### Active Agents (12)
-Defined in `data/agents/index.json`: `my-agent`, `agent-auto`, `legal-agent`, `governance-agent`, `code-review-agent`, `security-agent`, `pr-merge-agent`, `integrity-agent`, `bsu-audit-agent`, `repository-review`, `ios-chat-integration-agent`, `governance-review-agent`
+### Active Agents (18)
+Defined in `data/agents/index.json`:
+- `my-agent` - BSU Smart Agent (system management)
+- `agent-auto` - Auto agent (repository health, maintenance)
+- `legal-agent` - Legal analysis
+- `governance-agent` - Governance enforcement
+- `governance-review-agent` - Governance review
+- `code-review-agent` - Code review and PR quality checks
+- `security-agent` - Security scanning and alert monitoring
+- `pr-merge-agent` - Automated PR merging and branch cleanup
+- `integrity-agent` - Integrity checking
+- `bsu-audit-agent` - Audit logging
+- `repository-review` - Repository analysis
+- `ios-chat-integration-agent` - iOS integration
+- `kimi-agent` - Kimi/Moonshot AI (Chinese language model)
+- `gemini-agent` - Google Gemini (multimodal)
+- `claude-agent` - Anthropic Claude
+- `perplexity-agent` - Perplexity (real-time web search with citations)
+- `groq-agent` - Groq (ultra-fast inference)
+- `raptor-agent` - Raptor agent (restricted contexts for security)
+
+### Agent Registry (18 entries)
+All agents are also registered in `agents/registry.yaml` with governance fields. The registry version is `2.0` (Saffio Unified System), validated at server startup.
 
 ### Agent YAML Structure
 Each agent YAML file requires:
@@ -471,15 +634,24 @@ Each agent YAML file requires:
 - `contexts.allowed` - Allowed execution modes
 - `safety`, `risk`, `approval` - Governance fields
 
+### Duplicate Prevention
+- `scripts/prevent-duplicate-agents.js` enforces unique agent IDs across `data/agents/index.json` and `agents/registry.yaml`
+- Runs automatically as a precommit hook (installed via `npm run install:hooks`)
+- Also available as `npm run check:duplicates`
+
 ## GitHub Workflows
 
-The project has 53 GitHub Actions workflows in `.github/workflows/` covering:
-- **CI/CD**: `nodejs.yml`, `validate.yml`, `deploy.yml`, `unified-ci-deploy.yml`
+The project has 42 GitHub Actions workflows in `.github/workflows/` covering:
+- **CI/CD**: `nodejs.yml`, `validate.yml`, `deploy.yml`, `unified-ci-deploy.yml`, `ci-deploy-render.yml`
 - **Security**: `codeql-analysis.yml`, `secret-scanning.yml`
-- **Agent operations**: `run-bsu-agents.yml`, `bsu-audit.yml`, `weekly-agents.yml`, `agent-guardian.yml`
-- **PR management**: `pr-management.yml`, `pr-governance-check.yml`, `auto-merge.yml`, `close-stale-prs.yml`
-- **Infrastructure**: `cf-deploy.yml`, `cf-purge-cache.yml`, `deploy-pages.yml`
+- **Agent operations**: `run-bsu-agents.yml`, `bsu-audit.yml`, `weekly-agents.yml`, `agent-guardian.yml`, `ai-agent-guardian.yml`, `agent-executor.yml`
+- **PR management**: `pr-management.yml`, `pr-governance-check.yml`, `pr-operations.yml`, `pr-triage.yml`, `auto-merge.yml`, `close-stale-prs.yml`, `pr-checklist-gate.yml`, `pr-ci-failure-governance.yml`
+- **Infrastructure**: `cf-deploy.yml`, `cf-purge-cache.yml`, `deploy-pages.yml`, `render-cli.yml`
 - **ORBIT**: `orbit-actions.yml`, `orbit-telegram.yml`
+- **Maintenance**: `cleanup.yml`, `dedupe.yml`, `keep-alive.yml`, `sync-repos.yml`, `nexus-sync.yml`
+- **Reporting**: `publish-reports.yml`, `repo-review.yml`, `registry-validation.yml`
+- **Deployment**: `deploy-ios-app.yml`, `static.yml`, `preflight-check.yml`
+- **Automation**: `claude-assistant.yml`, `auto-keys.yml`
 
 ## GitHub MCP Server Integration
 
@@ -491,6 +663,7 @@ BSM includes integration with GitHub's official MCP (Model Context Protocol) ser
 - **Workflow Automation**: automated release workflows, PR reviews, issue triage
 - **CI/CD Visibility**: workflow status, run history, logs
 - **Security Monitoring**: Dependabot alerts, code scanning, secret scanning
+- **Browser DevTools**: via `browser-devtools-mcp` package (v0.2.23)
 
 ### Configuration
 
@@ -514,13 +687,6 @@ GITHUB_MCP_DOCKER_IMAGE=ghcr.io/github/github-mcp-server
 GO_PATH=/usr/local/go/bin/go          # For 'go' method
 ```
 
-### Usage with GitHub Copilot
-Once configured, use natural language commands:
-- "List all open pull requests in MOTEB1989/BSM"
-- "Show me the status of CI workflows"
-- "What issues are assigned to me?"
-- "Show git status and recent commits"
-
 ### Integration with BSU Agents
 GitHub MCP tools are available to all BSU agents:
 - **agent-auto**: Repository health checks, maintenance
@@ -531,11 +697,6 @@ GitHub MCP tools are available to all BSU agents:
 ### Documentation
 See `docs/GITHUB-MCP-INTEGRATION.md` for comprehensive setup guide, examples, and troubleshooting.
 
-### Resources
-- GitHub MCP Server: https://github.com/github/github-mcp-server
-- Official Docs: https://docs.github.com/en/copilot/how-tos/provide-context/use-mcp/set-up-the-github-mcp-server
-- Model Context Protocol: https://modelcontextprotocol.io/
-
 ## Lexprim Chat (Nuxt 3 Frontend)
 
 A separate Nuxt 3 application in `lexprim-chat/` provides an alternative chat frontend:
@@ -544,3 +705,15 @@ A separate Nuxt 3 application in `lexprim-chat/` provides an alternative chat fr
 - API composable (`composables/useApi.js`)
 - Tailwind CSS styling
 - See `lexprim-chat/DEPLOYMENT.md` for deployment instructions
+
+## Notification System
+
+The `notificationService` (`src/services/notificationService.js`) provides a multi-channel broadcast hub:
+- **Channels**: `internal` (in-memory EventEmitter), `audit`, `telegram`
+- **Agent subscriptions**: agents can subscribe with type/priority filters
+- **API**: `GET /api/notifications` with `limit`, `type`, `priority`, `since` query params
+- **Broadcast**: `POST /api/notifications` requires admin token
+
+## Team Coordination
+
+`agentCoordinationService` (`src/services/agentCoordinationService.js`) enables inter-agent communication and task delegation. Agents can coordinate on complex multi-step workflows by messaging each other through this service.
