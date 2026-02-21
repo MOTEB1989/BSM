@@ -86,11 +86,19 @@ function delay(ms) {
 }
 
 async function sendTelegramLongMessage(chatId, text) {
+function escapeTelegramMarkdown(text) {
+  if (!text) return "";
+  // Escape Telegram Markdown / MarkdownV2 special characters
+  // See: https://core.telegram.org/bots/api#markdownv2-style
+  return text.replace(/([_*[\]()~`>#+\-=|{}.!\\])/g, "\\$1");
+}
+
+async function sendTelegramLongMessage(chatId, text) {
   const chunks = splitTelegramMessage(String(text ?? ""), TELEGRAM_MESSAGE_LIMIT);
-  for (let i = 0; i < chunks.length; i++) {
-    const chunk = chunks[i];
+  for (const chunk of chunks) {
     if (!chunk) continue;
-    await telegramAgent.sendMessage(chatId, chunk);
+    const safeChunk = escapeTelegramMarkdown(chunk);
+    await telegramAgent.sendMessage(chatId, safeChunk);
     // Add a small delay between chunks to respect Telegram rate limits
     if (i < chunks.length - 1) {
       await delay(TELEGRAM_CHUNK_DELAY_MS);
