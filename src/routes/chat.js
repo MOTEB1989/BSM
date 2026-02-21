@@ -12,6 +12,7 @@ import {
   getDestinationSystemPrompt,
   formatOutput
 } from "../utils/messageFormatter.js";
+import { guardChatAgent } from "../guards/chatGuard.js";
 
 const router = Router();
 
@@ -49,10 +50,19 @@ router.get("/key-status", asyncHandler(async (_req, res) => {
 router.post("/", validateChatInput, asyncHandler(async (req, res) => {
   const { agentId, message, history = [], language = "ar" } = req.body;
 
+  // Enforce context restrictions before processing
+  // This prevents terminal_execution agents (raptor, my-agent) from being invoked via chat
+  await guardChatAgent(agentId, false);
+
+  // Special handling for kimi-agent: fail if key is missing
+  const kimiKey = models.kimi?.default;
+  if (agentId === "kimi-agent" && !hasUsableApiKey(kimiKey)) {
+    throw new AppError("KIMI AI service is not configured", 503, "MISSING_API_KEY");
+  }
+
   // Build provider list - when agentId is kimi-agent, prefer Kimi first
   const providers = [];
   const openaiKey = models.openai?.bsm || models.openai?.default;
-  const kimiKey = models.kimi?.default;
   const perplexityKey = models.perplexity?.default;
   const anthropicKey = models.anthropic?.default;
 
