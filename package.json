@@ -22,6 +22,7 @@
     "ci:check": "npm run check:tools && npm run lint && npm run test:unit",
     "health": "node scripts/health-check.js",
     "health:detailed": "node scripts/health-check.js --detailed",
+    "fix-pr": "bash scripts/fix-pr.sh",
     "pr-check": "node scripts/pr-review-checklist.js --local",
     "pr-check:verbose": "node scripts/pr-review-checklist.js --local --verbose",
     "test:unit": "node --test tests/*.test.js",
