@@ -3,6 +3,7 @@
     "github.vscode-pull-request-github",
     "github.copilot",
     "github.copilot-chat",
+    "serkan-ozal.browser-devtools-mcp-vscode",
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
     "ms-vscode.vscode-typescript-next",

@@ -19,6 +19,13 @@
         "GOOGLE_API_KEY": "${GOOGLE_API_KEY}",
         "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
       }
+    },
+    "browser-devtools": {
+      "command": "npx",
+      "args": ["-y", "browser-devtools-mcp"],
+      "env": {
+        "NODE_ENV": "development"
+      }
     }
   }
 }

@@ -496,6 +496,7 @@ The project includes VS Code workspace configuration for an optimal development 
 - **[GitHub Pull Requests and Issues](https://marketplace.visualstudio.com/items?itemName=GitHub.vscode-pull-request-github)** - Manage pull requests and issues directly from VS Code
 - **[GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)** - AI-powered code completion
 - **[GitHub Copilot Chat](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot-chat)** - Conversational AI assistance
+- **[Browser DevTools MCP](https://marketplace.visualstudio.com/items?itemName=serkan-ozal.browser-devtools-mcp-vscode)** - Browser automation and debugging via MCP
 - **ESLint** - JavaScript/TypeScript linting
 - **YAML** - YAML language support with schema validation
 - **Docker** - Docker container management
@@ -559,6 +560,8 @@ The project includes GitHub Actions workflows:
 
 ### Development & Setup
 - [VS Code Setup Guide](docs/VSCODE-SETUP.md) - Comprehensive VS Code development setup with GitHub PR extension
+- [MCP Integration Guide](docs/MCP-INTEGRATION.md) - Model Context Protocol integration with GitHub Copilot
+- [Browser DevTools MCP Setup](docs/BROWSER-DEVTOOLS-MCP-SETUP.md) - Browser automation and debugging via MCP
 
 ### Architecture and Design
 - [System Architecture](docs/ARCHITECTURE.md) - Comprehensive architectural overview
